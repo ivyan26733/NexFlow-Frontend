@@ -21,7 +21,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span className="logo-text">NEXFLOW</span>
           </a>
           <div className="nav-divider" />
-          <a href="/">Studio</a>
+          <a href="/">Flows</a>
+          <a href="/pulses">Pulses</a>
+          <a href="/transactions">Transactions</a>
           <a href="/nexus">Nexus</a>
           <div className="nav-spacer" />
           <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)' }}>v1.0 MVP</span>

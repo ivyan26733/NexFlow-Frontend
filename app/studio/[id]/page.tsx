@@ -15,35 +15,57 @@ import '@xyflow/react/dist/style.css'
 import { api } from '@/api'
 import { useExecutionSocket } from '@/useExecutionSocket'
 import { NODE_META } from '@/lib/nodeConfig'
-import type { NodeStatus, NodeExecutionEvent, FlowNode as ApiNode, FlowEdge as ApiEdge } from '@/types'
+import type {
+  NodeStatus,
+  NodeExecutionEvent,
+  FlowNode as ApiNode,
+  FlowEdge as ApiEdge,
+} from '@/types'
 
 import NodeSidebar     from '@/NodeSidebar'
 import NodeConfigPanel from '@/NodeConfigPanel'
 import StudioToolbar   from '@/StudioToolbar'
 import { FlowNodeCard } from '@/FlowNodeCard'
 
+/* ───────────────────────── Node Types ───────────────────────── */
+
 const nodeTypes: NodeTypes = {
-  START: FlowNodeCard, PULSE: FlowNodeCard, VARIABLE: FlowNodeCard,
-  MAPPER: FlowNodeCard, DECISION: FlowNodeCard, SUCCESS: FlowNodeCard, FAILURE: FlowNodeCard,
+  START:    FlowNodeCard,
+  PULSE:    FlowNodeCard,
+  NEXUS:    FlowNodeCard,
+  SUB_FLOW: FlowNodeCard,
+  VARIABLE: FlowNodeCard,
+  MAPPER:   FlowNodeCard,
+  DECISION: FlowNodeCard,
+  SUCCESS:  FlowNodeCard,
+  FAILURE:  FlowNodeCard,
 }
+
+/* ───────────────────────── Page ───────────────────────── */
 
 export default function StudioPage() {
   const { id: flowId } = useParams<{ id: string }>()
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
-  const [selectedNode,  setSelectedNode] = useState<Node | null>(null)
-  const [selectedEdge,  setSelectedEdge] = useState<Edge | null>(null)
-  const [executionId,   setExecutionId]  = useState<string | null>(null)
-  const [nodeStatuses,  setNodeStatuses] = useState<Record<string, NodeStatus>>({})
-  const [saving,        setSaving]       = useState(false)
-  const [flowName,      setFlowName]     = useState('')
 
-  // Refs so save always uses latest nodes/edges (avoids stale closure)
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null)
+  const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null)
+
+  const [executionId,  setExecutionId]  = useState<string | null>(null)
+  const [nodeStatuses, setNodeStatuses] = useState<Record<string, NodeStatus>>({})
+  const [saving,       setSaving]       = useState(false)
+
+  const [flowName, setFlowName] = useState('')
+  const [flowSlug, setFlowSlug] = useState('')
+
+  // refs → avoid stale closure during save
   const nodesRef = useRef(nodes)
   const edgesRef = useRef(edges)
   nodesRef.current = nodes
   edgesRef.current = edges
+
+  /* ───────────────────────── Load flow ───────────────────────── */
 
   useEffect(() => {
     async function load() {
@@ -52,43 +74,59 @@ export default function StudioPage() {
         api.canvas.load(flowId),
       ])
       setFlowName(flow.name)
+      setFlowSlug(flow.slug)
       setNodes(canvas.nodes.map(apiNodeToRfNode))
       setEdges(canvas.edges.map(apiEdgeToRfEdge))
     }
     load().catch(console.error)
   }, [flowId])
 
+  /* ───────────────────────── Live execution ───────────────────────── */
+
   useExecutionSocket({
     executionId,
-    onEvent: (ev: NodeExecutionEvent) => setNodeStatuses(prev => ({ ...prev, [ev.nodeId]: ev.status })),
+    onEvent: (ev: NodeExecutionEvent) =>
+      setNodeStatuses(prev => ({ ...prev, [ev.nodeId]: ev.status })),
   })
 
   const nodesWithStatus = nodes.map(n => ({
-    ...n, data: { ...n.data, liveStatus: nodeStatuses[n.id] ?? null },
+    ...n,
+    data: { ...n.data, liveStatus: nodeStatuses[n.id] ?? null },
   }))
 
+  /* ───────────────────────── Edge connect ───────────────────────── */
+
   const onConnect = useCallback((c: Connection) => {
-    setEdges(eds => addEdge({
-      ...c, id: crypto.randomUUID(), type: 'smoothstep',
-      data: { conditionType: 'SUCCESS' },
-      style: { stroke: '#00e676', strokeWidth: 2 },
-    }, eds))
-  }, [setEdges])
+    setEdges(eds =>
+      addEdge(
+        {
+          ...c,
+          id: crypto.randomUUID(),
+          type: 'smoothstep',
+          data: { conditionType: 'SUCCESS' },
+          style: { stroke: '#00e676', strokeWidth: 2 },
+        },
+        eds
+      )
+    )
+  }, [])
+
+  /* ───────────────────────── Actions ───────────────────────── */
 
   async function saveCanvas() {
     setSaving(true)
     try {
-      const latestNodes = nodesRef.current
-      const latestEdges = edgesRef.current
       await api.canvas.save(flowId, {
-        nodes: latestNodes.map(rfNodeToApiNode),
-        edges: latestEdges.map(rfEdgeToApiEdge),
+        nodes: nodesRef.current.map(rfNodeToApiNode),
+        edges: edgesRef.current.map(rfEdgeToApiEdge),
       })
-    } finally { setSaving(false) }
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function triggerFlow(payload: Record<string, unknown>) {
-    const exec = await api.executions.trigger(flowId, payload)
+    const exec = await api.executions.triggerBySlug(flowSlug, payload)
     setNodeStatuses({})
     setExecutionId(exec.id)
   }
@@ -108,16 +146,21 @@ export default function StudioPage() {
     setSelectedEdge(null)
   }
 
+  /* ───────────────────────── Render ───────────────────────── */
+
   return (
     <div className="studio-root">
       <NodeSidebar />
+
       <div className="studio-main">
         <StudioToolbar
           flowName={flowName}
+          flowSlug={flowSlug}
           saving={saving}
           onSave={saveCanvas}
           onTrigger={triggerFlow}
         />
+
         <div className="studio-canvas-row">
           <div className="studio-canvas-wrap">
             <ReactFlowProvider>
@@ -131,20 +174,26 @@ export default function StudioPage() {
                 nodeTypes={nodeTypes}
                 setSelectedNode={setSelectedNode}
                 setSelectedEdge={setSelectedEdge}
-                selectedEdge={selectedEdge}
               />
             </ReactFlowProvider>
           </div>
         </div>
       </div>
+
       {selectedNode && (
         <NodeConfigPanel
           node={selectedNode}
-          onUpdate={(data: Node['data']) => setNodes(ns => ns.map(n => n.id === selectedNode.id ? { ...n, data } : n))}
+          currentFlowId={flowId}
+          onUpdate={(data: Node['data']) =>
+            setNodes(ns =>
+              ns.map(n => (n.id === selectedNode.id ? { ...n, data } : n))
+            )
+          }
           onClose={() => setSelectedNode(null)}
           onRemove={deleteSelectedNode}
         />
       )}
+
       {selectedEdge && !selectedNode && (
         <EdgePanel
           edge={selectedEdge}
@@ -157,7 +206,8 @@ export default function StudioPage() {
   )
 }
 
-// Inner canvas: uses useReactFlow for correct drop position (flow coordinates)
+/* ───────────────────────── Canvas ───────────────────────── */
+
 function StudioCanvas({
   nodesWithStatus,
   edges,
@@ -168,7 +218,6 @@ function StudioCanvas({
   nodeTypes,
   setSelectedNode,
   setSelectedEdge,
-  selectedEdge,
 }: {
   nodesWithStatus: Node[]
   edges: Edge[]
@@ -179,7 +228,6 @@ function StudioCanvas({
   nodeTypes: NodeTypes
   setSelectedNode: (n: Node | null) => void
   setSelectedEdge: (e: Edge | null) => void
-  selectedEdge: Edge | null
 }) {
   const { screenToFlowPosition } = useReactFlow()
 
@@ -187,18 +235,23 @@ function StudioCanvas({
     e.preventDefault()
     const nodeType = e.dataTransfer.getData('nodeType')
     if (!nodeType) return
+
     const position = screenToFlowPosition({ x: e.clientX, y: e.clientY })
-    setNodes(ns => [...ns, {
-      id: crypto.randomUUID(),
-      type: nodeType,
-      position,
-      data: {
-        label: NODE_META[nodeType as keyof typeof NODE_META]?.label ?? nodeType,
-        nodeType,
-        config: {},
-        liveStatus: null,
+
+    setNodes(ns => [
+      ...ns,
+      {
+        id: crypto.randomUUID(),
+        type: nodeType,
+        position,
+        data: {
+          label: NODE_META[nodeType as keyof typeof NODE_META]?.label ?? nodeType,
+          nodeType,
+          config: {},
+          liveStatus: null,
+        },
       },
-    }])
+    ])
   }
 
   return (
@@ -225,13 +278,9 @@ function StudioCanvas({
   )
 }
 
-// ── Edge panel (when an edge is selected) ─────────────────────────────────────
-function EdgePanel({
-  edge,
-  nodes,
-  onClose,
-  onDelete,
-}: {
+/* ───────────────────────── Edge Panel ───────────────────────── */
+
+function EdgePanel({ edge, nodes, onClose, onDelete }: {
   edge: Edge
   nodes: Node[]
   onClose: () => void
@@ -243,65 +292,80 @@ function EdgePanel({
 
   return (
     <aside className="studio-config">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
-        <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)', letterSpacing: '0.1em' }}>EDGE</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <button type="button" onClick={onDelete} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', border: '1px solid var(--color-border)', borderRadius: '0.5rem', background: 'var(--color-panel)', color: 'var(--color-failure)', cursor: 'pointer' }} aria-label="Delete edge">
-            Delete edge
+      <div style={{ display:'flex', justifyContent:'space-between', padding:'1rem 1.25rem', borderBottom:'1px solid var(--color-border)' }}>
+        <span style={{ fontSize:'0.75rem', fontFamily:'var(--font-mono)', color:'var(--color-muted)' }}>
+          EDGE
+        </span>
+        <div>
+          <button onClick={onDelete} style={{ color:'var(--color-failure)' }}>
+            Delete
           </button>
-          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', padding: 4 }} aria-label="Close">
-            <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>×</span>
-          </button>
+          <button onClick={onClose}>×</button>
         </div>
       </div>
-      <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        <div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginBottom: '0.25rem' }}>From</p>
-          <p style={{ fontSize: '0.875rem', color: 'var(--color-text)' }}>{String(sourceLabel)}</p>
-        </div>
-        <div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginBottom: '0.25rem' }}>To</p>
-          <p style={{ fontSize: '0.875rem', color: 'var(--color-text)' }}>{String(targetLabel)}</p>
-        </div>
-        <div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginBottom: '0.25rem' }}>Condition</p>
-          <p style={{ fontSize: '0.875rem', color: conditionType === 'FAILURE' ? 'var(--color-failure)' : 'var(--color-success)' }}>{conditionType}</p>
-        </div>
+      <div style={{ padding:'1.25rem' }}>
+        <p>From: {String(sourceLabel)}</p>
+        <p>To: {String(targetLabel)}</p>
+        <p>Condition: {conditionType}</p>
       </div>
     </aside>
   )
 }
 
-// ── Converters ────────────────────────────────────────────────────────────────
+/* ───────────────────────── Converters ───────────────────────── */
 
 function apiNodeToRfNode(n: ApiNode): Node {
   return {
-    id: n.id, type: n.nodeType,
+    id: n.id,
+    type: n.nodeType,
     position: { x: n.positionX, y: n.positionY },
     data: { label: n.label, nodeType: n.nodeType, config: n.config, liveStatus: null },
   }
 }
+
 function apiEdgeToRfEdge(e: ApiEdge): Edge {
+  const sourceHandle = e.sourceHandle ?? (e.conditionType === 'FAILURE' ? 'failure' : undefined)
+  const stroke = (e.sourceHandle === 'failure' || e.conditionType === 'FAILURE') ? '#ff4444' : '#00e676'
   return {
-    id: e.id, source: e.sourceNodeId, target: e.targetNodeId, type: 'smoothstep',
+    id: e.id,
+    source: e.sourceNodeId,
+    target: e.targetNodeId,
+    sourceHandle: sourceHandle || undefined,
+    targetHandle: e.targetHandle ?? undefined,
+    type: 'smoothstep',
     data: { conditionType: e.conditionType },
-    style: { stroke: e.conditionType === 'FAILURE' ? '#ff4444' : '#00e676', strokeWidth: 2 },
+    style: { stroke, strokeWidth: 2 },
   }
 }
+
 function rfNodeToApiNode(n: Node): ApiNode {
   return {
-    id: n.id, flowId: '', nodeType: n.data.nodeType as ApiNode['nodeType'],
-    label: n.data.label as string, config: n.data.config as Record<string, unknown>,
-    positionX: n.position.x, positionY: n.position.y,
+    id: n.id,
+    flowId: '',
+    nodeType: n.data.nodeType as ApiNode['nodeType'],
+    label: n.data.label as string,
+    config: n.data.config as Record<string, unknown>,
+    positionX: n.position.x,
+    positionY: n.position.y,
   }
 }
+
 function rfEdgeToApiEdge(e: Edge): ApiEdge {
+  // Persist which handle (success/failure) so reload keeps the correct connection
+  const sourceHandle = e.sourceHandle ?? undefined
+  const conditionType = (sourceHandle === 'failure'
+    ? 'FAILURE'
+    : sourceHandle === 'success'
+      ? 'SUCCESS'
+      : (e.data?.conditionType ?? 'DEFAULT')) as ApiEdge['conditionType']
   return {
     id: e.id,
     flowId: '',
     sourceNodeId: e.source,
     targetNodeId: e.target,
-    conditionType: (e.data?.conditionType ?? 'DEFAULT') as ApiEdge['conditionType'],
+    sourceHandle,
+    targetHandle: e.targetHandle ?? undefined,
+    conditionType,
     conditionExpr: (e.data as { conditionExpr?: string })?.conditionExpr,
   }
 }

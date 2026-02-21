@@ -6,12 +6,13 @@ import { useRouter } from 'next/navigation'
 
 interface Props {
   flowName:  string
+  flowSlug?: string
   saving:    boolean
   onSave:    () => void
   onTrigger: (payload: Record<string, unknown>) => void
 }
 
-export default function StudioToolbar({ flowName, saving, onSave, onTrigger }: Props) {
+export default function StudioToolbar({ flowName, flowSlug, saving, onSave, onTrigger }: Props) {
   const router = useRouter()
   const [showTrigger, setShowTrigger] = useState(false)
   const [payloadText, setPayloadText] = useState('{\n  \n}')
