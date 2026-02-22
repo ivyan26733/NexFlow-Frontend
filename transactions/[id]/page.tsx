@@ -45,9 +45,17 @@ export default function TransactionDetailPage() {
     return <div style={{ padding: '2rem', color: 'var(--color-muted)' }}>Execution not found.</div>
   }
 
-  const nodeLogs = detail.ncoSnapshot?.nodes
-    ? Object.values(detail.ncoSnapshot.nodes) as NodeLog[]
+  const nodeOrder = detail.ncoSnapshot?.nodeExecutionOrder ?? []
+  const nodeLogs: NodeLog[] = detail.ncoSnapshot?.nodes
+    ? Object.entries(detail.ncoSnapshot.nodes).map(([, n]) => n as NodeLog)
     : []
+  if (nodeOrder.length > 0) {
+    nodeLogs.sort((a, b) => {
+      const ai = nodeOrder.indexOf(a.nodeId)
+      const bi = nodeOrder.indexOf(b.nodeId)
+      return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi)
+    })
+  }
 
   return (
     <div style={{ padding: '2rem', maxWidth: '960px', margin: '0 auto' }}>

@@ -75,7 +75,12 @@ export default function StudioPage() {
       ])
       setFlowName(flow.name)
       setFlowSlug(flow.slug)
-      setNodes(canvas.nodes.map(apiNodeToRfNode))
+      let initialNodes = canvas.nodes.map(apiNodeToRfNode)
+      const hasStart = initialNodes.some(n => n.type === 'START')
+      if (!hasStart) {
+        initialNodes = [createDefaultStartNode(), ...initialNodes]
+      }
+      setNodes(initialNodes)
       setEdges(canvas.edges.map(apiEdgeToRfEdge))
     }
     load().catch(console.error)
@@ -182,7 +187,7 @@ export default function StudioPage() {
 
       {selectedNode && (
         <NodeConfigPanel
-          node={selectedNode}
+          node={nodes.find(n => n.id === selectedNode.id) ?? selectedNode}
           currentFlowId={flowId}
           onUpdate={(data: Node['data']) =>
             setNodes(ns =>
@@ -310,6 +315,24 @@ function EdgePanel({ edge, nodes, onClose, onDelete }: {
       </div>
     </aside>
   )
+}
+
+/* ───────────────────────── Default START node ───────────────────────── */
+
+const DEFAULT_START_NODE_ID = '00000000-0000-0000-0000-000000000001'
+
+function createDefaultStartNode(): Node {
+  return {
+    id: DEFAULT_START_NODE_ID,
+    type: 'START',
+    position: { x: 260, y: 120 },
+    data: {
+      label: NODE_META.START.label,
+      nodeType: 'START',
+      config: {},
+      liveStatus: null,
+    },
+  }
 }
 
 /* ───────────────────────── Converters ───────────────────────── */

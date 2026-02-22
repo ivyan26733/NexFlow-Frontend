@@ -7,20 +7,20 @@ interface Props {
   onChange: (c: Record<string, unknown>) => void
 }
 
-// Config form for VARIABLE nodes
-// Each variable can be a static value or a {{ref}} expression
+// Config form for VARIABLE nodes — multiple key/value pairs; values can be {{ref}} or static
 export default function VariableConfig({ config, onChange }: Props) {
   const variables = (config.variables as Record<string, string>) ?? {}
 
   function updateVar(oldKey: string, newKey: string, val: string) {
     const updated = { ...variables }
     if (oldKey !== newKey) delete updated[oldKey]
-    updated[newKey] = val
+    if (newKey.trim() !== '' || val !== '') updated[newKey.trim() || oldKey] = val
     onChange({ ...config, variables: updated })
   }
 
   function addVar() {
-    onChange({ ...config, variables: { ...variables, '': '' } })
+    const uniqueKey = `var_${Date.now()}`
+    onChange({ ...config, variables: { ...variables, [uniqueKey]: '' } })
   }
 
   function removeVar(key: string) {
@@ -29,29 +29,70 @@ export default function VariableConfig({ config, onChange }: Props) {
     onChange({ ...config, variables: updated })
   }
 
+  const entries = Object.entries(variables)
+
   return (
     <Field label="VARIABLES">
-      <div className="flex flex-col gap-2">
-        {Object.entries(variables).map(([k, v], i) => (
-          <div key={i} className="flex flex-col gap-1 p-2 bg-panel rounded-lg border border-border">
-            <div className="flex gap-1.5 items-center">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {entries.length === 0 && (
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginBottom: '0.25rem' }}>
+            Add one or more variables. Use {'{{'} refs {'}}'} for dynamic values.
+          </p>
+        )}
+        {entries.map(([k, v]) => (
+          <div
+            key={k}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.25rem',
+              padding: '0.5rem',
+              background: 'var(--color-panel)',
+              borderRadius: '0.5rem',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
               <input
-                className="input-base flex-1 text-[11px] font-mono"
+                className="input-base"
+                style={{ flex: 1, fontSize: '0.6875rem', fontFamily: 'var(--font-mono)' }}
                 placeholder="variableName"
-                defaultValue={k}
-                onBlur={e => updateVar(k, e.target.value, v)}
+                value={k}
+                onChange={e => updateVar(k, e.target.value, v)}
               />
-              <button onClick={() => removeVar(k)} className="text-muted hover:text-failure transition-colors text-xs">✕</button>
+              <button
+                type="button"
+                onClick={() => removeVar(k)}
+                style={{ color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem', padding: '0.25rem' }}
+                aria-label="Remove variable"
+              >
+                ✕
+              </button>
             </div>
             <input
-              className="input-base text-[11px]"
+              className="input-base"
+              style={{ fontSize: '0.6875rem' }}
               placeholder="value or {{nodes.x.output.field}}"
-              defaultValue={v}
-              onBlur={e => updateVar(k, k, e.target.value)}
+              value={v}
+              onChange={e => updateVar(k, k, e.target.value)}
             />
           </div>
         ))}
-        <button onClick={addVar} className="text-xs text-muted hover:text-accent transition-colors text-left">
+        <button
+          type="button"
+          onClick={addVar}
+          style={{
+            fontSize: '0.8125rem',
+            color: 'var(--color-accent)',
+            background: 'none',
+            border: '1px dashed var(--color-border)',
+            borderRadius: '0.5rem',
+            padding: '0.5rem 0.75rem',
+            cursor: 'pointer',
+            textAlign: 'left',
+            marginTop: entries.length > 0 ? '0.25rem' : 0,
+          }}
+        >
           + Add variable
         </button>
       </div>

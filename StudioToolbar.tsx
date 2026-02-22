@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Save, Play, Loader2, ChevronRight } from 'lucide-react'
+import { Save, Play, Loader2, ChevronRight, HelpCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 interface Props {
@@ -15,6 +15,7 @@ interface Props {
 export default function StudioToolbar({ flowName, flowSlug, saving, onSave, onTrigger }: Props) {
   const router = useRouter()
   const [showTrigger, setShowTrigger] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
   const [payloadText, setPayloadText] = useState('{\n  \n}')
   const [payloadError, setPayloadError] = useState('')
 
@@ -36,6 +37,10 @@ export default function StudioToolbar({ flowName, flowSlug, saving, onSave, onTr
         <ChevronRight size={16} style={{ color: 'var(--color-muted)', flexShrink: 0 }} />
         <span className="studio-toolbar-title">{flowName}</span>
         <div className="studio-toolbar-actions">
+          <button type="button" onClick={() => setShowHelp(true)} className="studio-toolbar-btn" title="How to run & reference syntax">
+            <HelpCircle size={16} />
+            Help
+          </button>
           <button type="button" onClick={onSave} disabled={saving} className="studio-toolbar-btn">
             {saving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={16} />}
             {saving ? 'Saving...' : 'Save'}
@@ -68,6 +73,35 @@ export default function StudioToolbar({ flowName, flowSlug, saving, onSave, onTr
               <button type="button" onClick={handleTrigger} className="dashboard-btn-primary">
                 <Play size={14} /> Run
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Help: how to run & reference syntax */}
+      {showHelp && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }} onClick={() => setShowHelp(false)}>
+          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.75rem', padding: '1.5rem', width: '32rem', maxWidth: '95vw', maxHeight: '85vh', overflow: 'auto' }} onClick={e => e.stopPropagation()}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--color-text)' }}>Studio: Run a flow & reference syntax</h2>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--color-muted)', marginBottom: '1rem' }}>
+              The flow you draw <strong style={{ color: 'var(--color-text)' }}>is</strong> the program. No separate code file — you configure nodes and use <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--color-panel)', padding: '2px 6px', borderRadius: 4 }}>{'{{ ... }}'}</code> references.
+            </p>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.375rem', color: 'var(--color-text)' }}>How to run</h3>
+            <ol style={{ fontSize: '0.8125rem', color: 'var(--color-muted)', marginBottom: '1rem', paddingLeft: '1.25rem', lineHeight: 1.6 }}>
+              <li>Build the flow (e.g. Start → Variable → Success), connect edges, configure nodes.</li>
+              <li>Click <strong style={{ color: 'var(--color-text)' }}>Save</strong>.</li>
+              <li>Click <strong style={{ color: 'var(--color-text)' }}>Trigger</strong> → enter optional JSON (e.g. <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>{'{"name": "World"}'}</code>) → <strong style={{ color: 'var(--color-text)' }}>Run</strong>.</li>
+            </ol>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.375rem', color: 'var(--color-text)' }}>Reference syntax (“language”)</h3>
+            <ul style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginBottom: '0', paddingLeft: '1.25rem', lineHeight: 1.7 }}>
+              <li><code style={{ fontFamily: 'var(--font-mono)' }}>{'{{nodes.start.output.body}}'}</code> — trigger payload; add <code style={{ fontFamily: 'var(--font-mono)' }}>.fieldName</code> for a field.</li>
+              <li><code style={{ fontFamily: 'var(--font-mono)' }}>{'{{nodes.<nodeId>.successOutput.body}}'}</code> — success output of a node (e.g. HTTP response).</li>
+              <li><code style={{ fontFamily: 'var(--font-mono)' }}>{'{{nodes.<nodeId>.failureOutput.body}}'}</code> — failure output.</li>
+              <li><code style={{ fontFamily: 'var(--font-mono)' }}>{'{{variables.<name>}}'}</code> — variable set by a Variable node.</li>
+            </ul>
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginTop: '0.75rem' }}>Use these in Variable, Mapper, Decision, HTTP URL/body, and Nexus config.</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+              <button type="button" onClick={() => setShowHelp(false)} className="dashboard-btn-primary">Close</button>
             </div>
           </div>
         </div>

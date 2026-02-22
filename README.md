@@ -76,6 +76,46 @@ Path alias: `@/` → project root (see `tsconfig.json`).
 - **Canvas:** Connect nodes, save/load canvas, delete nodes and edges (panel or Backspace)
 - **Execution:** Trigger flow with JSON payload; live node status over WebSocket
 
+---
+
+## Studio: How to run a flow (“run a program”)
+
+In the Studio, **the flow you draw is the program**. There is no separate code file; you build the program by adding nodes and connecting them.
+
+1. **Create or open a flow** from the dashboard.
+2. **Build the flow:** drag nodes from the left (Start is always there; add e.g. Variable → Success).
+3. **Save** (toolbar **Save**).
+4. **Run it:** click **Trigger** in the toolbar. Optionally enter a JSON payload (e.g. `{"name": "World"}`). Click **Run**. The flow executes on the backend; you’ll see node status on the canvas if the execution WebSocket is connected.
+
+**Simple “program” example:** Start → **Variable** (add a variable, e.g. `greeting` = `Hello {{nodes.start.output.body.name}}`) → **Success**. Trigger with payload `{"name": "World"}`. The Variable node resolves the reference and the flow ends at Success.
+
+---
+
+## Studio: Which “language” and how to “code”
+
+You don’t write code in a traditional language inside the Studio. You configure nodes; the only “language” is:
+
+- **Reference expressions** in node config (Variable, Mapper, Decision, HTTP body, etc.): `{{ ... }}`  
+  These pull data from the execution context.
+
+**Reference syntax:**
+
+| Reference | Meaning |
+|-----------|--------|
+| `{{nodes.start.output.body}}` | Trigger payload (request body). Use `{{nodes.start.output.body.fieldName}}` for a field. |
+| `{{nodes.<nodeId>.successOutput.body}}` | Success output of a node (e.g. HTTP response body). Replace `<nodeId>` with the node’s ID. |
+| `{{nodes.<nodeId>.failureOutput.body}}` | Failure output of a node. |
+| `{{variables.<name>}}` | A variable set by a Variable node earlier in the flow. |
+
+**Where you use it:**
+
+- **Variable node:** value = `{{nodes.start.output.body.name}}` or a literal like `"hello"`.
+- **Mapper node:** each output field can be a literal or `{{...}}` (e.g. `{{variables.userId}}`).
+- **Decision node:** left/right operands can be refs (e.g. `{{variables.amount}}` > `500`).
+- **HTTP Call / Nexus:** URL, headers, body can use `{{...}}` for dynamic values.
+
+So “coding” in the Studio = **building the graph** + **filling node config with values and `{{...}}` references**. No JavaScript/Java/Python inside the canvas; the backend runs the flow and resolves refs.
+
 ## API Usage
 
 The app talks to the NexFlow backend:

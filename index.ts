@@ -163,6 +163,7 @@ export interface NcoSnapshot {
   }
   variables: Record<string, unknown>
   nodes:     Record<string, NodeLog>
+  nodeExecutionOrder?: string[]
 }
 
 // Per-node execution log inside NCO
