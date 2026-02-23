@@ -128,6 +128,31 @@ The app talks to the NexFlow backend:
 
 See `api.ts` for the client implementation.
 
+## CI/CD
+
+Pipeline: GitHub Actions → Vercel
+
+| Branch event | What happens |
+|---|---|
+| Push to `main` | CI runs → if it passes → deploys to production on Vercel |
+| Pull request to `main` | CI runs as a check → Vercel creates a preview URL |
+| Push to any other branch | Nothing (pipeline does not trigger) |
+
+**GitHub Secrets required** (Settings → Secrets and variables → Actions):
+
+| Secret | How to get it |
+|---|---|
+| `VERCEL_TOKEN` | vercel.com → Account Settings → Tokens → Create |
+| `VERCEL_ORG_ID` | Run `npx vercel link` → open `.vercel/project.json` → copy `orgId` |
+| `VERCEL_PROJECT_ID` | Same file → copy `projectId` |
+
+**Vercel Environment Variables** (set in Vercel dashboard, not GitHub):
+
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | Your Railway backend URL e.g. `https://nexflow-backend.railway.app` |
+| `NEXT_PUBLIC_WS_URL` | Same URL with `/ws` appended |
+
 ## License
 
 Private / as per project.

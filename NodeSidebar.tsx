@@ -88,6 +88,7 @@ function getShortDescription(type: NodeType): string {
     case 'PULSE':    return 'Outbound HTTP request'
     case 'NEXUS':    return 'Via saved connector'
     case 'SUB_FLOW': return 'Call another flow'
+    case 'SCRIPT':   return 'JavaScript or Python'
     case 'VARIABLE': return 'Set static values'
     case 'MAPPER':   return 'Reshape data'
     case 'DECISION': return 'Branch on condition'

@@ -13,6 +13,7 @@ export type NodeType =
   | 'PULSE'
   | 'NEXUS'
   | 'SUB_FLOW'
+  | 'SCRIPT'
   | 'VARIABLE'
   | 'MAPPER'
   | 'DECISION'
@@ -233,6 +234,15 @@ export interface NexusNodeConfig {
   // JDBC
   query?:     string
   queryType?: QueryType
+}
+
+// ─── Config stored inside a SCRIPT node ───────────────────────────────────────
+
+export type ScriptLanguage = 'javascript' | 'python'
+
+export interface ScriptNodeConfig {
+  language: ScriptLanguage
+  code:     string
 }
 
 // ─── Config stored inside a SUB_FLOW node ─────────────────────────────────────

@@ -16,4 +16,6 @@ export type {
   CanvasData,
   NodeExecutionEvent,
   NexusConnector,
+  ScriptLanguage,
+  ScriptNodeConfig,
 } from '../index'

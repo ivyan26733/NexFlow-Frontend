@@ -34,6 +34,7 @@ const nodeTypes: NodeTypes = {
   PULSE:    FlowNodeCard,
   NEXUS:    FlowNodeCard,
   SUB_FLOW: FlowNodeCard,
+  SCRIPT:   FlowNodeCard,
   VARIABLE: FlowNodeCard,
   MAPPER:   FlowNodeCard,
   DECISION: FlowNodeCard,

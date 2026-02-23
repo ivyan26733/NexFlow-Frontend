@@ -7,6 +7,7 @@ import type {
   NodeType,
   NexusNodeConfig,
   SubFlowNodeConfig,
+  ScriptNodeConfig,
 } from './index'
 
 interface NodeData {
@@ -25,8 +26,8 @@ export function FlowNodeCard({ data, selected }: NodeProps) {
   const isTerminal  = meta.isTerminal
   const borderColor = selected ? '#00d4ff' : (glowColor ?? meta.color)
 
-  // Dual-output nodes (from FIRST file logic)
-  const hasDualOutputs = ['PULSE', 'NEXUS', 'DECISION', 'SUB_FLOW'].includes(d.nodeType)
+  // Dual-output nodes: SUCCESS + FAILURE handles
+  const hasDualOutputs = ['PULSE', 'NEXUS', 'DECISION', 'SUB_FLOW', 'SCRIPT'].includes(d.nodeType)
 
   return (
     <div style={{ minWidth: 140, maxWidth: 200 }}>
@@ -248,15 +249,25 @@ function getConfigPreview(
       return `${modeTag} ${c.targetFlowName}`
     }
 
-    case 'DECISION':
+    case 'DECISION': {
+      if (config.mode === 'code') {
+        return `code: ${config.language ?? 'js'}`
+      }
       return config.left
         ? `${config.left} ${config.operator} ${config.right}`
         : null
+    }
 
     case 'VARIABLE':
       return config.variables
         ? `${Object.keys(config.variables as object).length} var(s)`
         : null
+
+    case 'SCRIPT': {
+      const c = config as Partial<ScriptNodeConfig>
+      const langIcon = c.language === 'python' ? '🐍' : '⚡'
+      return `${langIcon} ${c.language ?? 'javascript'}`
+    }
 
     default:
       return null

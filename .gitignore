@@ -2,7 +2,7 @@
 node_modules/
 .pnpm-store/
 
-# Next.js
+# Next.js build output
 .next/
 out/
 
@@ -10,12 +10,13 @@ out/
 build/
 dist/
 
-# Env
+# Environment files — never commit secrets
 .env
 .env.local
+.env.production.local
+.env.*.local
 .env.development.local
 .env.test.local
-.env.production.local
 
 # Debug
 npm-debug.log*
@@ -33,9 +34,11 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Vercel
+# Vercel local config — contains project IDs
 .vercel
 
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel

@@ -66,6 +66,14 @@ export const NODE_META: Record<NodeType, NodeMeta> = {
     isTerminal:  false,
   },
 
+  SCRIPT: {
+    label:       'Script',
+    color:       '#a78bfa',
+    bgColor:     '#1e1b4b',
+    description: 'Run JavaScript or Python — use input.variables, input.nodes, input.trigger',
+    isTerminal:  false,
+  },
+
   SUCCESS: {
     label:       'Success',
     color:       '#00e676',
@@ -88,6 +96,7 @@ export const DRAGGABLE_NODES: NodeType[] = [
   'PULSE',
   'NEXUS',
   'SUB_FLOW',
+  'SCRIPT',
   'VARIABLE',
   'MAPPER',
   'DECISION',
@@ -98,6 +107,6 @@ export const DRAGGABLE_NODES: NodeType[] = [
 // Grouped sections in the sidebar
 export const NODE_GROUPS: { label: string; types: NodeType[] }[] = [
   { label: 'CALL',     types: ['PULSE', 'NEXUS', 'SUB_FLOW'] },
-  { label: 'LOGIC',    types: ['VARIABLE', 'MAPPER', 'DECISION'] },
+  { label: 'LOGIC',    types: ['SCRIPT', 'VARIABLE', 'MAPPER', 'DECISION'] },
   { label: 'TERMINAL', types: ['SUCCESS', 'FAILURE'] },
 ]

@@ -74,9 +74,9 @@ export const api = {
         body: JSON.stringify(payload),
       }),
 
-    // Trigger by internal flow ID (Studio fallback)
+    // Trigger by internal flow ID (Studio fallback — backend accepts slug or UUID on same path)
     triggerById: (flowId: string, payload: Record<string, unknown>) =>
-      request<Execution>(`/api/pulse/id/${flowId}`, {
+      request<Execution>(`/api/pulse/${flowId}`, {
         method: 'POST',
         body: JSON.stringify(payload),
       }),
