@@ -14,28 +14,28 @@ interface Options {
 
 export function useExecutionSocket({ executionId, onEvent }: Options) {
   const clientRef = useRef<Client | null>(null)
+  const onEventRef = useRef(onEvent)
+  onEventRef.current = onEvent
 
-  const connect = useCallback(() => {
+  useEffect(() => {
     if (!executionId) return
 
     const client = new Client({
       webSocketFactory: () => new SockJS(WS_URL),
       onConnect: () => {
-        // Subscribe to events for this specific execution
         client.subscribe(`/topic/execution/${executionId}`, (msg) => {
           const event: NodeExecutionEvent = JSON.parse(msg.body)
-          onEvent(event)
+          onEventRef.current(event)
         })
       },
-      onDisconnect: () => clientRef.current = null,
+      onDisconnect: () => { clientRef.current = null },
     })
 
     client.activate()
     clientRef.current = client
-  }, [executionId, onEvent])
-
-  useEffect(() => {
-    connect()
-    return () => { clientRef.current?.deactivate() }
-  }, [connect])
+    return () => {
+      clientRef.current?.deactivate()
+      clientRef.current = null
+    }
+  }, [executionId])
 }
