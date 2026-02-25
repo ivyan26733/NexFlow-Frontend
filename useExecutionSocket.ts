@@ -5,7 +5,11 @@ import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import type { NodeExecutionEvent } from './index'
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:8090/ws'
+// Derive from API URL when not set — ensures production uses correct backend (Vercel only needs NEXT_PUBLIC_API_URL)
+const WS_URL =
+  process.env.NEXT_PUBLIC_WS_URL ??
+  (process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '')}/ws` : null) ??
+  'http://localhost:8090/ws'
 
 interface Options {
   executionId: string | null
