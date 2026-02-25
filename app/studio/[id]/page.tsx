@@ -132,7 +132,7 @@ export default function StudioPage() {
   }
 
   async function triggerFlow(payload: Record<string, unknown>) {
-    const exec = await api.executions.triggerBySlug(flowSlug, payload, true) // true = wait for WebSocket subscriber
+    const exec = await api.executions.triggerBySlug(flowSlug, payload, true)
     setNodeStatuses({})
     setExecutionId(exec.id)
   }

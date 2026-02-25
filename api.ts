@@ -67,8 +67,6 @@ export const api = {
     getById: (id: string) =>
       request<ExecutionDetail>(`/api/executions/${id}`),
 
-    // Trigger by public slug (recommended)
-    // waitForSubscriber: when true, backend delays execution 1.5s so Studio can connect/subscribe first
     triggerBySlug: (slug: string, payload: Record<string, unknown>, waitForSubscriber?: boolean) =>
       request<Execution>(`/api/pulse/${slug}`, {
         method: 'POST',
@@ -76,7 +74,6 @@ export const api = {
         body: JSON.stringify(payload),
       }),
 
-    // Trigger by internal flow ID (Studio fallback — backend accepts slug or UUID on same path)
     triggerById: (flowId: string, payload: Record<string, unknown>, waitForSubscriber?: boolean) =>
       request<Execution>(`/api/pulse/${flowId}`, {
         method: 'POST',
