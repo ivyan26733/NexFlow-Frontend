@@ -48,6 +48,7 @@ export default function TransactionDetailPage() {
   const nodeLogs: NodeLog[] = detail.ncoSnapshot?.nodes
     ? Object.entries(detail.ncoSnapshot.nodes).map(([, n]) => n as NodeLog)
     : []
+  const snapshotError = detail.ncoSnapshot?.error
   if (nodeOrder.length > 0) {
     nodeLogs.sort((a, b) => {
       const ai = nodeOrder.indexOf(a.nodeId)
@@ -86,7 +87,14 @@ export default function TransactionDetailPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {nodeLogs.length === 0 ? (
           <div className="dashboard-card" style={{ padding: '2rem', textAlign: 'center' }}>
-            <p className="dashboard-subtitle" style={{ marginBottom: 0 }}>No node logs in snapshot.</p>
+            {snapshotError ? (
+              <>
+                <p className="dashboard-label" style={{ color: 'var(--color-failure)', marginBottom: '0.5rem' }}>Execution failed</p>
+                <p className="dashboard-subtitle" style={{ marginBottom: 0, fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>{snapshotError}</p>
+              </>
+            ) : (
+              <p className="dashboard-subtitle" style={{ marginBottom: 0 }}>No node logs in snapshot.</p>
+            )}
           </div>
         ) : nodeLogs.map(log => (
           <NodeLogCard key={log.nodeId} log={log} isOpen={!!expanded[log.nodeId]} onToggle={() => toggle(log.nodeId)} />

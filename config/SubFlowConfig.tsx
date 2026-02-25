@@ -244,16 +244,20 @@ export default function SubFlowConfig({ config, onChange, currentFlowId }: Props
 
       {/* ── Payload mapping ──────────────────────────────────────────────── */}
       <Field label="PAYLOAD TO CHILD FLOW">
+        <p style={{ fontSize: '0.65rem', color: 'var(--color-muted)', marginBottom: '0.35rem', lineHeight: 1.5 }}>
+          Data sent to the child. The child receives it as <strong style={{ color: 'var(--color-text)' }}>input.trigger.body</strong>.
+        </p>
         <p style={{ fontSize: '0.65rem', color: 'var(--color-muted)', marginBottom: '0.5rem', lineHeight: 1.5 }}>
-          Data passed to the child flow's START node. Supports{' '}
+          Add a row e.g. key <code style={{ fontSize: '0.65rem' }}>number</code>, value{' '}
+          <code style={{ fontSize: '0.6rem', color: 'var(--color-accent)' }}>{'{{nodes.start.output.body.number}}'}</code>{' '}
+          so the child script can use <code style={{ fontSize: '0.65rem' }}>input.trigger.body.number</code>. Supports{' '}
           <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', fontSize: '0.65rem' }}>{'{{refs}}'}</span>.
-          Leave empty to send no payload.
         </p>
         <KVEditor
           rows={payloadRows}
           onChange={updatePayloadRows}
-          keyPlaceholder="key"
-          valuePlaceholder="value or {{nodes.x.successOutput.body.field}}"
+          keyPlaceholder="e.g. number"
+          valuePlaceholder="e.g. {{nodes.start.output.body.number}}"
         />
       </Field>
     </div>

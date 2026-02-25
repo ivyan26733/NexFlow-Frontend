@@ -154,17 +154,19 @@ export interface ExecutionDetail extends ExecutionSummary {
 // ─── NCO Snapshot (Execution Memory) ──────────────────────────────────────────
 
 export interface NcoSnapshot {
-  meta: {
+  meta?: {
     flowId:        string
     executionId:   string
-    currentNodeId: string
-    startedAt:     string
-    completedAt:   string
+    currentNodeId?: string
+    startedAt?:    string
+    completedAt?:  string
     status:        ExecStatus
   }
-  variables: Record<string, unknown>
-  nodes:     Record<string, NodeLog>
+  variables?: Record<string, unknown>
+  nodes?:     Record<string, NodeLog>
   nodeExecutionOrder?: string[]
+  /** Set by backend when execution failed before any node ran (e.g. flow has no START node) */
+  error?:     string
 }
 
 // Per-node execution log inside NCO
