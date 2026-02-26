@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import { Copy, Check, Play, Loader2, Zap, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
 import { api } from '@/api'
 import type { Flow, Execution } from '@/types'
+import CardMenu from '@/CardMenu'
+import { usePagination, PaginationControls } from '@/Pagination'
+import { MillennialLoader } from '@/MillennialLoader'
 
 export default function PulsesPage() {
   const router = useRouter()
@@ -14,6 +17,22 @@ export default function PulsesPage() {
   useEffect(() => {
     api.flows.list().then(setFlows).catch(console.error).finally(() => setLoading(false))
   }, [])
+
+  const {
+    pageItems: pagedFlows,
+    page,
+    totalPages,
+    totalItems,
+    pageSize,
+    setPage,
+    setPageSize,
+  } = usePagination(flows, 8)
+
+  async function deleteFlow(flowId: string) {
+    if (!confirm('Delete this flow and all its transactions? This cannot be undone.')) return
+    await api.flows.delete(flowId)
+    setFlows(fs => fs.filter(f => f.id !== flowId))
+  }
 
   return (
     <div className="dashboard-page">
@@ -27,7 +46,7 @@ export default function PulsesPage() {
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-          <Loader2 size={20} style={{ color: 'var(--color-muted)', animation: 'spin 1s linear infinite' }} />
+          <MillennialLoader label="Loading pulses…" />
         </div>
       ) : flows.length === 0 ? (
         <div className="dashboard-empty">
@@ -37,17 +56,38 @@ export default function PulsesPage() {
           <button type="button" onClick={() => router.push('/')} className="dashboard-btn-primary">Go to Studio</button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {flows.map(flow => (
-            <PulseCard key={flow.id} flow={flow} onOpenStudio={() => router.push(`/studio/${flow.id}`)} />
-          ))}
-        </div>
+        <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {pagedFlows.map(flow => (
+              <PulseCard
+                key={flow.id}
+                flow={flow}
+                onOpenView={() => router.push(`/studio/${flow.id}?mode=view`)}
+                onOpenEdit={() => router.push(`/studio/${flow.id}`)}
+                onDelete={() => deleteFlow(flow.id)}
+              />
+            ))}
+          </div>
+          <PaginationControls
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        </>
       )}
     </div>
   )
 }
 
-function PulseCard({ flow, onOpenStudio }: { flow: Flow; onOpenStudio: () => void }) {
+function PulseCard({ flow, onOpenView, onOpenEdit, onDelete }: {
+  flow: Flow
+  onOpenView: () => void
+  onOpenEdit: () => void
+  onDelete: () => void
+}) {
   const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'
   const slug = flow.slug ?? flow.id
   const [copied, setCopied] = useState(false)
@@ -100,8 +140,14 @@ function PulseCard({ flow, onOpenStudio }: { flow: Flow; onOpenStudio: () => voi
             <button type="button" onClick={copy} className="studio-toolbar-btn" style={{ padding: 2, flexShrink: 0 }} title="Copy URL">{copied ? <Check size={13} style={{ color: 'var(--color-success)' }} /> : <Copy size={13} />}</button>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-          <button type="button" onClick={onOpenStudio} className="studio-toolbar-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem' }}><ExternalLink size={12} /> Studio</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+          <CardMenu
+            items={[
+              { label: 'Open in view mode', onClick: onOpenView },
+              { label: 'Open in edit mode', onClick: onOpenEdit },
+              { label: 'Delete', onClick: onDelete, danger: true },
+            ]}
+          />
           <button type="button" onClick={() => setTestOpen(o => !o)} className="dashboard-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', padding: '0.4rem 0.875rem' }}><Play size={12} /> Test {testOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}</button>
         </div>
       </div>

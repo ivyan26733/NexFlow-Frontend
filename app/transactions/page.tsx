@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle, Clock, Loader2, Zap, ArrowRight } from 'lucide-react'
 import { api } from '@/api'
 import type { ExecutionSummary, ExecStatus } from '@/types'
+import { usePagination, PaginationControls } from '@/Pagination'
+import { MillennialLoader } from '@/MillennialLoader'
 
 export default function TransactionsPage() {
   const router = useRouter()
@@ -20,6 +22,16 @@ export default function TransactionsPage() {
   }, [])
 
   const filtered = filter === 'ALL' ? executions : executions.filter(e => e.status === filter)
+
+  const {
+    pageItems: pagedExecutions,
+    page,
+    totalPages,
+    totalItems,
+    pageSize,
+    setPage,
+    setPageSize,
+  } = usePagination(filtered, 15)
 
   const counts = {
     ALL: executions.length,
@@ -68,14 +80,14 @@ export default function TransactionsPage() {
 
         {loading ? (
           <div style={{ padding: '3rem', display: 'flex', justifyContent: 'center' }}>
-            <Loader2 size={20} style={{ color: 'var(--color-muted)', animation: 'spin 1s linear infinite' }} />
+            <MillennialLoader label="Loading transactions…" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="dashboard-empty" style={{ padding: '3rem' }}>
             <p className="dashboard-subtitle" style={{ marginBottom: 0 }}>No executions found</p>
           </div>
         ) : (
-          filtered.map((ex, i) => (
+          pagedExecutions.map((ex, i) => (
             <div
               key={ex.id}
               role="button"
@@ -119,6 +131,17 @@ export default function TransactionsPage() {
           ))
         )}
       </div>
+
+      {!loading && filtered.length > 0 && (
+        <PaginationControls
+          page={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
+      )}
     </div>
   )
 }

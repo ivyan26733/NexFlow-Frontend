@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Play, Clock, Zap } from 'lucide-react'
+import CardMenu from '@/CardMenu'
 import { api } from '../api'
 import type { Flow } from '../index'
+import { usePagination, PaginationControls } from '../Pagination'
+import { MillennialLoader } from '../MillennialLoader'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -20,10 +23,26 @@ export default function DashboardPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  const {
+    pageItems: pagedFlows,
+    page,
+    totalPages,
+    totalItems,
+    pageSize,
+    setPage,
+    setPageSize,
+  } = usePagination(flows, 9)
+
   async function createFlow() {
     if (!newName.trim()) return
     const flow = await api.flows.create({ name: newName.trim(), status: 'DRAFT' })
     router.push(`/studio/${flow.id}`)
+  }
+
+  async function deleteFlow(flowId: string) {
+    if (!confirm('Delete this studio and all its transactions? This cannot be undone.')) return
+    await api.flows.delete(flowId)
+    setFlows(fs => fs.filter(f => f.id !== flowId))
   }
 
   return (
@@ -73,25 +92,42 @@ export default function DashboardPage() {
 
       {/* Flow grid */}
       {loading ? (
-        <div className="dashboard-grid">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} style={{ height: '9rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.75rem' }} />
-          ))}
-        </div>
+        <MillennialLoader label="Loading your studios…" />
       ) : flows.length === 0 ? (
         <EmptyState onNew={() => setCreating(true)} />
       ) : (
-        <div className="dashboard-grid">
-          {flows.map(flow => (
-            <FlowCard key={flow.id} flow={flow} onClick={() => router.push(`/studio/${flow.id}`)} />
-          ))}
-        </div>
+        <>
+          <div className="dashboard-grid">
+            {pagedFlows.map(flow => (
+              <FlowCard
+                key={flow.id}
+                flow={flow}
+                onOpenView={() => router.push(`/studio/${flow.id}?mode=view`)}
+                onOpenEdit={() => router.push(`/studio/${flow.id}`)}
+                onDelete={() => deleteFlow(flow.id)}
+              />
+            ))}
+          </div>
+          <PaginationControls
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        </>
       )}
     </div>
   )
 }
 
-function FlowCard({ flow, onClick }: { flow: Flow; onClick: () => void }) {
+function FlowCard({ flow, onOpenView, onOpenEdit, onDelete }: {
+  flow: Flow
+  onOpenView: () => void
+  onOpenEdit: () => void
+  onDelete: () => void
+}) {
   const statusColors: Record<string, { bg: string; text: string }> = {
     DRAFT:    { bg: 'rgba(100,116,139,0.2)', text: 'var(--color-muted)' },
     ACTIVE:   { bg: 'rgba(0,230,118,0.15)', text: 'var(--color-success)' },
@@ -101,12 +137,30 @@ function FlowCard({ flow, onClick }: { flow: Flow; onClick: () => void }) {
   const sc = statusColors[flow.status] ?? statusColors.DRAFT
 
   return (
-    <div onClick={onClick} className="dashboard-card" role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onClick()}>
+    <div
+      onClick={onOpenEdit}
+      className="dashboard-card"
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => e.key === 'Enter' && onOpenEdit()}
+      style={{ position: 'relative' }}
+    >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
         <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem', background: 'rgba(0,212,255,0.15)', border: '1px solid rgba(0,212,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Zap size={16} style={{ color: 'var(--color-accent)' }} />
         </div>
-        <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', padding: '0.125rem 0.5rem', borderRadius: '9999px', background: sc.bg, color: sc.text }}>{flow.status}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} onClick={e => e.stopPropagation()}>
+          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', padding: '0.125rem 0.5rem', borderRadius: '9999px', background: sc.bg, color: sc.text }}>
+            {flow.status}
+          </span>
+          <CardMenu
+            items={[
+              { label: 'Open in view mode', onClick: onOpenView },
+              { label: 'Open in edit mode', onClick: onOpenEdit },
+              { label: 'Delete', onClick: onDelete, danger: true },
+            ]}
+          />
+        </div>
       </div>
       <h3 className="dashboard-card-title" style={{ marginBottom: '0.25rem' }}>{flow.name}</h3>
       {flow.description && <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', overflow: 'hidden', marginBottom: '0.75rem', lineHeight: 1.4, maxHeight: '2.8em' }}>{flow.description}</p>}

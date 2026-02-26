@@ -10,9 +10,10 @@ interface Props {
   saving:    boolean
   onSave:    () => void
   onTrigger: (payload: Record<string, unknown>) => void
+  viewMode?: boolean
 }
 
-export default function StudioToolbar({ flowName, flowSlug, saving, onSave, onTrigger }: Props) {
+export default function StudioToolbar({ flowName, flowSlug, saving, onSave, onTrigger, viewMode }: Props) {
   const router = useRouter()
   const [showTrigger, setShowTrigger] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
@@ -41,14 +42,18 @@ export default function StudioToolbar({ flowName, flowSlug, saving, onSave, onTr
             <HelpCircle size={16} />
             Help
           </button>
-          <button type="button" onClick={onSave} disabled={saving} className="studio-toolbar-btn">
-            {saving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={16} />}
-            {saving ? 'Saving...' : 'Save'}
-          </button>
-          <button type="button" onClick={() => setShowTrigger(true)} className="studio-toolbar-btn accent">
-            <Play size={16} />
-            Trigger
-          </button>
+          {!viewMode && (
+            <>
+              <button type="button" onClick={onSave} disabled={saving} className="studio-toolbar-btn">
+                {saving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={16} />}
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+              <button type="button" onClick={() => setShowTrigger(true)} className="studio-toolbar-btn accent">
+                <Play size={16} />
+                Trigger
+              </button>
+            </>
+          )}
         </div>
       </div>
 

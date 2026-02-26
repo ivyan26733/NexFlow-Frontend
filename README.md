@@ -48,8 +48,8 @@ If not set, the app uses `http://localhost:8090` as the API base URL.
 Frontend/
 ├── app/
 │   ├── layout.tsx          # Root layout + nav
-│   ├── page.tsx            # Dashboard (list flows)
-│   ├── globals.css         # Global + studio styles
+│   ├── page.tsx            # Dashboard (list flows, with pagination + delete)
+│   ├── globals.css         # Global + studio styles, pagination bar, loader
 │   └── studio/
 │       └── [id]/
 │           └── page.tsx    # Flow editor (canvas)
@@ -62,6 +62,8 @@ Frontend/
 ├── NodeConfigPanel.tsx     # Right panel (node config + delete)
 ├── StudioToolbar.tsx       # Top bar (Save, Trigger)
 ├── FlowNodeCard.tsx        # React Flow node component
+├── Pagination.tsx          # Reusable pagination hook + controls
+├── MillennialLoader.tsx    # Reusable millennial-style loading screen
 ├── lib/
 │   └── nodeConfig.ts      # NODE_META, DRAGGABLE_NODES
 └── config/                 # Node-type config components (e.g. PulseConfig)
@@ -75,6 +77,110 @@ Path alias: `@/` → project root (see `tsconfig.json`).
 - **Studio:** Visual flow editor with drag-and-drop nodes (START, PULSE, VARIABLE, MAPPER, DECISION, SUCCESS, FAILURE)
 - **Canvas:** Connect nodes, save/load canvas, delete nodes and edges (panel or Backspace)
 - **Execution:** Trigger flow with JSON payload; live node status over WebSocket
+
+---
+
+## Pagination
+
+The app uses a **shared, client-side pagination helper** so every list view behaves consistently without adding extra complexity to the backend.
+
+- **Why client-side?**
+  - Existing backend endpoints already return full arrays (`/api/flows`, `/api/executions`, `/api/nexus/connectors`).
+  - For typical NexFlow usage these lists are modest in size; fetching once and slicing on the client is simpler and avoids changing API contracts.
+  - The logic is centralized in a small hook + UI component, so pages don’t re‑implement pagination.
+
+- **Core pieces**
+  - `Pagination.tsx`
+    - `usePagination<T>(items, initialPageSize)` – computes `pageItems`, `page`, `pageSize`, `totalItems`, `totalPages`, and helpers to change page/size.
+    - `PaginationControls` – pill‑style control bar with:
+      - “Showing X–Y of N”
+      - Rows-per-page selector (10/20/50)
+      - Prev / Next buttons with disabled states.
+  - Styling lives in `app/globals.css`:
+    - `.pagination-bar`, `.pagination-btn`, `.pagination-summary`, etc. – shared millennial‑style pill UI.
+
+- **Where pagination is applied**
+  - `app/page.tsx` (Dashboard / “Your Flows”)  
+    - Paginates flows (`usePagination(flows, 9)`) and renders `PaginationControls` under the grid.
+    - Each flow card also has a **Delete studio** button; deleting a studio removes that flow plus its executions and canvas data on the backend.
+  - `app/transactions/page.tsx` (Transactions list)  
+    - Paginates **after filtering** by status: `usePagination(filtered, 15)`.
+    - `PaginationControls` is shown below the table when there are results.
+  - `app/pulses/page.tsx` (Pulses / HTTP triggers)  
+    - Paginates flows when listing their pulse endpoints: `usePagination(flows, 8)`.
+  - `app/nexus/page.tsx` (Nexus connectors)  
+    - Paginates connectors: `usePagination(connectors, 10)`.
+
+If you want to add pagination to a new list:
+
+1. Import from the shared helper:
+
+   ```ts
+   import { usePagination, PaginationControls } from '@/Pagination'
+   ```
+
+2. Wrap your data with the hook:
+
+   ```ts
+   const {
+     pageItems,
+     page,
+     totalPages,
+     totalItems,
+     pageSize,
+     setPage,
+     setPageSize,
+   } = usePagination(items, 10)
+   ```
+
+3. Render `pageItems` instead of the full array, and drop `PaginationControls` under the list:
+
+   ```tsx
+   {pageItems.map(item => /* ... */)}
+
+   <PaginationControls
+     page={page}
+     totalPages={totalPages}
+     totalItems={totalItems}
+     pageSize={pageSize}
+     onPageChange={setPage}
+     onPageSizeChange={setPageSize}
+   />
+   ```
+
+---
+
+## Loading screen (“millennial” style)
+
+To avoid boring spinners and only show a loader when data is genuinely taking a moment, there is a shared **Millennial loader** component:
+
+- **Component**
+  - `MillennialLoader` in `MillennialLoader.tsx`.
+  - Props:
+    - `label?: string` – short text like “Loading transactions…”.
+    - `fullScreen?: boolean` – when `true`, covers the full viewport.
+  - Uses Lucide’s `Loader2` plus gradient “orb” styling.
+
+- **Styling**
+  - In `app/globals.css`:
+    - `.millennial-loader-fullscreen`, `.millennial-loader`, `.millennial-loader-orb`, `.millennial-loader-icon`, etc.
+    - Reuses the global `spin` keyframe and gradients, so it feels cohesive with pagination and Studio chrome.
+
+- **Where it is used**
+  - `app/page.tsx` – while loading flows.
+  - `app/studio/[id]/page.tsx` – full-screen while loading flow + canvas (“Loading studio…”).
+  - `app/transactions/page.tsx` – while loading executions.
+  - `app/transactions/[id]/page.tsx` – while loading execution detail (“Loading execution…”).
+  - `app/pulses/page.tsx` – while loading flows for pulse endpoints.
+  - `app/nexus/page.tsx` – while loading connectors.
+
+You can drop it into any other page:
+
+```tsx
+import { MillennialLoader } from '@/MillennialLoader'
+
+return loading ? <MillennialLoader label="Loading something cool…" /> : <ActualContent />
+```
 
 ---
 

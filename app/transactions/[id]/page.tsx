@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, CheckCircle, XCircle, Loader2, Clock, ChevronDown, ChevronRight } from 'lucide-react'
 import { api } from '@/api'
 import type { ExecutionDetail, NodeLog, NodeStatus } from '@/types'
+import { MillennialLoader } from '@/MillennialLoader'
 
 export default function TransactionDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -29,14 +30,28 @@ export default function TransactionDetailPage() {
       .finally(() => setLoading(false))
   }, [id])
 
+  const nodeLogs: NodeLog[] = useMemo(() => {
+    if (!detail?.ncoSnapshot?.nodes) return []
+    const logs = Object.entries(detail.ncoSnapshot.nodes).map(([, n]) => n as NodeLog)
+    const order = detail.ncoSnapshot?.nodeExecutionOrder ?? []
+    if (order.length > 0) {
+      logs.sort((a, b) => {
+        const ai = order.indexOf(a.nodeId)
+        const bi = order.indexOf(b.nodeId)
+        return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi)
+      })
+    }
+    return logs
+  }, [detail?.ncoSnapshot?.nodes, detail?.ncoSnapshot?.nodeExecutionOrder])
+
   function toggle(nodeId: string) {
     setExpanded(prev => ({ ...prev, [nodeId]: !prev[nodeId] }))
   }
 
   if (loading) {
     return (
-      <div className="dashboard-page" style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-        <Loader2 size={24} style={{ color: 'var(--color-muted)', animation: 'spin 1s linear infinite' }} />
+      <div className="dashboard-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
+        <MillennialLoader label="Loading execution…" />
       </div>
     )
   }
@@ -44,18 +59,7 @@ export default function TransactionDetailPage() {
     return <div className="dashboard-page" style={{ color: 'var(--color-muted)' }}>Execution not found.</div>
   }
 
-  const nodeOrder = detail.ncoSnapshot?.nodeExecutionOrder ?? []
-  const nodeLogs: NodeLog[] = detail.ncoSnapshot?.nodes
-    ? Object.entries(detail.ncoSnapshot.nodes).map(([, n]) => n as NodeLog)
-    : []
   const snapshotError = detail.ncoSnapshot?.error
-  if (nodeOrder.length > 0) {
-    nodeLogs.sort((a, b) => {
-      const ai = nodeOrder.indexOf(a.nodeId)
-      const bi = nodeOrder.indexOf(b.nodeId)
-      return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi)
-    })
-  }
 
   return (
     <div className="dashboard-page">
@@ -96,9 +100,11 @@ export default function TransactionDetailPage() {
               <p className="dashboard-subtitle" style={{ marginBottom: 0 }}>No node logs in snapshot.</p>
             )}
           </div>
-        ) : nodeLogs.map(log => (
-          <NodeLogCard key={log.nodeId} log={log} isOpen={!!expanded[log.nodeId]} onToggle={() => toggle(log.nodeId)} />
-        ))}
+        ) : (
+          nodeLogs.map(log => (
+            <NodeLogCard key={log.nodeId} log={log} isOpen={!!expanded[log.nodeId]} onToggle={() => toggle(log.nodeId)} />
+          ))
+        )}
       </div>
     </div>
   )

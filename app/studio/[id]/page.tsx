@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import {
   ReactFlow, ReactFlowProvider, useReactFlow,
   Background, Controls, MiniMap,
@@ -11,6 +11,7 @@ import {
   BackgroundVariant,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
+import { PanelLeftOpen } from 'lucide-react'
 
 import { api } from '@/api'
 import { useExecutionSocket } from '@/useExecutionSocket'
@@ -26,6 +27,7 @@ import NodeSidebar     from '@/NodeSidebar'
 import NodeConfigPanel from '@/NodeConfigPanel'
 import StudioToolbar   from '@/StudioToolbar'
 import { FlowNodeCard } from '@/FlowNodeCard'
+import { MillennialLoader } from '@/MillennialLoader'
 
 /* ───────────────────────── Node Types ───────────────────────── */
 
@@ -46,6 +48,8 @@ const nodeTypes: NodeTypes = {
 
 export default function StudioPage() {
   const { id: flowId } = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const viewMode = searchParams.get('mode') === 'view'
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
@@ -60,6 +64,9 @@ export default function StudioPage() {
   const [flowName, setFlowName] = useState('')
   const [flowSlug, setFlowSlug] = useState('')
 
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+
   // refs → avoid stale closure during save
   const nodesRef = useRef(nodes)
   const edgesRef = useRef(edges)
@@ -69,6 +76,7 @@ export default function StudioPage() {
   /* ───────────────────────── Load flow ───────────────────────── */
 
   useEffect(() => {
+    setLoading(true)
     async function load() {
       const [flow, canvas] = await Promise.all([
         api.flows.get(flowId),
@@ -84,7 +92,7 @@ export default function StudioPage() {
       setNodes(initialNodes)
       setEdges(canvas.edges.map(apiEdgeToRfEdge))
     }
-    load().catch(console.error)
+    load().catch(console.error).finally(() => setLoading(false))
   }, [flowId])
 
   /* ───────────────────────── Live execution ───────────────────────── */
@@ -154,9 +162,15 @@ export default function StudioPage() {
 
   /* ───────────────────────── Render ───────────────────────── */
 
+  if (loading) {
+    return <MillennialLoader fullScreen label="Loading studio…" />
+  }
+
   return (
     <div className="studio-root">
-      <NodeSidebar />
+      <div className={`studio-sidebar-wrapper ${sidebarOpen ? 'open' : 'collapsed'}`}>
+        <NodeSidebar />
+      </div>
 
       <div className="studio-main">
         <StudioToolbar
@@ -165,10 +179,18 @@ export default function StudioPage() {
           saving={saving}
           onSave={saveCanvas}
           onTrigger={triggerFlow}
+          viewMode={viewMode}
         />
 
         <div className="studio-canvas-row">
           <div className="studio-canvas-wrap">
+            <button
+              type="button"
+              className="studio-sidebar-toggle"
+              onClick={() => setSidebarOpen(prev => !prev)}
+            >
+              <PanelLeftOpen size={16} />
+            </button>
             <ReactFlowProvider>
               <StudioCanvas
                 nodesWithStatus={nodesWithStatus}
@@ -180,6 +202,7 @@ export default function StudioPage() {
                 nodeTypes={nodeTypes}
                 setSelectedNode={setSelectedNode}
                 setSelectedEdge={setSelectedEdge}
+                viewMode={viewMode}
               />
             </ReactFlowProvider>
           </div>
@@ -190,13 +213,14 @@ export default function StudioPage() {
         <NodeConfigPanel
           node={nodes.find(n => n.id === selectedNode.id) ?? selectedNode}
           currentFlowId={flowId}
-          onUpdate={(data: Node['data']) =>
+          onUpdate={viewMode ? () => {} : (data: Node['data']) =>
             setNodes(ns =>
               ns.map(n => (n.id === selectedNode.id ? { ...n, data } : n))
             )
           }
           onClose={() => setSelectedNode(null)}
-          onRemove={deleteSelectedNode}
+          onRemove={viewMode ? undefined : deleteSelectedNode}
+          readOnly={viewMode}
         />
       )}
 
@@ -205,7 +229,8 @@ export default function StudioPage() {
           edge={selectedEdge}
           nodes={nodes}
           onClose={() => setSelectedEdge(null)}
-          onDelete={deleteSelectedEdge}
+          onDelete={viewMode ? undefined : deleteSelectedEdge}
+          viewMode={viewMode}
         />
       )}
     </div>
@@ -224,6 +249,7 @@ function StudioCanvas({
   nodeTypes,
   setSelectedNode,
   setSelectedEdge,
+  viewMode,
 }: {
   nodesWithStatus: Node[]
   edges: Edge[]
@@ -234,11 +260,13 @@ function StudioCanvas({
   nodeTypes: NodeTypes
   setSelectedNode: (n: Node | null) => void
   setSelectedEdge: (e: Edge | null) => void
+  viewMode: boolean
 }) {
   const { screenToFlowPosition } = useReactFlow()
 
   function onDrop(e: React.DragEvent) {
     e.preventDefault()
+    if (viewMode) return
     const nodeType = e.dataTransfer.getData('nodeType')
     if (!nodeType) return
 
@@ -267,15 +295,17 @@ function StudioCanvas({
       nodeTypes={nodeTypes}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
+      onConnect={viewMode ? undefined : onConnect}
       onNodeClick={(_, n) => { setSelectedNode(n); setSelectedEdge(null) }}
       onEdgeClick={(_, e) => { setSelectedEdge(e); setSelectedNode(null) }}
       onPaneClick={() => { setSelectedNode(null); setSelectedEdge(null) }}
       onDrop={onDrop}
       onDragOver={e => e.preventDefault()}
       fitView
-      deleteKeyCode="Backspace"
+      nodesDraggable={!viewMode}
+      nodesConnectable={!viewMode}
       elementsSelectable
+      deleteKeyCode={viewMode ? null : 'Backspace'}
     >
       <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#1e2d45" />
       <Controls />
@@ -286,11 +316,12 @@ function StudioCanvas({
 
 /* ───────────────────────── Edge Panel ───────────────────────── */
 
-function EdgePanel({ edge, nodes, onClose, onDelete }: {
+function EdgePanel({ edge, nodes, onClose, onDelete, viewMode }: {
   edge: Edge
   nodes: Node[]
   onClose: () => void
-  onDelete: () => void
+  onDelete?: () => void
+  viewMode?: boolean
 }) {
   const sourceLabel = nodes.find(n => n.id === edge.source)?.data?.label ?? edge.source
   const targetLabel = nodes.find(n => n.id === edge.target)?.data?.label ?? edge.target
@@ -298,21 +329,25 @@ function EdgePanel({ edge, nodes, onClose, onDelete }: {
 
   return (
     <aside className="studio-config">
-      <div style={{ display:'flex', justifyContent:'space-between', padding:'1rem 1.25rem', borderBottom:'1px solid var(--color-border)' }}>
-        <span style={{ fontSize:'0.75rem', fontFamily:'var(--font-mono)', color:'var(--color-muted)' }}>
+      <div className="studio-config-header">
+        <span style={{ fontSize:'0.75rem', fontFamily:'var(--font-mono)', color:'var(--color-muted)', letterSpacing:'0.08em' }}>
           EDGE
         </span>
-        <div>
-          <button onClick={onDelete} style={{ color:'var(--color-failure)' }}>
-            Delete
+        <div className="flex items-center gap-1">
+          {!viewMode && onDelete && (
+            <button type="button" onClick={onDelete} className="config-panel-btn-ghost config-panel-btn-danger">
+              Delete
+            </button>
+          )}
+          <button type="button" onClick={onClose} title="Close" className="config-panel-btn-ghost text-lg leading-none">
+            ×
           </button>
-          <button onClick={onClose}>×</button>
         </div>
       </div>
-      <div style={{ padding:'1.25rem' }}>
-        <p>From: {String(sourceLabel)}</p>
-        <p>To: {String(targetLabel)}</p>
-        <p>Condition: {conditionType}</p>
+      <div className="studio-config-body">
+        <p className="text-sm text-text mb-2"><span className="text-muted">From:</span> {String(sourceLabel)}</p>
+        <p className="text-sm text-text mb-2"><span className="text-muted">To:</span> {String(targetLabel)}</p>
+        <p className="text-sm text-text"><span className="text-muted">Condition:</span> {conditionType}</p>
       </div>
     </aside>
   )
