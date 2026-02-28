@@ -1,24 +1,40 @@
 'use client'
 
-import { useState } from 'react'
-import { Save, Play, Loader2, ChevronRight, HelpCircle } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Save, Play, Loader2, ChevronRight, HelpCircle, Pencil } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 interface Props {
+  flowId:    string
   flowName:  string
   flowSlug?: string
   saving:    boolean
   onSave:    () => void
+  onFlowNameChange?: (name: string) => void
   onTrigger: (payload: Record<string, unknown>) => void
   viewMode?: boolean
 }
 
-export default function StudioToolbar({ flowName, flowSlug, saving, onSave, onTrigger, viewMode }: Props) {
+export default function StudioToolbar({ flowId, flowName, flowSlug, saving, onSave, onFlowNameChange, onTrigger, viewMode }: Props) {
   const router = useRouter()
   const [showTrigger, setShowTrigger] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [payloadText, setPayloadText] = useState('{\n  \n}')
   const [payloadError, setPayloadError] = useState('')
+  const [editingName, setEditingName] = useState(false)
+  const [editNameValue, setEditNameValue] = useState(flowName)
+  const editInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { setEditNameValue(flowName) }, [flowName])
+  useEffect(() => { if (editingName) editInputRef.current?.focus() }, [editingName])
+
+  function commitFlowName() {
+    const trimmed = editNameValue.trim()
+    if (trimmed && trimmed !== flowName && onFlowNameChange) {
+      onFlowNameChange(trimmed)
+    }
+    setEditingName(false)
+  }
 
   function handleTrigger() {
     try {
@@ -36,7 +52,25 @@ export default function StudioToolbar({ flowName, flowSlug, saving, onSave, onTr
       <div className="studio-toolbar">
         <button type="button" onClick={() => router.push('/')} className="studio-toolbar-breadcrumb">Flows</button>
         <ChevronRight size={16} style={{ color: 'var(--color-muted)', flexShrink: 0 }} />
-        <span className="studio-toolbar-title">{flowName}</span>
+        {editingName ? (
+          <input
+            ref={editInputRef}
+            type="text"
+            value={editNameValue}
+            onChange={e => setEditNameValue(e.target.value)}
+            onBlur={commitFlowName}
+            onKeyDown={e => { if (e.key === 'Enter') commitFlowName(); if (e.key === 'Escape') { setEditNameValue(flowName); setEditingName(false) } }}
+            className="input-base studio-toolbar-title"
+            style={{ minWidth: 120, maxWidth: 280 }}
+          />
+        ) : (
+          <span className="studio-toolbar-title">{flowName}</span>
+        )}
+        {!viewMode && onFlowNameChange && !editingName && (
+          <button type="button" onClick={() => setEditingName(true)} className="studio-toolbar-btn" title="Edit flow name" style={{ padding: '0.25rem 0.5rem' }}>
+            <Pencil size={14} />
+          </button>
+        )}
         <div className="studio-toolbar-actions">
           <button type="button" onClick={() => setShowHelp(true)} className="studio-toolbar-btn" title="How to run & reference syntax">
             <HelpCircle size={16} />
@@ -104,7 +138,7 @@ export default function StudioToolbar({ flowName, flowSlug, saving, onSave, onTr
               <li><code style={{ fontFamily: 'var(--font-mono)' }}>{'{{nodes.<nodeId>.failureOutput.body}}'}</code> — failure output.</li>
               <li><code style={{ fontFamily: 'var(--font-mono)' }}>{'{{variables.<name>}}'}</code> — variable set by a Variable node.</li>
             </ul>
-            <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginTop: '0.75rem' }}>Use these in Variable, Mapper, Decision, HTTP URL/body, and Nexus config.</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginTop: '0.75rem' }}>Use these in Variable, Mapper, Decision, and Nexus config.</p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
               <button type="button" onClick={() => setShowHelp(false)} className="dashboard-btn-primary">Close</button>
             </div>

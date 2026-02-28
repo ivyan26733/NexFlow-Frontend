@@ -5,6 +5,7 @@ import type {
   ExecutionSummary,
   ExecutionDetail,
   NexusConnector,
+  NexMap,
 } from './index'
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'
@@ -37,6 +38,11 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
+    update: (id: string, body: { name: string }) =>
+      request<Flow>(`/api/flows/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
     delete: (id: string) =>
       request<void>(`/api/flows/${id}`, { method: 'DELETE' }),
   },
@@ -66,6 +72,12 @@ export const api = {
     // Full execution detail with NCO snapshot
     getById: (id: string) =>
       request<ExecutionDetail>(`/api/executions/${id}`),
+
+    // Nex map only (convenience for transaction detail page)
+    getNex: (id: string) =>
+      fetch(`${BASE}/api/executions/${id}/nex`)
+        .then(r => r.ok ? r.json() : Promise.resolve({ transactionId: id, nex: {} }))
+        .then((body: { transactionId: string; nex?: NexMap }) => ({ transactionId: body.transactionId, nex: body.nex ?? {} })),
 
     triggerBySlug: (slug: string, payload: Record<string, unknown>, waitForSubscriber?: boolean) =>
       request<Execution>(`/api/pulse/${slug}`, {

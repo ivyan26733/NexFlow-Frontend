@@ -24,10 +24,12 @@ export function FlowNodeCard({ data, selected }: NodeProps) {
 
   const glowColor   = getLiveGlow(d.liveStatus)
   const isTerminal  = meta.isTerminal
-  const borderColor = selected ? '#00d4ff' : (glowColor ?? meta.color)
+  const isLoop      = d.nodeType === 'LOOP'
+  const loopColor   = '#F59E0B'
+  const borderColor = selected ? '#00d4ff' : (glowColor ?? (isLoop ? loopColor : meta.color))
 
-  // Dual-output nodes: SUCCESS + FAILURE handles
-  const hasDualOutputs = ['PULSE', 'NEXUS', 'DECISION', 'SUB_FLOW', 'SCRIPT'].includes(d.nodeType)
+  // Dual-output nodes: SUCCESS + FAILURE handles; LOOP has CONTINUE + EXIT
+  const hasDualOutputs = ['NEXUS', 'DECISION', 'SUB_FLOW', 'SCRIPT'].includes(d.nodeType)
 
   return (
     <div style={{ minWidth: 140, maxWidth: 200 }}>
@@ -88,6 +90,7 @@ export function FlowNodeCard({ data, selected }: NodeProps) {
             gap: 6,
             padding: '6px 8px',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
+            ...(isLoop ? { background: loopColor + '18' } : {}),
           }}
         >
           <span
@@ -96,10 +99,10 @@ export function FlowNodeCard({ data, selected }: NodeProps) {
               fontFamily: 'var(--font-mono)',
               fontWeight: 700,
               letterSpacing: '0.06em',
-              color: meta.color,
+              color: isLoop ? loopColor : meta.color,
             }}
           >
-            {d.nodeType === 'PULSE' ? 'HTTP' : d.nodeType.replace('_', ' ')}
+            {d.nodeType === 'NEXUS' ? 'Nexus' : d.nodeType === 'LOOP' ? '↺ LOOP' : d.nodeType.replace('_', ' ')}
           </span>
 
           {d.liveStatus && (
@@ -109,23 +112,87 @@ export function FlowNodeCard({ data, selected }: NodeProps) {
                 fontFamily: 'var(--font-mono)',
                 padding: '2px 4px',
                 borderRadius: 4,
-                ...statusBadgeStyle(d.liveStatus),
+                ...(isLoop && d.liveStatus === 'RUNNING'
+                  ? { background: 'rgba(245,158,11,0.25)', color: loopColor }
+                  : isLoop && d.liveStatus === 'SUCCESS'
+                    ? { background: 'rgba(0,230,118,0.2)', color: 'var(--color-success)' }
+                    : statusBadgeStyle(d.liveStatus)),
               }}
             >
-              {d.liveStatus}
+              {isLoop && d.liveStatus === 'RUNNING'
+                ? '↺ looping…'
+                : isLoop && d.liveStatus === 'SUCCESS'
+                  ? (typeof (d as Record<string, unknown>).iterationCount === 'number'
+                      ? `✓ ${(d as Record<string, unknown>).iterationCount} iterations`
+                      : '✓ done')
+                  : d.liveStatus === 'RETRYING'
+                    ? 'RETRYING ↺'
+                    : d.liveStatus}
             </span>
           )}
         </div>
 
-        {/* Config preview */}
-        <div style={{ padding: '6px 8px', minHeight: 28 }}>
+        {/* Config preview + nex badge (reserve space so they don't overlap handles row) */}
+        <div style={{ padding: '6px 8px', paddingBottom: (d.config?.saveOutputAs as string)?.trim() ? 20 : 6, minHeight: 28, position: 'relative' }}>
           <ConfigPreview nodeType={d.nodeType} config={d.config} />
+          {(d.config?.saveOutputAs as string)?.trim() && (
+            <div style={{ position: 'absolute', left: 8, bottom: 4, fontSize: 9, fontFamily: 'var(--font-mono)', color: '#F59E0B', opacity: 0.9 }}>
+              nex.{(d.config.saveOutputAs as string).trim()}
+            </div>
+          )}
         </div>
 
         {/* Output handles */}
         {!isTerminal && (
           <>
-            {hasDualOutputs ? (
+            {isLoop ? (
+              <>
+                <Handle
+                  type="source"
+                  id="continue"
+                  position={Position.Left}
+                  style={{
+                    left: -3,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: loopColor,
+                    border: '2px dashed rgba(0,0,0,0.3)',
+                    width: 8,
+                    height: 8,
+                  }}
+                />
+                <Handle
+                  type="source"
+                  id="exit"
+                  position={Position.Right}
+                  style={{
+                    right: -3,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: '#10B981',
+                    border: 'none',
+                    width: 6,
+                    height: 6,
+                  }}
+                />
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '6px 8px 8px',
+                    fontSize: 8,
+                    fontFamily: 'var(--font-mono)',
+                    borderTop: '1px solid rgba(255,255,255,0.06)',
+                    background: 'rgba(0,0,0,0.12)',
+                    marginTop: 2,
+                  }}
+                >
+                  <span style={{ color: loopColor }}>↺ CONTINUE</span>
+                  <span style={{ color: '#10B981' }}>EXIT →</span>
+                </div>
+              </>
+            ) : hasDualOutputs ? (
               <>
                 <Handle
                   type="source"
@@ -160,6 +227,7 @@ export function FlowNodeCard({ data, selected }: NodeProps) {
                     padding: '2px 8px 6px',
                     fontSize: 8,
                     fontFamily: 'var(--font-mono)',
+                    minHeight: 18,
                   }}
                 >
                   <span style={{ color: 'var(--color-success)' }}>
@@ -224,13 +292,9 @@ function getConfigPreview(
   config: Record<string, unknown>
 ): string | null {
   switch (type) {
-    case 'PULSE':
-      return config.url
-        ? `${config.method ?? 'GET'} ${config.url}`
-        : null
-
     case 'NEXUS': {
       const c = config as Partial<NexusNodeConfig>
+      if (c.url) return `${c.method ?? 'GET'} ${c.url}`
       if (!c.connectorName) return null
       if (c.connectorType === 'JDBC') {
         return c.query
@@ -269,6 +333,11 @@ function getConfigPreview(
       return `${langIcon} ${c.language ?? 'javascript'}`
     }
 
+    case 'LOOP':
+      return config.condition
+        ? `↺ ${(config.condition as string).slice(0, 24)}…`
+        : '↺ condition'
+
     default:
       return null
   }
@@ -278,10 +347,12 @@ function getConfigPreview(
 
 function getLiveGlow(status: NodeStatus | null): string | null {
   switch (status) {
-    case 'RUNNING': return '#00d4ff'
-    case 'SUCCESS': return '#00e676'
-    case 'FAILURE': return '#ff4444'
-    default:        return null
+    case 'RUNNING':  return '#00d4ff'
+    case 'SUCCESS':  return '#00e676'
+    case 'FAILURE':  return '#ff4444'
+    case 'RETRYING': return '#f59e0b'
+    case 'CONTINUE': return '#f59e0b'
+    default:         return null
   }
 }
 
@@ -295,6 +366,9 @@ function statusBadgeStyle(
       return { background: 'rgba(0,230,118,0.2)', color: 'var(--color-success)' }
     case 'FAILURE':
       return { background: 'rgba(255,68,68,0.2)', color: 'var(--color-failure)' }
+    case 'RETRYING':
+    case 'CONTINUE':
+      return { background: 'rgba(245,158,11,0.2)', color: '#f59e0b' }
     default:
       return { background: 'rgba(100,116,139,0.2)', color: 'var(--color-muted)' }
   }

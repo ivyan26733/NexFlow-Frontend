@@ -11,6 +11,7 @@ export type {
   Execution,
   ExecutionSummary,
   ExecutionDetail,
+  NexMap,
   NcoSnapshot,
   NodeLog,
   CanvasData,
@@ -18,4 +19,5 @@ export type {
   NexusConnector,
   ScriptLanguage,
   ScriptNodeConfig,
+  LoopNodeConfig,
 } from '../index'

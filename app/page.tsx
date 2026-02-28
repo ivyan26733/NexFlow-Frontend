@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Play, Clock, Zap } from 'lucide-react'
 import CardMenu from '@/CardMenu'
@@ -14,7 +14,9 @@ export default function DashboardPage() {
   const [flows, setFlows]       = useState<Flow[]>([])
   const [loading, setLoading]   = useState(true)
   const [creating, setCreating] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [newName, setNewName]   = useState('')
+  const createInProgressRef = useRef(false)
 
   useEffect(() => {
     api.flows.list()
@@ -35,8 +37,17 @@ export default function DashboardPage() {
 
   async function createFlow() {
     if (!newName.trim()) return
-    const flow = await api.flows.create({ name: newName.trim(), status: 'DRAFT' })
-    router.push(`/studio/${flow.id}`)
+    if (createInProgressRef.current) return
+    createInProgressRef.current = true
+    setSubmitting(true)
+    try {
+      const flow = await api.flows.create({ name: newName.trim(), status: 'DRAFT' })
+      router.push(`/studio/${flow.id}`)
+    } catch (e) {
+      console.error('Create flow failed', e)
+      createInProgressRef.current = false
+      setSubmitting(false)
+    }
   }
 
   async function deleteFlow(flowId: string) {
@@ -78,13 +89,14 @@ export default function DashboardPage() {
               placeholder="Flow name..."
               value={newName}
               onChange={e => setNewName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && createFlow()}
+              onKeyDown={e => { if (e.key === 'Enter' && !submitting) createFlow() }}
+              disabled={submitting}
               className="input-base"
               style={{ marginBottom: '1rem' }}
             />
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => setCreating(false)} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
-              <button type="button" onClick={createFlow} className="dashboard-btn-primary">Create</button>
+              <button type="button" onClick={() => setCreating(false)} disabled={submitting} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: 'var(--color-muted)', background: 'none', border: 'none', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}>Cancel</button>
+              <button type="button" onClick={createFlow} disabled={submitting} className="dashboard-btn-primary">{submitting ? 'Creating…' : 'Create'}</button>
             </div>
           </div>
         </div>

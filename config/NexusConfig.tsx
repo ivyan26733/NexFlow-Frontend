@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, Database, Globe, RefreshCw } from 'lucide-react'
+import { Loader2, Database, Globe, RefreshCw, Link2 } from 'lucide-react'
 import { api } from '@/api'
 import type { NexusConnector, NexusNodeConfig, HttpMethod, QueryType } from './../index'
 import { Field } from '../NodeConfigPanel'
+import RetryConfig from './RetryConfig'
 
 interface Props {
   config:   Record<string, unknown>
@@ -14,6 +15,8 @@ interface Props {
 const HTTP_METHODS: HttpMethod[]  = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 const QUERY_TYPES:  QueryType[]   = ['SELECT', 'INSERT', 'UPDATE', 'DELETE']
 
+type RequestMode = 'inline' | 'connector'
+
 export default function NexusConfig({ config, onChange }: Props) {
   const c = config as Partial<NexusNodeConfig>
 
@@ -21,12 +24,13 @@ export default function NexusConfig({ config, onChange }: Props) {
   const [loading,     setLoading]     = useState(true)
   const [selected,    setSelected]    = useState<NexusConnector | null>(null)
 
-  // Load all connectors on mount
+  // Inline = no connectorId, just url/method/headers/body (same page, no redirect)
+  const mode: RequestMode = c.connectorId ? 'connector' : 'inline'
+
   useEffect(() => {
     api.nexus.list()
       .then(list => {
         setConnectors(list)
-        // If config already has a connectorId, resolve it
         if (c.connectorId) {
           const match = list.find(cn => cn.id === c.connectorId)
           if (match) setSelected(match)
@@ -35,6 +39,19 @@ export default function NexusConfig({ config, onChange }: Props) {
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
+
+  function setMode(m: RequestMode) {
+    if (m === 'inline') {
+      onChange({
+        ...c,
+        connectorId: '', connectorName: '', connectorType: undefined,
+        url: c.url ?? '', method: c.method ?? 'GET', headers: c.headers ?? {}, body: c.body ?? {},
+      })
+      setSelected(null)
+    } else {
+      onChange({ ...c, url: undefined })
+    }
+  }
 
   function pickConnector(connectorId: string) {
     const connector = connectors.find(cn => cn.id === connectorId) ?? null
@@ -45,13 +62,11 @@ export default function NexusConfig({ config, onChange }: Props) {
       return
     }
 
-    // Denormalize name + type into node config so executor has it without a DB lookup from frontend
     onChange({
       ...c,
       connectorId:   connector.id!,
       connectorName: connector.name,
       connectorType: connector.connectorType,
-      // Reset mode-specific fields when switching connector type
       ...(connector.connectorType === 'JDBC'
         ? { path: undefined, method: 'GET', headers: {}, body: {}, query: c.query ?? '', queryType: c.queryType ?? 'SELECT' }
         : { query: undefined, queryType: undefined, path: c.path ?? '', method: c.method ?? 'GET', headers: c.headers ?? {}, body: c.body ?? {} }
@@ -66,19 +81,7 @@ export default function NexusConfig({ config, onChange }: Props) {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-muted)', fontSize: '0.8rem' }}>
-        <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Loading connectors…
-      </div>
-    )
-  }
-
-  if (connectors.length === 0) {
-    return (
-      <div style={{ padding: '0.875rem', background: 'var(--color-panel)', borderRadius: '0.5rem', border: '1px solid var(--color-border)' }}>
-        <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginBottom: '0.4rem' }}>No Nexus connectors yet.</p>
-        <a href="/nexus" target="_blank" rel="noopener"
-          style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textDecoration: 'none' }}>
-          Create one in Nexus →
-        </a>
+        <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Loading…
       </div>
     )
   }
@@ -86,6 +89,59 @@ export default function NexusConfig({ config, onChange }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
+      {/* Mode: Quick request (inline) vs Use connector — all on same page, no redirect */}
+      <Field label="REQUEST TYPE">
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => setMode('inline')}
+            style={{
+              padding: '0.4rem 0.75rem',
+              borderRadius: '6px',
+              border: `1px solid ${mode === 'inline' ? 'var(--color-accent)' : 'var(--color-border)'}`,
+              background: mode === 'inline' ? 'rgba(59, 130, 246, 0.12)' : 'var(--color-panel)',
+              color: mode === 'inline' ? 'var(--color-accent)' : 'var(--color-muted)',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+            }}
+          >
+            <Link2 size={12} /> Quick request (URL)
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('connector')}
+            style={{
+              padding: '0.4rem 0.75rem',
+              borderRadius: '6px',
+              border: `1px solid ${mode === 'connector' ? 'var(--color-accent)' : 'var(--color-border)'}`,
+              background: mode === 'connector' ? 'rgba(59, 130, 246, 0.12)' : 'var(--color-panel)',
+              color: mode === 'connector' ? 'var(--color-accent)' : 'var(--color-muted)',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+            }}
+          >
+            <Globe size={12} /> Use connector
+          </button>
+        </div>
+        {connectors.length === 0 && mode === 'connector' && (
+          <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)', marginTop: '0.35rem' }}>
+            No connectors yet. <a href="/nexus" target="_blank" rel="noopener" style={{ color: 'var(--color-accent)' }}>Create one in Nexus</a> (opens in new tab).
+          </p>
+        )}
+      </Field>
+
+      {mode === 'inline' && (
+        <InlineRestFields c={c} set={set} />
+      )}
+
+      {mode === 'connector' && (
+        <>
       {/* Connector picker */}
       <Field label="CONNECTOR">
         <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -148,11 +204,61 @@ export default function NexusConfig({ config, onChange }: Props) {
       {selected?.connectorType === 'JDBC' && (
         <JdbcFields c={c} set={set} />
       )}
+        </>
+      )}
+
+      <RetryConfig config={config} onChange={onChange} />
     </div>
   )
 }
 
-// ── REST fields ───────────────────────────────────────────────────────────────
+// ── Inline HTTP (no connector): URL, method, headers, body — same page as Studio ─────────────────
+
+function InlineRestFields({ c, set }: { c: Partial<NexusNodeConfig>; set: (k: keyof NexusNodeConfig, v: unknown) => void }) {
+  const headers = (c.headers ?? {}) as Record<string, string>
+  const body    = (c.body ?? {})    as Record<string, string>
+
+  return (
+    <>
+      <Field label="URL">
+        <input
+          type="text"
+          className="input-base"
+          placeholder="https://api.example.com/endpoint"
+          value={(c.url as string) ?? ''}
+          onChange={e => set('url', e.target.value)}
+        />
+      </Field>
+      <Field label="METHOD">
+        <select
+          className="input-base"
+          value={(c.method as string) ?? 'GET'}
+          onChange={e => set('method', e.target.value)}
+        >
+          {HTTP_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+      </Field>
+      <Field label="HEADERS">
+        <KVEditor
+          pairs={Object.entries(headers)}
+          onChange={pairs => set('headers', Object.fromEntries(pairs.filter(([k]) => k)))}
+          keyPlaceholder="Key"
+          valuePlaceholder="value or {{ref}}"
+        />
+      </Field>
+      <Field label="BODY">
+        <KVEditor
+          pairs={Object.entries(body)}
+          onChange={pairs => set('body', Object.fromEntries(pairs.filter(([k]) => k)))}
+          keyPlaceholder="field"
+          valuePlaceholder="value or {{ref}}"
+        />
+      </Field>
+    </>
+  )
+}
+
+// ── REST fields (connector mode) ───────────────────────────────────────────────────────────────
 
 function RestFields({ c, set }: { c: Partial<NexusNodeConfig>; set: (k: keyof NexusNodeConfig, v: unknown) => void }) {
   const headers = (c.headers ?? {}) as Record<string, string>
@@ -232,7 +338,7 @@ function JdbcFields({ c, set }: { c: Partial<NexusNodeConfig>; set: (k: keyof Ne
           onChange={e => set('query', e.target.value)}
         />
         <p style={{ fontSize: '0.65rem', color: 'var(--color-muted)', marginTop: '0.25rem' }}>
-          Use <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-accent)' }}>{'{{variables.key}}'}</span> or <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-accent)' }}>{'{{nodes.id.successOutput.body.field}}'}</span> inside the query.
+          Use <span className="config-panel-code-inline">{'{{variables.key}}'}</span>, <span className="config-panel-code-inline">{'{{nodes.id.successOutput.body.field}}'}</span>, or <span className="config-panel-code-inline">{'{{nex.userData.field}}'}</span> (if a node saved as &quot;userData&quot;).
         </p>
         <p style={{ fontSize: '0.65rem', color: '#ff8080', marginTop: '0.2rem' }}>
           ⚠ Refs are string-interpolated. Sanitize inputs to prevent SQL injection in production.

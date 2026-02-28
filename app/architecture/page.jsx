@@ -363,7 +363,282 @@ const flows = {
       },
     ],
   },
+  retry: {
+    id: "retry",
+    label: "↺ Retry on Failure",
+    color: "#F59E0B",
+    desc: "Per-node retry with backoff when a node fails (SCRIPT, NEXUS, SUB_FLOW, etc.)",
+    steps: [
+      {
+        layer: "FRONTEND",
+        actor: "Node Config Panel",
+        action: "User configures retry on a node (max retries, backoff ms, multiplier)",
+        detail: "RetryConfig component: maxRetries, backoffMs, backoffMultiplier\nStored in node config under key 'retry'",
+        file: "config/RetryConfig.tsx",
+        color: "#3B82F6",
+      },
+      {
+        layer: "BACKEND",
+        actor: "FlowExecutionEngine",
+        action: "Before running a node, reads retry config from node.config",
+        detail: "RetryConfig extracted from config; maxRetries clamped to [0, 10]\nIf maxRetries > 0 and node returns FAILURE → retry loop",
+        file: "FlowExecutionEngine.java → runNode() → extractRetryConfig()",
+        color: "#8B5CF6",
+      },
+      {
+        layer: "BACKEND",
+        actor: "FlowExecutionEngine",
+        action: "On failure: publishes RETRYING, sleeps with backoff, re-runs node",
+        detail: "eventPublisher.nodeRetrying(executionId, nodeId, attempt)\nThread.sleep(backoffMs); backoffMs *= multiplier\nRepeats until success or maxRetries exceeded",
+        file: "FlowExecutionEngine.java → retry loop",
+        color: "#8B5CF6",
+      },
+      {
+        layer: "BACKEND",
+        actor: "ExecutionEventPublisher",
+        action: "Emits nodeRetrying so UI can show amber 'retrying' state",
+        detail: "Status RETRYING sent to /topic/executions/{flowId}\nFrontend FlowNodeCard shows ↺ retrying",
+        file: "ExecutionEventPublisher.java → nodeRetrying()",
+        color: "#10B981",
+      },
+      {
+        layer: "BACKEND",
+        actor: "NodeStatus / RetryConfig",
+        action: "RETRYING is a first-class node status; RetryConfig holds backoff settings",
+        detail: "NodeStatus enum: SUCCESS, FAILURE, RETRYING\nRetryConfig.java: maxRetries, backoffMs, backoffMultiplier",
+        file: "model/nco/NodeStatus.java, RetryConfig.java",
+        color: "#EC4899",
+      },
+    ],
+  },
+  scriptValidation: {
+    id: "scriptValidation",
+    label: "✓ Script Null Check",
+    color: "#EF4444",
+    desc: "Script returning null or { result: null } is treated as FAILURE so the flow can route to failure edge",
+    steps: [
+      {
+        layer: "BACKEND",
+        actor: "ScriptExecutor",
+        action: "After script runs successfully, checks if return value is null or empty",
+        detail: "isNullOrEmptyResult(output): true if output == null\nor output is { result: null } (single key)\nTreats as failure so flow takes FAILURE edge",
+        file: "ScriptExecutor.java → isNullOrEmptyResult()",
+        color: "#8B5CF6",
+      },
+      {
+        layer: "BACKEND",
+        actor: "ScriptExecutor",
+        action: "Returns FAILURE context with clear error message",
+        detail: "Script returned null or no value. Return a non-null value for success,\nor throw an error to fail.\nNode status = FAILURE → next nodes from failure edge",
+        file: "ScriptExecutor.java → failure()",
+        color: "#8B5CF6",
+      },
+      {
+        layer: "FRONTEND",
+        actor: "Transaction / Studio",
+        action: "SCRIPT node shows red (FAILURE) when script returns null",
+        detail: "Execution result shows failureOutput.error\nSubflow parent gets FAILURE if child script returned null",
+        file: "transactions/[id]/page.tsx, Studio",
+        color: "#3B82F6",
+      },
+    ],
+  },
+  subflow: {
+    id: "subflow",
+    label: "📂 SubFlow (SYNC / ASYNC)",
+    color: "#06B6D4",
+    desc: "Call another flow from a node; SYNC waits for result, ASYNC fire-and-forget",
+    steps: [
+      {
+        layer: "BACKEND",
+        actor: "SubFlowExecutor",
+        action: "Reads config: targetFlowId, mode (SYNC/ASYNC)",
+        detail: "Loads target Flow from DB\nSYNC: runs child flow in same thread, waits for NCO\nASYNC: starts child, returns immediately with executionId",
+        file: "SubFlowExecutor.java → execute()",
+        color: "#8B5CF6",
+      },
+      {
+        layer: "BACKEND",
+        actor: "FlowExecutionEngine",
+        action: "Child flow executed via same engine.execute(); NCO returned",
+        detail: "nco holds all child node outputs, nodeExecutionOrder\nParent gets child NCO snapshot in output.nco",
+        file: "SubFlowExecutor.java → flowExecutionEngine.execute()",
+        color: "#8B5CF6",
+      },
+      {
+        layer: "BACKEND",
+        actor: "SubFlowExecutor",
+        action: "Extracts single result for parent scripts: last node with successOutput.result",
+        detail: "extractChildResult(childSnapshot): walks nodeExecutionOrder backwards\nUnwraps { result: x } so parent gets x directly\noutput.result = extracted value",
+        file: "SubFlowExecutor.java → extractChildResult()",
+        color: "#EC4899",
+      },
+      {
+        layer: "FRONTEND",
+        actor: "Parent flow script",
+        action: "Access child result via input.nodes.subFlowNode.successOutput.result",
+        detail: "Reference resolution: {{nodes.mySubFlow.successOutput.result}}\nIf child failed or returned null, parent sees FAILURE",
+        file: "Script node config, ReferenceResolver",
+        color: "#3B82F6",
+      },
+    ],
+  },
+  nexus: {
+    id: "nexus",
+    label: "🔌 Nexus Connector",
+    color: "#8B5CF6",
+    desc: "Execute REST or JDBC using a saved Nexus Connector",
+    steps: [
+      {
+        layer: "FRONTEND",
+        actor: "Nexus config panel",
+        action: "User picks a connector and maps request (body, headers, params)",
+        detail: "Connectors listed from GET /api/nexus/connectors\nConfig: connectorId, method, path, body template with {{refs}}",
+        file: "config/NexusConfig, lib/api.ts",
+        color: "#3B82F6",
+      },
+      {
+        layer: "BACKEND",
+        actor: "NexusExecutor",
+        action: "Loads NexusConnector by ID, resolves references in path/body/headers",
+        detail: "ReferenceResolver.resolveMap(config, nco)\nREST: builds URL, executes HTTP (e.g. RestTemplate)\nResult rows as list of maps",
+        file: "NexusExecutor.java",
+        color: "#8B5CF6",
+      },
+      {
+        layer: "BACKEND",
+        actor: "NexusController / Repository",
+        action: "CRUD for connectors; engine only reads connector at execution time",
+        detail: "NexusConnector entity: name, type (REST/JDBC), config JSON\nNexusController: GET/POST/PUT/DELETE /api/nexus/connectors",
+        file: "NexusController.java, NexusConnectorRepository.java",
+        color: "#8B5CF6",
+      },
+    ],
+  },
+  backend: {
+    id: "backend",
+    label: "📁 Backend Structure",
+    color: "#64748B",
+    desc: "Java package layout and file descriptions for nexflow-backend",
+    steps: [],
+  },
 };
+
+/** Backend file structure: package → files with short explanation */
+const backendFileStructure = [
+  {
+    package: "controller",
+    desc: "REST API entry points",
+    files: [
+      { name: "ExecutionController.java", desc: "Trigger execution (POST /api/executions/trigger/{flowId}), get execution by ID, list transactions." },
+      { name: "FlowController.java", desc: "CRUD for flows: create, get, update, delete. Accepts canvas payload (nodes, edges)." },
+      { name: "PulseController.java", desc: "Pulse trigger endpoint: trigger flow by flowId with optional payload and delay." },
+      { name: "NexusController.java", desc: "CRUD for Nexus Connectors (REST/JDBC). List, create, update, delete connectors." },
+    ],
+  },
+  {
+    package: "service",
+    desc: "Business logic",
+    files: [
+      { name: "FlowService.java", desc: "Load/save flow graph. Delete-by-flowId then re-insert nodes and edges. No diff; full replace." },
+    ],
+  },
+  {
+    package: "engine",
+    desc: "Execution runtime",
+    files: [
+      { name: "FlowExecutionEngine.java", desc: "Main loop: build graph from nodes/edges, start from START node, run NodeExecutors, follow SUCCESS/FAILURE edges. Retry loop, NCO updates, finalize transaction." },
+      { name: "ScriptRunner.java", desc: "Subprocess runner for JavaScript (Node) and Python. Wraps user code, passes input JSON, parses stdout for { success, output/error }." },
+      { name: "ExecutionEventPublisher.java", desc: "Publishes nodeStarted, nodeCompleted, nodeRetrying, executionComplete to WebSocket topic." },
+    ],
+  },
+  {
+    package: "executor",
+    desc: "Node execution (interface + shared)",
+    files: [
+      { name: "NodeExecutor.java", desc: "Interface: supportedType(), execute(FlowNode, NCO) → NodeContext." },
+      { name: "NodeExecutorRegistry.java", desc: "Maps NodeType to executor instance. Used by engine to get executor per node." },
+      { name: "ReferenceResolver.java", desc: "Resolves {{nodes.x.output.y}} and {{variables.z}} in config maps using NCO. Used before node execution." },
+      { name: "DecisionExecutor.java", desc: "Evaluates condition (simple or script). Returns SUCCESS or FAILURE." },
+      { name: "VariableExecutor.java", desc: "Sets flow variables from config (key-value with optional {{refs}})." },
+      { name: "MapperExecutor.java", desc: "Resolves output template map against NCO; result becomes node output." },
+      { name: "StartExecutor.java", desc: "No-op; START node output is set by engine from trigger payload." },
+      { name: "TerminalExecutors.java", desc: "SuccessExecutor / FailureExecutor; terminal nodes that end the run." },
+    ],
+  },
+  {
+    package: "executor.impl",
+    desc: "Concrete node executors",
+    files: [
+      { name: "ScriptExecutor.java", desc: "Builds script input from NCO, calls ScriptRunner. Null/empty result → FAILURE. Puts result in successOutput.result." },
+      { name: "SubFlowExecutor.java", desc: "Loads target flow; SYNC runs child and waits for NCO; extracts result via extractChildResult() for parent." },
+      { name: "NexusExecutor.java", desc: "HTTP Call: inline (url/method/body) or connector. REST/JDBC; same output shape for compatibility." },
+    ],
+  },
+  {
+    package: "model.domain",
+    desc: "JPA entities and enums",
+    files: [
+      { name: "Flow.java", desc: "Flow entity: id, name, description. One-to-many nodes and edges." },
+      { name: "FlowNode.java", desc: "Node: id, flowId, type, label, position (x,y), config (JSON)." },
+      { name: "FlowEdge.java", desc: "Edge: sourceId, targetId, edgeType (success/failure)." },
+      { name: "Execution.java", desc: "Transaction/execution record: flowId, status, triggeredBy, startedAt, completedAt, ncoSnapshot (JSON)." },
+      { name: "NexusConnector.java", desc: "Connector: name, type (REST/JDBC), config JSON." },
+      { name: "NodeType.java", desc: "Enum: START, NEXUS, SUB_FLOW, SCRIPT, VARIABLE, MAPPER, DECISION, SUCCESS, FAILURE, ..." },
+    ],
+  },
+  {
+    package: "model.nco",
+    desc: "Execution context (in-memory)",
+    files: [
+      { name: "NexflowContextObject.java", desc: "NCO: meta (flowId, executionId, status), variables, nodes map, nodeAliases, nodeExecutionOrder." },
+      { name: "NodeContext.java", desc: "Per-node result: nodeId, nodeType, status, input, output, successOutput, failureOutput, errorMessage." },
+      { name: "NodeStatus.java", desc: "Enum: SUCCESS, FAILURE, RETRYING." },
+      { name: "RetryConfig.java", desc: "maxRetries, backoffMs, backoffMultiplier. Stored in node config." },
+      { name: "ExecutionStatus.java", desc: "Execution-level status enum." },
+    ],
+  },
+  {
+    package: "model.dto",
+    desc: "Request/response DTOs",
+    files: [
+      { name: "CanvasSaveDto.java", desc: "Payload for save: nodes, edges." },
+      { name: "FlowNodeDto.java", desc: "Node representation in API." },
+      { name: "FlowEdgeDto.java", desc: "Edge representation in API." },
+    ],
+  },
+  {
+    package: "repository",
+    desc: "JPA repositories",
+    files: [
+      { name: "FlowRepository.java", desc: "JpaRepository<Flow, UUID>. Find flows by id." },
+      { name: "FlowNodeRepository.java", desc: "findByFlowId(flowId). Nodes for a flow." },
+      { name: "FlowEdgeRepository.java", desc: "findByFlowId(flowId). Edges for a flow." },
+      { name: "ExecutionRepository.java", desc: "Execution/transaction persistence." },
+      { name: "NexusConnectorRepository.java", desc: "Nexus connector CRUD." },
+    ],
+  },
+  {
+    package: "config",
+    desc: "Spring configuration",
+    files: [
+      { name: "AppConfig.java", desc: "WebSocket message broker, SockJS endpoint /ws, topic prefix /topic." },
+      { name: "CorsConfig.java", desc: "CORS allowed origins for frontend." },
+      { name: "FlowNodeConstraintMigration.java", desc: "DB migration / constraint for flow nodes if used." },
+    ],
+  },
+  {
+    package: "root",
+    desc: "Application root",
+    files: [
+      { name: "NexflowBackendApplication.java", desc: "Spring Boot entry point." },
+      { name: "ExecutionNodeLog.java", desc: "Entity/log for node execution if used." },
+      { name: "NcoMeta.java", desc: "Meta info for NCO (flowId, executionId, etc.)." },
+      { name: "EdgeCondition.java", desc: "Edge condition type if used." },
+      { name: "FlowStatus.java", desc: "Flow status enum if used." },
+    ],
+  },
+];
 
 const layerColors = {
   FRONTEND: { bg: "#1E3A5F", border: "#3B82F6", label: "#93C5FD" },
@@ -376,8 +651,11 @@ export default function NexflowArchitecture() {
   const [activeFlow, setActiveFlow] = useState("pulse");
   const [activeStep, setActiveStep] = useState(null);
   const [expandedStep, setExpandedStep] = useState(null);
+  const [activePackageIndex, setActivePackageIndex] = useState(0);
 
   const flow = flows[activeFlow];
+  const isBackendView = activeFlow === "backend";
+  const selectedPackage = isBackendView ? backendFileStructure[activePackageIndex] : null;
 
   return (
     <div style={{
@@ -391,38 +669,38 @@ export default function NexflowArchitecture() {
       <div style={{
         background: "linear-gradient(135deg, #0D1117 0%, #161B2E 100%)",
         borderBottom: "1px solid #1E293B",
-        padding: "20px 28px",
+        padding: "24px 36px",
         display: "flex",
         alignItems: "center",
-        gap: "16px",
+        gap: "20px",
       }}>
         <div style={{
-          width: "36px", height: "36px",
+          width: "42px", height: "42px",
           background: "linear-gradient(135deg, #00D4FF, #8B5CF6)",
-          borderRadius: "8px",
+          borderRadius: "10px",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "18px", fontWeight: "bold", color: "#fff",
+          fontSize: "20px", fontWeight: "bold", color: "#fff",
         }}>N</div>
         <div>
-          <div style={{ fontSize: "16px", fontWeight: "700", color: "#F1F5F9", letterSpacing: "0.05em" }}>
+          <div style={{ fontSize: "18px", fontWeight: "700", color: "#F1F5F9", letterSpacing: "0.05em" }}>
             NEXFLOW ARCHITECTURE
           </div>
-          <div style={{ fontSize: "11px", color: "#64748B", marginTop: "2px" }}>
-            Interactive system flow debugger
+          <div style={{ fontSize: "12px", color: "#64748B", marginTop: "4px" }}>
+            Interactive system flow debugger · Backend structure & recent features
           </div>
         </div>
-        <div style={{ marginLeft: "auto", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        <div style={{ marginLeft: "auto", display: "flex", gap: "10px", flexWrap: "wrap" }}>
           {Object.values(flows).map(f => (
             <button
               key={f.id}
-              onClick={() => { setActiveFlow(f.id); setActiveStep(null); setExpandedStep(null); }}
+              onClick={() => { setActiveFlow(f.id); setActiveStep(null); setExpandedStep(null); setActivePackageIndex(0); }}
               style={{
-                padding: "7px 14px",
-                borderRadius: "6px",
+                padding: "9px 16px",
+                borderRadius: "8px",
                 border: `1px solid ${activeFlow === f.id ? f.color : "#1E293B"}`,
                 background: activeFlow === f.id ? `${f.color}18` : "transparent",
                 color: activeFlow === f.id ? f.color : "#64748B",
-                fontSize: "11px",
+                fontSize: "12px",
                 fontWeight: "600",
                 cursor: "pointer",
                 transition: "all 0.15s",
@@ -435,34 +713,68 @@ export default function NexflowArchitecture() {
 
       {/* Flow description */}
       <div style={{
-        padding: "14px 28px",
+        padding: "18px 36px",
         background: "#0D1117",
         borderBottom: "1px solid #1E293B",
-        fontSize: "12px",
+        fontSize: "13px",
         color: "#94A3B8",
         display: "flex",
         alignItems: "center",
-        gap: "10px",
+        gap: "12px",
+        lineHeight: 1.5,
       }}>
         <span style={{
-          width: "8px", height: "8px", borderRadius: "50%",
+          width: "10px", height: "10px", borderRadius: "50%",
           background: flow.color, display: "inline-block",
-          boxShadow: `0 0 8px ${flow.color}`,
+          boxShadow: `0 0 10px ${flow.color}`,
         }} />
         {flow.desc}
       </div>
 
-      <div style={{ display: "flex", height: "calc(100vh - 120px)" }}>
+      <div style={{ display: "flex", height: "calc(100vh - 140px)" }}>
 
-        {/* Step list */}
+        {/* Left: Step list or Package list (Backend view) */}
         <div style={{
-          width: "340px",
+          width: "380px",
           borderRight: "1px solid #1E293B",
           overflowY: "auto",
           background: "#0A0E1A",
           flexShrink: 0,
+          padding: "8px 0",
         }}>
-          {flow.steps.map((step, i) => {
+          {isBackendView ? (
+            /* Package list for Backend Structure */
+            backendFileStructure.map((pkg, i) => {
+              const isActive = activePackageIndex === i;
+              return (
+                <div
+                  key={pkg.package}
+                  onClick={() => setActivePackageIndex(i)}
+                  style={{
+                    padding: "18px 20px",
+                    margin: "6px 12px",
+                    borderBottom: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    background: isActive ? "#13192B" : "transparent",
+                    borderLeft: `4px solid ${isActive ? flow.color : "transparent"}`,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <div style={{ fontSize: "13px", fontWeight: "600", color: isActive ? "#F1F5F9" : "#94A3B8", marginBottom: "4px" }}>
+                    {pkg.package}
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#64748B", lineHeight: 1.4 }}>
+                    {pkg.desc}
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#475569", marginTop: "6px" }}>
+                    {pkg.files.length} file{pkg.files.length !== 1 ? "s" : ""}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            flow.steps.map((step, i) => {
             const lc = layerColors[step.layer] || layerColors.BACKEND;
             const isActive = activeStep === i;
             return (
@@ -470,11 +782,13 @@ export default function NexflowArchitecture() {
                 key={i}
                 onClick={() => { setActiveStep(i); setExpandedStep(expandedStep === i ? null : i); }}
                 style={{
-                  padding: "14px 16px",
-                  borderBottom: "1px solid #1E293B",
+                  padding: "18px 20px",
+                  margin: "4px 12px",
+                  borderBottom: "none",
+                  borderRadius: "8px",
                   cursor: "pointer",
                   background: isActive ? "#13192B" : "transparent",
-                  borderLeft: `3px solid ${isActive ? flow.color : "transparent"}`,
+                  borderLeft: `4px solid ${isActive ? flow.color : "transparent"}`,
                   transition: "all 0.15s",
                   position: "relative",
                 }}
@@ -506,9 +820,9 @@ export default function NexflowArchitecture() {
 
                 {/* Action */}
                 <div style={{
-                  fontSize: "12px",
+                  fontSize: "13px",
                   color: isActive ? "#F1F5F9" : "#94A3B8",
-                  lineHeight: "1.4",
+                  lineHeight: "1.5",
                   fontWeight: isActive ? "500" : "400",
                 }}>
                   {step.action}
@@ -516,10 +830,10 @@ export default function NexflowArchitecture() {
 
                 {/* File */}
                 <div style={{
-                  marginTop: "6px",
-                  fontSize: "10px",
+                  marginTop: "8px",
+                  fontSize: "11px",
                   color: "#3B82F6",
-                  opacity: 0.7,
+                  opacity: 0.8,
                 }}>
                   📄 {step.file}
                 </div>
@@ -538,21 +852,62 @@ export default function NexflowArchitecture() {
                 )}
               </div>
             );
-          })}
+          })
+          )}
         </div>
 
         {/* Main detail panel */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "32px 40px", minWidth: 0 }}>
 
-          {activeStep === null ? (
+          {isBackendView ? (
+            /* Backend file structure: list of files with descriptions */
+            selectedPackage && (
+              <div>
+                <div style={{ marginBottom: "28px" }}>
+                  <div style={{ fontSize: "11px", color: "#64748B", letterSpacing: "0.1em", marginBottom: "8px" }}>
+                    PACKAGE
+                  </div>
+                  <div style={{ fontSize: "20px", fontWeight: "700", color: "#F1F5F9" }}>
+                    com.nexflow.nexflow_backend.{selectedPackage.package}
+                  </div>
+                  <div style={{ fontSize: "13px", color: "#94A3B8", marginTop: "8px", lineHeight: 1.5 }}>
+                    {selectedPackage.desc}
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                  {selectedPackage.files.map((file, fi) => (
+                    <div
+                      key={file.name}
+                      style={{
+                        background: "#0D1117",
+                        border: "1px solid #1E293B",
+                        borderRadius: "12px",
+                        padding: "22px 26px",
+                        transition: "border-color 0.15s",
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = "#334155"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = "#1E293B"; }}
+                    >
+                      <div style={{ fontSize: "14px", fontWeight: "600", color: "#3B82F6", marginBottom: "10px", fontFamily: "inherit" }}>
+                        📄 {file.name}
+                      </div>
+                      <div style={{ fontSize: "13px", color: "#94A3B8", lineHeight: 1.65 }}>
+                        {file.desc}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          ) : activeStep === null ? (
             /* Overview diagram */
             <div>
-              <div style={{ fontSize: "13px", color: "#64748B", marginBottom: "20px", letterSpacing: "0.05em" }}>
+              <div style={{ fontSize: "14px", color: "#64748B", marginBottom: "28px", letterSpacing: "0.05em", lineHeight: 1.5 }}>
                 CLICK A STEP ON THE LEFT TO SEE DETAILS  ·  OR BROWSE THE OVERVIEW BELOW
               </div>
 
               {/* Full flow diagram */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 {flow.steps.map((step, i) => {
                   const lc = layerColors[step.layer] || layerColors.BACKEND;
                   return (
@@ -620,24 +975,24 @@ export default function NexflowArchitecture() {
                         onClick={() => setActiveStep(i)}
                         style={{
                           flex: 1,
-                          padding: "12px 16px",
-                          margin: "4px 0",
+                          padding: "16px 20px",
+                          margin: "6px 0",
                           background: "#0D1117",
                           border: "1px solid #1E293B",
-                          borderRadius: "8px",
+                          borderRadius: "10px",
                           cursor: "pointer",
                           transition: "all 0.15s",
                         }}
                         onMouseEnter={e => { e.currentTarget.style.borderColor = flow.color + "60"; e.currentTarget.style.background = "#13192B"; }}
                         onMouseLeave={e => { e.currentTarget.style.borderColor = "#1E293B"; e.currentTarget.style.background = "#0D1117"; }}
                       >
-                        <div style={{ fontSize: "11px", color: "#64748B", marginBottom: "4px" }}>
+                        <div style={{ fontSize: "12px", color: "#64748B", marginBottom: "6px" }}>
                           {step.actor}
                         </div>
-                        <div style={{ fontSize: "13px", color: "#E2E8F0", fontWeight: "500" }}>
+                        <div style={{ fontSize: "14px", color: "#E2E8F0", fontWeight: "500", lineHeight: 1.4 }}>
                           {step.action}
                         </div>
-                        <div style={{ fontSize: "10px", color: "#3B82F6", marginTop: "4px", opacity: 0.8 }}>
+                        <div style={{ fontSize: "11px", color: "#3B82F6", marginTop: "6px", opacity: 0.8 }}>
                           {step.file}
                         </div>
                       </div>
@@ -650,7 +1005,7 @@ export default function NexflowArchitecture() {
             /* Step detail */
             <div>
               {/* Navigation */}
-              <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
+              <div style={{ display: "flex", gap: "12px", marginBottom: "28px", alignItems: "center" }}>
                 <button
                   onClick={() => setActiveStep(null)}
                   style={{
@@ -694,9 +1049,9 @@ export default function NexflowArchitecture() {
                     <div style={{
                       background: "linear-gradient(135deg, #0D1117, #13192B)",
                       border: `1px solid ${step.color}40`,
-                      borderRadius: "12px",
-                      padding: "24px",
-                      marginBottom: "16px",
+                      borderRadius: "14px",
+                      padding: "28px 32px",
+                      marginBottom: "24px",
                     }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
                         <div style={{
@@ -735,25 +1090,25 @@ export default function NexflowArchitecture() {
                     <div style={{
                       background: "#0D1117",
                       border: "1px solid #1E293B",
-                      borderRadius: "12px",
+                      borderRadius: "14px",
                       overflow: "hidden",
-                      marginBottom: "16px",
+                      marginBottom: "24px",
                     }}>
                       <div style={{
-                        padding: "10px 16px",
+                        padding: "14px 20px",
                         borderBottom: "1px solid #1E293B",
-                        fontSize: "10px", fontWeight: "700",
+                        fontSize: "11px", fontWeight: "700",
                         color: "#475569", letterSpacing: "0.1em",
                         background: "#080B14",
-                        display: "flex", alignItems: "center", gap: "8px",
+                        display: "flex", alignItems: "center", gap: "10px",
                       }}>
                         <span style={{ color: "#F59E0B" }}>◆</span> WHAT HAPPENS INSIDE
                       </div>
-                      <div style={{ padding: "20px" }}>
+                      <div style={{ padding: "26px 28px" }}>
                         {step.detail.split("\n").map((line, li) => (
                           <div key={li} style={{
-                            fontSize: "12px",
-                            lineHeight: "1.8",
+                            fontSize: "13px",
+                            lineHeight: "2",
                             color: line.startsWith("//") || line.startsWith("#") ? "#475569" :
                                    line.includes("→") ? "#10B981" :
                                    line.includes(".java") || line.includes(".tsx") ? "#3B82F6" :
@@ -767,7 +1122,7 @@ export default function NexflowArchitecture() {
                     </div>
 
                     {/* Prev/Next node context */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
                       {activeStep > 0 && (
                         <div
                           onClick={() => setActiveStep(activeStep - 1)}
@@ -845,27 +1200,27 @@ export default function NexflowArchitecture() {
 
         {/* Right: layer legend */}
         <div style={{
-          width: "160px",
+          width: "200px",
           borderLeft: "1px solid #1E293B",
           background: "#0A0E1A",
-          padding: "20px 14px",
+          padding: "28px 20px",
           flexShrink: 0,
         }}>
-          <div style={{ fontSize: "9px", color: "#475569", fontWeight: "700", letterSpacing: "0.12em", marginBottom: "16px" }}>
+          <div style={{ fontSize: "10px", color: "#475569", fontWeight: "700", letterSpacing: "0.12em", marginBottom: "20px" }}>
             LAYERS
           </div>
           {Object.entries(layerColors).map(([layer, c]) => (
-            <div key={layer} style={{ marginBottom: "14px" }}>
+            <div key={layer} style={{ marginBottom: "18px" }}>
               <div style={{
-                padding: "8px 10px",
+                padding: "12px 14px",
                 background: c.bg,
                 border: `1px solid ${c.border}40`,
-                borderRadius: "6px",
+                borderRadius: "8px",
               }}>
-                <div style={{ fontSize: "9px", fontWeight: "700", color: c.label, letterSpacing: "0.1em" }}>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: c.label, letterSpacing: "0.1em" }}>
                   {layer}
                 </div>
-                <div style={{ fontSize: "10px", color: "#475569", marginTop: "4px", lineHeight: "1.4" }}>
+                <div style={{ fontSize: "11px", color: "#475569", marginTop: "6px", lineHeight: "1.5" }}>
                   {layer === "FRONTEND" && "Next.js\nReact components"}
                   {layer === "BACKEND" && "Spring Boot\nJava services"}
                   {layer === "WEBSOCKET" && "STOMP\nReal-time events"}
@@ -875,27 +1230,28 @@ export default function NexflowArchitecture() {
             </div>
           ))}
 
-          <div style={{ marginTop: "20px", borderTop: "1px solid #1E293B", paddingTop: "16px" }}>
-            <div style={{ fontSize: "9px", color: "#475569", fontWeight: "700", letterSpacing: "0.12em", marginBottom: "12px" }}>
+          <div style={{ marginTop: "28px", borderTop: "1px solid #1E293B", paddingTop: "20px" }}>
+            <div style={{ fontSize: "10px", color: "#475569", fontWeight: "700", letterSpacing: "0.12em", marginBottom: "14px" }}>
               FLOWS
             </div>
             {Object.values(flows).map(f => (
               <div
                 key={f.id}
-                onClick={() => { setActiveFlow(f.id); setActiveStep(null); }}
+                onClick={() => { setActiveFlow(f.id); setActiveStep(null); setActivePackageIndex(0); }}
                 style={{
-                  display: "flex", alignItems: "center", gap: "6px",
-                  marginBottom: "8px", cursor: "pointer",
-                  opacity: activeFlow === f.id ? 1 : 0.5,
+                  display: "flex", alignItems: "center", gap: "10px",
+                  marginBottom: "12px", cursor: "pointer",
+                  opacity: activeFlow === f.id ? 1 : 0.6,
+                  padding: "6px 0",
                 }}
               >
                 <div style={{
-                  width: "8px", height: "8px", borderRadius: "50%",
+                  width: "10px", height: "10px", borderRadius: "50%",
                   background: f.color,
-                  boxShadow: activeFlow === f.id ? `0 0 6px ${f.color}` : "none",
+                  boxShadow: activeFlow === f.id ? `0 0 8px ${f.color}` : "none",
                   flexShrink: 0,
                 }} />
-                <span style={{ fontSize: "10px", color: activeFlow === f.id ? "#E2E8F0" : "#475569" }}>
+                <span style={{ fontSize: "11px", color: activeFlow === f.id ? "#E2E8F0" : "#64748B", lineHeight: 1.3 }}>
                   {f.label.split(" ").slice(1).join(" ")}
                 </span>
               </div>

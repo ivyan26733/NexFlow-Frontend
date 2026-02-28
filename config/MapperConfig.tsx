@@ -30,8 +30,8 @@ export default function MapperConfig({ config, onChange }: Props) {
 
   return (
     <Field label="OUTPUT SHAPE">
-      <p className="text-[10px] text-muted mb-2 leading-relaxed">
-        Map fields from any previous node. The output becomes the body sent to the next Pulse.
+      <p className="config-panel-description">
+        Map fields from any previous node (e.g. <span className="config-panel-code-inline">{'{{nodes.fetchUser.successOutput.body}}'}</span> or <span className="config-panel-code-inline">{'{{nex.userData.result}}'}</span> if saved as &quot;userData&quot;). The output becomes the body sent to the next Pulse.
       </p>
       <div className="flex flex-col gap-2">
         {Object.entries(output).map(([k, v], i) => (
@@ -49,10 +49,10 @@ export default function MapperConfig({ config, onChange }: Props) {
               defaultValue={v}
               onBlur={e => updateField(k, k, e.target.value)}
             />
-            <button onClick={() => removeField(k)} className="text-muted hover:text-failure transition-colors text-xs flex-shrink-0">✕</button>
+            <button type="button" onClick={() => removeField(k)} className="config-panel-btn-ghost flex-shrink-0" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: 'var(--color-muted)' }} title="Remove field">✕</button>
           </div>
         ))}
-        <button onClick={addField} className="text-xs text-muted hover:text-accent transition-colors text-left">
+        <button type="button" onClick={addField} className="config-panel-add-btn">
           + Add field
         </button>
       </div>

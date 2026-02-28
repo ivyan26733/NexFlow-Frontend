@@ -7,16 +7,16 @@ export type FlowStatus =
   | 'PAUSED'
   | 'ARCHIVED'
 
-// Node kinds supported by the engine
+// Node kinds supported by the engine (HTTP Call = NEXUS with inline url or connector)
 export type NodeType =
   | 'START'
-  | 'PULSE'
   | 'NEXUS'
   | 'SUB_FLOW'
   | 'SCRIPT'
   | 'VARIABLE'
   | 'MAPPER'
   | 'DECISION'
+  | 'LOOP'
   | 'SUCCESS'
   | 'FAILURE'
 
@@ -24,6 +24,7 @@ export type NodeType =
 export type EdgeCondition =
   | 'SUCCESS'
   | 'FAILURE'
+  | 'CONTINUE'   // LOOP node: route back to loop body
   | 'DEFAULT'
   | 'CUSTOM'
 
@@ -40,7 +41,9 @@ export type NodeStatus =
   | 'RUNNING'
   | 'SUCCESS'
   | 'FAILURE'
+  | 'CONTINUE'   // LOOP node: keep looping
   | 'SKIPPED'
+  | 'RETRYING'
 
 // Nexus authentication modes
 export type AuthType =
@@ -151,9 +154,18 @@ export interface ExecutionDetail extends ExecutionSummary {
   ncoSnapshot: NcoSnapshot | null
 }
 
+// ─── Nex (universal output container) ────────────────────────────────────────
+
+/** The nex map from a completed transaction. Keys are saveOutputAs names; values are node outputs. */
+export interface NexMap {
+  [key: string]: unknown
+}
+
 // ─── NCO Snapshot (Execution Memory) ──────────────────────────────────────────
 
 export interface NcoSnapshot {
+  /** Everything saved via "Save output as" in this execution. */
+  nex?: NexMap
   meta?: {
     flowId:        string
     executionId:   string
@@ -223,15 +235,18 @@ export interface NexusConnector {
 // ─── Config stored inside a NEXUS node ────────────────────────────────────────
 
 export interface NexusNodeConfig {
-  connectorId:   string
-  connectorName: string
-  connectorType: ConnectorType
+  connectorId?:   string
+  connectorName?: string
+  connectorType?: ConnectorType
 
-  // REST
-  path?:    string
+  // Inline HTTP (no connector): full URL
+  url?:     string
   method?:  HttpMethod
   headers?: Record<string, string>
   body?:    Record<string, string>
+
+  // REST (with connector): path relative to connector baseUrl
+  path?:    string
 
   // JDBC
   query?:     string
@@ -258,4 +273,12 @@ export interface SubFlowNodeConfig {
   // Payload passed to child flow's START node
   // Values support {{}} references resolved against parent NCO
   payload: Record<string, string>
+}
+
+// ─── Config stored inside a LOOP node ─────────────────────────────────────────
+
+export interface LoopNodeConfig {
+  condition:     string   // e.g. "{{loop.index}} < 5"
+  maxIterations: number   // default 100
+  description?:  string   // optional note
 }

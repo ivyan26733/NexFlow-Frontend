@@ -107,7 +107,7 @@ export default function DecisionConfig({ config, onChange }: Props) {
           <Field label="LEFT VALUE">
             <input
               className="input-base font-mono"
-              placeholder="{{variables.amount}} or a value"
+              placeholder="{{variables.amount}} or {{nex.userData.field}}"
               value={(config.left as string) ?? ''}
               onChange={e => update('left', e.target.value)}
             />
@@ -128,7 +128,7 @@ export default function DecisionConfig({ config, onChange }: Props) {
           <Field label="RIGHT VALUE">
             <input
               className="input-base font-mono"
-              placeholder="500 or {{ref}}"
+              placeholder="500 or {{nex.userData.userId}}"
               value={(config.right as string) ?? ''}
               onChange={e => update('right', e.target.value)}
             />

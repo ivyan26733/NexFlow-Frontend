@@ -65,7 +65,7 @@ export default function NexusPage() {
           <p className="dashboard-label">CONNECTIONS</p>
           <h1 className="dashboard-title">Nexus</h1>
           <p className="dashboard-subtitle">
-            Manage reusable API connectors. Reference them in PULSE nodes instead of re-entering credentials every time.
+            Manage reusable API connectors. Use them in HTTP Call (Nexus) nodes or configure a quick URL inline in Studio.
           </p>
         </div>
         <button type="button" onClick={openCreate} className="dashboard-btn-primary">

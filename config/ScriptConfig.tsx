@@ -4,6 +4,7 @@ import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Code2, BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
 import { Field } from '../NodeConfigPanel'
+import RetryConfig from './RetryConfig'
 
 // Load Monaco dynamically — it's a large library and must not run on server
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
@@ -136,6 +137,8 @@ export default function ScriptConfig({ config, onChange }: Props) {
       </button>
 
       {helpOpen && <HelpPanel language={language} />}
+
+      <RetryConfig config={config} onChange={onChange} />
     </div>
   )
 }
@@ -228,11 +231,10 @@ function HelpPanel({ language }: { language: Language }) {
 
       <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '0.625rem' }}>
         <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)' }}>
-          The value you return is stored under this node's label key. If this node is labelled
-          "Calculate Discount", downstream nodes reference it as{' '}
-          <code style={{ fontFamily: 'monospace', color: 'var(--color-accent)', fontSize: '0.68rem' }}>
-            {'{{nodes.calculateDiscount.successOutput.result}}'}
-          </code>
+          The value you return is stored under this node&apos;s label key. Downstream:{' '}
+          <code className="config-panel-code-inline">{'{{nodes.calculateDiscount.successOutput.result}}'}</code>
+          {' '}or, if you set &quot;Save output as&quot; e.g. userData:{' '}
+          <code className="config-panel-code-inline">{'{{nex.userData.result.userId}}'}</code>
         </p>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { Search, Loader2, GitBranch, Zap, RefreshCw, X, Plus } from 'lucide-reac
 import { api } from '@/api'
 import type { Flow, SubFlowNodeConfig, SubFlowMode } from './../index'
 import { Field } from '../NodeConfigPanel'
+import RetryConfig from './RetryConfig'
 
 interface Props {
   config:   Record<string, unknown>
@@ -227,10 +228,9 @@ export default function SubFlowConfig({ config, onChange, currentFlowId }: Props
             <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>
               Parent flow <strong style={{ color: 'var(--color-text)' }}>waits</strong> for the child to finish.
               Child result available as{' '}
-              <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', fontSize: '0.65rem' }}>
-                {'{{nodes.thisNodeId.successOutput.nco.nodes.*}}'}
-              </span>
-              . If child fails, this node routes to the <span style={{ color: '#ff4444' }}>failure</span> edge.
+              <span className="config-panel-code-inline">{'{{nodes.thisNodeId.successOutput.nco.nodes.*}}'}</span>
+              {' '}or <span className="config-panel-code-inline">{'{{nex.childResult.field}}'}</span> (if child node saved as &quot;childResult&quot;).
+              If child fails, this node routes to the <span style={{ color: '#ff4444' }}>failure</span> edge.
             </p>
           ) : (
             <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>
@@ -249,17 +249,19 @@ export default function SubFlowConfig({ config, onChange, currentFlowId }: Props
         </p>
         <p style={{ fontSize: '0.65rem', color: 'var(--color-muted)', marginBottom: '0.5rem', lineHeight: 1.5 }}>
           Add a row e.g. key <code style={{ fontSize: '0.65rem' }}>number</code>, value{' '}
-          <code style={{ fontSize: '0.6rem', color: 'var(--color-accent)' }}>{'{{nodes.start.output.body.number}}'}</code>{' '}
+          <code className="config-panel-code-inline">{'{{nodes.start.output.body.number}}'}</code>{' '}
           so the child script can use <code style={{ fontSize: '0.65rem' }}>input.trigger.body.number</code>. Supports{' '}
-          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', fontSize: '0.65rem' }}>{'{{refs}}'}</span>.
+          <span className="config-panel-code-inline">{'{{refs}}'}</span>.
         </p>
         <KVEditor
           rows={payloadRows}
           onChange={updatePayloadRows}
           keyPlaceholder="e.g. number"
-          valuePlaceholder="e.g. {{nodes.start.output.body.number}}"
+          valuePlaceholder="e.g. {{nodes.start.output.body.number}} or {{nex.userData.id}}"
         />
       </Field>
+
+      <RetryConfig config={config} onChange={onChange} />
     </div>
   )
 }

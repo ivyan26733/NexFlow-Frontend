@@ -52,7 +52,7 @@ export default function NexusPage() {
           <p style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)', letterSpacing: '0.12em', marginBottom: '0.4rem' }}>CONNECTIONS</p>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.4rem' }}>Nexus</h1>
           <p style={{ color: 'var(--color-muted)', fontSize: '0.875rem' }}>
-            Manage reusable API connectors. Reference them in PULSE nodes instead of re-entering credentials every time.
+            Manage reusable API connectors. Use them in HTTP Call (Nexus) nodes or configure a quick URL inline in Studio.
           </p>
         </div>
         <button onClick={openCreate}

@@ -1,19 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Trash2, Copy, Check } from 'lucide-react'
 import type { Node } from '@xyflow/react'
 import { NODE_META } from '@/lib/nodeConfig'
 import type { NodeType } from '@/types'
 
-import PulseConfig    from './config/PulseConfig'
 import NexusConfig    from './config/NexusConfig'
 import SubFlowConfig  from './config/SubFlowConfig'
 import ScriptConfig   from './config/ScriptConfig'
 import VariableConfig from './config/VariableConfig'
 import MapperConfig   from './config/MapperConfig'
 import DecisionConfig from './config/DecisionConfig'
+import LoopConfig from './config/LoopConfig'
 import TerminalConfig from './config/TerminalConfig'
+import SaveOutputAsField from './config/SaveOutputAsField'
 
 interface Props {
   node:          Node
@@ -42,6 +43,11 @@ export default function NodeConfigPanel({ node, currentFlowId, onUpdate, onClose
   const [label, setLabel] = useState((node.data.label as string) ?? '')
   const [copied, setCopied] = useState(false)
 
+  // Sync label when user clicks a different node (panel stays open)
+  useEffect(() => {
+    setLabel((node.data.label as string) ?? '')
+  }, [node.id, node.data.label])
+
   function copyNodeId() {
     navigator.clipboard.writeText(toLabelKey(label || 'node'))
     setCopied(true)
@@ -63,7 +69,7 @@ export default function NodeConfigPanel({ node, currentFlowId, onUpdate, onClose
       <div className="node-config-panel-header">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: meta.color }} />
-          <span className="text-sm font-medium" style={{ color: meta.color }}>{meta.label}</span>
+          <span className="config-panel-header-title" style={{ color: meta.color }}>{meta.label}</span>
         </div>
         <div className="flex items-center gap-1">
           {onRemove && nodeType !== 'START' && (
@@ -72,6 +78,7 @@ export default function NodeConfigPanel({ node, currentFlowId, onUpdate, onClose
               onClick={onRemove}
               title="Delete node"
               className="config-panel-btn-ghost config-panel-btn-danger"
+              style={{ color: 'var(--color-failure)' }}
             >
               <Trash2 size={16} />
             </button>
@@ -100,14 +107,15 @@ export default function NodeConfigPanel({ node, currentFlowId, onUpdate, onClose
           config={node.data.config as Record<string, unknown>}
           currentFlowId={currentFlowId}
           onChange={updateConfig}
+          nodeLabel={label}
         />
 
         <div className="mt-auto flex flex-col gap-4 flex-shrink-0">
 
           <div className="config-panel-card">
-            <p className="text-[10px] font-mono text-muted tracking-wider mb-1.5">REFERENCE AS</p>
+            <p className="config-panel-label mb-1.5">REFERENCE AS</p>
             <div className="flex items-center gap-2">
-              <code className="text-[12px] font-mono text-accent flex-1 break-all">{toLabelKey(label || 'node')}</code>
+              <code className="config-panel-code flex-1" style={{ marginBottom: 0 }}>{toLabelKey(label || 'node')}</code>
               <button
                 type="button"
                 onClick={copyNodeId}
@@ -117,18 +125,19 @@ export default function NodeConfigPanel({ node, currentFlowId, onUpdate, onClose
                 {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
               </button>
             </div>
-            <p className="text-[10px] text-muted mt-1.5">
+            <p className="config-panel-description mt-1.5" style={{ marginBottom: 0 }}>
               Change the label above to change this name
             </p>
           </div>
 
           <div className="config-panel-card">
-            <p className="text-[10px] font-mono text-muted tracking-wider mb-1.5">USE IN OTHER NODES</p>
-            <p className="text-[11px] font-mono text-accent break-all">
-              {'{{nodes.' + toLabelKey(label || 'node') + '.successOutput.result}}'}
+            <p className="config-panel-label mb-1.5">USE IN OTHER NODES</p>
+            <code className="config-panel-code">{'{{nodes.' + toLabelKey(label || 'node') + '.successOutput.result}}'}</code>
+            <p className="config-panel-description mt-1.5 break-all" style={{ marginBottom: 0 }}>
+              Or with &quot;Save output as&quot;: <span className="config-panel-code-inline">{'{{nex.NAME.field}}'}</span> (e.g. <span className="config-panel-code-inline">{'{{nex.userData.result}}'}</span>)
             </p>
-            <p className="text-[11px] font-mono text-muted break-all mt-1.5">
-              {'{{variables.myVar}} for variables'}
+            <p className="config-panel-description mt-0.5 break-all" style={{ marginBottom: 0 }}>
+              <span className="config-panel-code-inline">{'{{variables.myVar}}'}</span> for variables
             </p>
           </div>
         </div>
@@ -139,32 +148,33 @@ export default function NodeConfigPanel({ node, currentFlowId, onUpdate, onClose
 
 // ── Route to the right config component ──────────────────────────────────────
 
-function NodeForm({ nodeType, config, currentFlowId, onChange }: {
+function NodeForm({ nodeType, config, currentFlowId, onChange, nodeLabel }: {
   nodeType:      NodeType
   config:        Record<string, unknown>
   currentFlowId: string
   onChange:      (c: Record<string, unknown>) => void
+  nodeLabel?:    string
 }) {
   switch (nodeType) {
-    case 'PULSE':    return <PulseConfig    config={config} onChange={onChange} />
-    case 'NEXUS':    return <NexusConfig    config={config} onChange={onChange} />
-    case 'SUB_FLOW': return <SubFlowConfig  config={config} onChange={onChange} currentFlowId={currentFlowId} />
-    case 'SCRIPT':   return <ScriptConfig   config={config} onChange={onChange} />
-    case 'VARIABLE': return <VariableConfig config={config} onChange={onChange} />
-    case 'MAPPER':   return <MapperConfig   config={config} onChange={onChange} />
-    case 'DECISION': return <DecisionConfig config={config} onChange={onChange} />
+    case 'NEXUS':    return (<> <NexusConfig    config={config} onChange={onChange} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
+    case 'SUB_FLOW': return (<> <SubFlowConfig  config={config} onChange={onChange} currentFlowId={currentFlowId} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
+    case 'SCRIPT':   return (<> <ScriptConfig   config={config} onChange={onChange} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
+    case 'VARIABLE': return (<> <VariableConfig config={config} onChange={onChange} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
+    case 'MAPPER':   return (<> <MapperConfig   config={config} onChange={onChange} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
+    case 'DECISION': return (<> <DecisionConfig config={config} onChange={onChange} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
+    case 'LOOP':     return (<> <LoopConfig config={config} onChange={onChange} nodeLabel={nodeLabel} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
     case 'SUCCESS':
-    case 'FAILURE':  return <TerminalConfig config={config} onChange={onChange} />
-    case 'START':    return <StartHint />
+    case 'FAILURE':  return (<> <TerminalConfig config={config} onChange={onChange} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
+    case 'START':    return (<> <StartHint /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
     default:         return null
   }
 }
 
 function StartHint() {
   return (
-    <p className="text-xs text-muted leading-relaxed">
+    <p className="config-panel-description">
       The Start node receives the incoming trigger payload.{' '}
-      <span className="font-mono text-accent">{'{{nodes.start.output.*}}'}</span>
+      <span className="config-panel-code-inline">{'{{nodes.start.output.*}}'}</span>
     </p>
   )
 }
@@ -174,7 +184,7 @@ function StartHint() {
 export function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={className}>
-      <label className="text-[10px] font-mono text-muted tracking-wider block mb-1.5">{label}</label>
+      <label className="config-panel-label block mb-1.5">{label}</label>
       {children}
     </div>
   )

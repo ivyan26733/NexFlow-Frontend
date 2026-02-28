@@ -35,7 +35,7 @@ export default function VariableConfig({ config, onChange }: Props) {
     <Field label="VARIABLES">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {entries.length === 0 && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginBottom: '0.25rem' }}>
+          <p className="config-panel-description">
             Add one or more variables. Use {'{{'} refs {'}}'} for dynamic values.
           </p>
         )}
@@ -72,7 +72,7 @@ export default function VariableConfig({ config, onChange }: Props) {
             <input
               className="input-base"
               style={{ fontSize: '0.6875rem' }}
-              placeholder="value or {{nodes.x.output.field}}"
+              placeholder="value or {{nodes.x.output.field}} or {{nex.userData.field}}"
               value={v}
               onChange={e => updateVar(k, k, e.target.value)}
             />
@@ -81,17 +81,8 @@ export default function VariableConfig({ config, onChange }: Props) {
         <button
           type="button"
           onClick={addVar}
-          style={{
-            fontSize: '0.8125rem',
-            color: 'var(--color-accent)',
-            background: 'none',
-            border: '1px dashed var(--color-border)',
-            borderRadius: '0.5rem',
-            padding: '0.5rem 0.75rem',
-            cursor: 'pointer',
-            textAlign: 'left',
-            marginTop: entries.length > 0 ? '0.25rem' : 0,
-          }}
+          className="config-panel-add-btn"
+          style={{ marginTop: entries.length > 0 ? '0.25rem' : 0 }}
         >
           + Add variable
         </button>

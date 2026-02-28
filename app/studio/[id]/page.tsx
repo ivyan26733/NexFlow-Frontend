@@ -33,13 +33,13 @@ import { MillennialLoader } from '@/MillennialLoader'
 
 const nodeTypes: NodeTypes = {
   START:    FlowNodeCard,
-  PULSE:    FlowNodeCard,
   NEXUS:    FlowNodeCard,
   SUB_FLOW: FlowNodeCard,
   SCRIPT:   FlowNodeCard,
   VARIABLE: FlowNodeCard,
   MAPPER:   FlowNodeCard,
   DECISION: FlowNodeCard,
+  LOOP:     FlowNodeCard,
   SUCCESS:  FlowNodeCard,
   FAILURE:  FlowNodeCard,
 }
@@ -67,9 +67,10 @@ export default function StudioPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  // refs → avoid stale closure during save
+  // refs → avoid stale closure during save + prevent double-save
   const nodesRef = useRef(nodes)
   const edgesRef = useRef(edges)
+  const saveInProgressRef = useRef(false)
   nodesRef.current = nodes
   edgesRef.current = edges
 
@@ -111,14 +112,21 @@ export default function StudioPage() {
   /* ───────────────────────── Edge connect ───────────────────────── */
 
   const onConnect = useCallback((c: Connection) => {
+    const sourceHandle = c.sourceHandle ?? undefined
+    const conditionType = sourceHandle === 'continue' ? 'CONTINUE' : sourceHandle === 'failure' ? 'FAILURE' : 'SUCCESS'
+    const style = conditionType === 'CONTINUE'
+      ? { stroke: '#F59E0B', strokeWidth: 2, strokeDasharray: '6 3' }
+      : conditionType === 'FAILURE'
+        ? { stroke: '#ff4444', strokeWidth: 2 }
+        : { stroke: '#00e676', strokeWidth: 2 }
     setEdges(eds =>
       addEdge(
         {
           ...c,
           id: crypto.randomUUID(),
           type: 'smoothstep',
-          data: { conditionType: 'SUCCESS' },
-          style: { stroke: '#00e676', strokeWidth: 2 },
+          data: { conditionType },
+          style,
         },
         eds
       )
@@ -128,6 +136,8 @@ export default function StudioPage() {
   /* ───────────────────────── Actions ───────────────────────── */
 
   async function saveCanvas() {
+    if (saveInProgressRef.current) return
+    saveInProgressRef.current = true
     setSaving(true)
     try {
       await api.canvas.save(flowId, {
@@ -135,6 +145,7 @@ export default function StudioPage() {
         edges: edgesRef.current.map(rfEdgeToApiEdge),
       })
     } finally {
+      saveInProgressRef.current = false
       setSaving(false)
     }
   }
@@ -143,6 +154,15 @@ export default function StudioPage() {
     const exec = await api.executions.triggerBySlug(flowSlug, payload, true)
     setNodeStatuses({})
     setExecutionId(exec.id)
+  }
+
+  async function updateFlowName(name: string) {
+    try {
+      await api.flows.update(flowId, { name })
+      setFlowName(name)
+    } catch (e) {
+      console.error('Failed to update flow name', e)
+    }
   }
 
   function deleteSelectedNode() {
@@ -174,10 +194,12 @@ export default function StudioPage() {
 
       <div className="studio-main">
         <StudioToolbar
+          flowId={flowId}
           flowName={flowName}
           flowSlug={flowSlug}
           saving={saving}
           onSave={saveCanvas}
+          onFlowNameChange={updateFlowName}
           onTrigger={triggerFlow}
           viewMode={viewMode}
         />
@@ -345,9 +367,9 @@ function EdgePanel({ edge, nodes, onClose, onDelete, viewMode }: {
         </div>
       </div>
       <div className="studio-config-body">
-        <p className="text-sm text-text mb-2"><span className="text-muted">From:</span> {String(sourceLabel)}</p>
-        <p className="text-sm text-text mb-2"><span className="text-muted">To:</span> {String(targetLabel)}</p>
-        <p className="text-sm text-text"><span className="text-muted">Condition:</span> {conditionType}</p>
+        <p className="config-panel-description mb-2" style={{ color: 'var(--color-text)', marginBottom: '0.5rem' }}><span className="text-muted">From:</span> {String(sourceLabel)}</p>
+        <p className="config-panel-description mb-2" style={{ color: 'var(--color-text)', marginBottom: '0.5rem' }}><span className="text-muted">To:</span> {String(targetLabel)}</p>
+        <p className="config-panel-description" style={{ color: 'var(--color-text)', marginBottom: 0 }}><span className="text-muted">Condition:</span> {conditionType}</p>
       </div>
     </aside>
   )
@@ -383,8 +405,9 @@ function apiNodeToRfNode(n: ApiNode): Node {
 }
 
 function apiEdgeToRfEdge(e: ApiEdge): Edge {
-  const sourceHandle = e.sourceHandle ?? (e.conditionType === 'FAILURE' ? 'failure' : undefined)
-  const stroke = (e.sourceHandle === 'failure' || e.conditionType === 'FAILURE') ? '#ff4444' : '#00e676'
+  const sourceHandle = e.sourceHandle ?? (e.conditionType === 'FAILURE' ? 'failure' : e.conditionType === 'CONTINUE' ? 'continue' : undefined)
+  const stroke = e.conditionType === 'CONTINUE' ? '#F59E0B' : (e.sourceHandle === 'failure' || e.conditionType === 'FAILURE') ? '#ff4444' : '#00e676'
+  const strokeDasharray = e.conditionType === 'CONTINUE' ? '6 3' : undefined
   return {
     id: e.id,
     source: e.sourceNodeId,
@@ -393,7 +416,7 @@ function apiEdgeToRfEdge(e: ApiEdge): Edge {
     targetHandle: e.targetHandle ?? undefined,
     type: 'smoothstep',
     data: { conditionType: e.conditionType },
-    style: { stroke, strokeWidth: 2 },
+    style: { stroke, strokeWidth: 2, ...(strokeDasharray ? { strokeDasharray } : {}) },
   }
 }
 
@@ -414,9 +437,11 @@ function rfEdgeToApiEdge(e: Edge): ApiEdge {
   const sourceHandle = e.sourceHandle ?? undefined
   const conditionType = (sourceHandle === 'failure'
     ? 'FAILURE'
-    : sourceHandle === 'success'
-      ? 'SUCCESS'
-      : (e.data?.conditionType ?? 'DEFAULT')) as ApiEdge['conditionType']
+    : sourceHandle === 'continue'
+      ? 'CONTINUE'
+      : sourceHandle === 'success'
+        ? 'SUCCESS'
+        : (e.data?.conditionType ?? 'DEFAULT')) as ApiEdge['conditionType']
   return {
     id: e.id,
     flowId: '',

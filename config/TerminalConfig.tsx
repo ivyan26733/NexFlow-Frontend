@@ -24,25 +24,25 @@ export default function TerminalConfig({ config, onChange }: Props) {
 
   return (
     <Field label="RESPONSE BODY">
-      <p className="text-[10px] text-muted mb-2">Shape what gets returned when the flow ends here.</p>
+      <p className="config-panel-description">Shape what gets returned when the flow ends here.</p>
       <div className="flex flex-col gap-1.5">
         {Object.entries(response).map(([k, v], i) => (
           <div key={i} className="flex gap-1.5 items-center">
             <input
-              className="input-base flex-1 text-[11px] font-mono"
+              className="input-base flex-1 font-mono"
               placeholder="fieldName"
               defaultValue={k}
               onBlur={e => updateField(k, e.target.value, v)}
             />
             <input
-              className="input-base flex-1 text-[11px]"
+              className="input-base flex-1"
               placeholder="value or {{ref}}"
               defaultValue={v}
               onBlur={e => updateField(k, k, e.target.value)}
             />
           </div>
         ))}
-        <button onClick={addField} className="text-xs text-muted hover:text-accent transition-colors text-left">
+        <button type="button" onClick={addField} className="config-panel-add-btn">
           + Add field
         </button>
       </div>
