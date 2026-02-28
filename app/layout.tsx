@@ -13,10 +13,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{ margin: 0, minHeight: '100vh', background: 'var(--color-base)', color: 'var(--color-text)' }}>
         <nav className="app-nav">
           <a href="/" className="nav-brand">
-            <span className="logo-box">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M2 7h10M7 2l5 5-5 5" stroke="#0a0d14" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+            <span
+              className="logo-box"
+              style={{
+                background: 'linear-gradient(135deg, #00D4FF 0%, #6366F1 100%)',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                fontWeight: 800,
+                color: '#0a0d14',
+              }}
+            >
+              N
             </span>
             <span className="logo-text">NEXFLOW</span>
           </a>
@@ -25,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <a href="/pulses">Pulses</a>
           <a href="/transactions">Transactions</a>
           <a href="/nexus">Nexus</a>
+          <a href="/about">About</a>
           <div className="nav-spacer" />
           <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)' }}>v1.0 MVP</span>
         </nav>
