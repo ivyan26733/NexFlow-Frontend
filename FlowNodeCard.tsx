@@ -122,8 +122,8 @@ export function FlowNodeCard({ data, selected }: NodeProps) {
               {isLoop && d.liveStatus === 'RUNNING'
                 ? '↺ looping…'
                 : isLoop && d.liveStatus === 'SUCCESS'
-                  ? (typeof (d as Record<string, unknown>).iterationCount === 'number'
-                      ? `✓ ${(d as Record<string, unknown>).iterationCount} iterations`
+                  ? (typeof (d as unknown as Record<string, unknown>).iterationCount === 'number'
+                      ? `✓ ${(d as unknown as Record<string, unknown>).iterationCount} iterations`
                       : '✓ done')
                   : d.liveStatus === 'RETRYING'
                     ? 'RETRYING ↺'
