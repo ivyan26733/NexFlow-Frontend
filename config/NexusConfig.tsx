@@ -22,23 +22,31 @@ export default function NexusConfig({ config, onChange }: Props) {
 
   const [connectors,  setConnectors]  = useState<NexusConnector[]>([])
   const [loading,     setLoading]     = useState(true)
+  const [error,       setError]       = useState<string | null>(null)
   const [selected,    setSelected]    = useState<NexusConnector | null>(null)
 
   // Inline = no connectorId, just url/method/headers/body (same page, no redirect)
   const mode: RequestMode = c.connectorId ? 'connector' : 'inline'
 
   useEffect(() => {
+    setError(null)
     api.nexus.list()
       .then(list => {
         setConnectors(list)
         if (c.connectorId) {
           const match = list.find(cn => cn.id === c.connectorId)
           if (match) setSelected(match)
+          else setSelected(null)
+        } else {
+          setSelected(null)
         }
       })
-      .catch(console.error)
+      .catch(err => {
+        console.error('Failed to load connectors:', err)
+        setError('Failed to load connectors. Check your connection.')
+      })
       .finally(() => setLoading(false))
-  }, [])
+  }, [c.connectorId])
 
   function setMode(m: RequestMode) {
     if (m === 'inline') {
@@ -54,7 +62,7 @@ export default function NexusConfig({ config, onChange }: Props) {
   }
 
   function pickConnector(connectorId: string) {
-    const connector = connectors.find(cn => cn.id === connectorId) ?? null
+    const connector = connectors.find(cn => String(cn.id) === String(connectorId)) ?? null
     setSelected(connector)
 
     if (!connector) {
@@ -82,6 +90,14 @@ export default function NexusConfig({ config, onChange }: Props) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-muted)', fontSize: '0.8rem' }}>
         <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Loading…
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div style={{ fontSize: '0.8rem', color: 'var(--color-failure)' }}>
+        {error}
       </div>
     )
   }
@@ -129,9 +145,10 @@ export default function NexusConfig({ config, onChange }: Props) {
             <Globe size={12} /> Use connector
           </button>
         </div>
-        {connectors.length === 0 && mode === 'connector' && (
+        {mode === 'connector' && connectors.length === 0 && (
           <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)', marginTop: '0.35rem' }}>
-            No connectors yet. <a href="/nexus" target="_blank" rel="noopener" style={{ color: 'var(--color-accent)' }}>Create one in Nexus</a> (opens in new tab).
+            0 connectors found. Create one on the Nexus page first.{' '}
+            <a href="/nexus" target="_blank" rel="noopener" style={{ color: 'var(--color-accent)' }}>Open Nexus →</a>
           </p>
         )}
       </Field>
@@ -153,7 +170,7 @@ export default function NexusConfig({ config, onChange }: Props) {
           >
             <option value="">— Select connector —</option>
             {connectors.map(cn => (
-              <option key={cn.id} value={cn.id}>
+              <option key={cn.id ?? cn.name} value={cn.id ?? ''}>
                 {cn.name} ({cn.connectorType})
               </option>
             ))}
@@ -240,20 +257,22 @@ function InlineRestFields({ c, set }: { c: Partial<NexusNodeConfig>; set: (k: ke
       </Field>
       <Field label="HEADERS">
         <KVEditor
-          pairs={Object.entries(headers)}
-          onChange={pairs => set('headers', Object.fromEntries(pairs.filter(([k]) => k)))}
+          pairs={Object.entries(headers).length ? Object.entries(headers) : [['', '']]}
+          onChange={pairs => set('headers', Object.fromEntries(pairs))}
           keyPlaceholder="Key"
           valuePlaceholder="value or {{ref}}"
         />
       </Field>
-      <Field label="BODY">
-        <KVEditor
-          pairs={Object.entries(body)}
-          onChange={pairs => set('body', Object.fromEntries(pairs.filter(([k]) => k)))}
-          keyPlaceholder="field"
-          valuePlaceholder="value or {{ref}}"
-        />
-      </Field>
+      {['POST', 'PUT', 'PATCH'].includes((c.method as string) ?? 'GET') && (
+        <Field label="BODY">
+          <KVEditor
+            pairs={Object.entries(body).length ? Object.entries(body) : [['', '']]}
+            onChange={pairs => set('body', Object.fromEntries(pairs))}
+            keyPlaceholder="field"
+            valuePlaceholder="value or {{ref}}"
+          />
+        </Field>
+      )}
     </>
   )
 }
@@ -275,7 +294,7 @@ function RestFields({ c, set }: { c: Partial<NexusNodeConfig>; set: (k: keyof Ne
             onChange={e => set('method', e.target.value)}
             style={{ width: '6rem', flexShrink: 0 }}
           >
-            {HTTP_METHODS.map(m => <option key={m}>{m}</option>)}
+            {HTTP_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
           <input
             className="input-base"
@@ -292,22 +311,24 @@ function RestFields({ c, set }: { c: Partial<NexusNodeConfig>; set: (k: keyof Ne
       {/* Headers override */}
       <Field label="HEADERS (override)">
         <KVEditor
-          pairs={Object.entries(headers)}
-          onChange={pairs => set('headers', Object.fromEntries(pairs.filter(([k]) => k)))}
+          pairs={Object.entries(headers).length ? Object.entries(headers) : [['', '']]}
+          onChange={pairs => set('headers', Object.fromEntries(pairs))}
           keyPlaceholder="Header-Name"
           valuePlaceholder="value or {{ref}}"
         />
       </Field>
 
-      {/* Body */}
-      <Field label="REQUEST BODY">
-        <KVEditor
-          pairs={Object.entries(body)}
-          onChange={pairs => set('body', Object.fromEntries(pairs.filter(([k]) => k)))}
-          keyPlaceholder="field"
-          valuePlaceholder="value or {{ref}}"
-        />
-      </Field>
+      {/* Body — only for methods that send a body */}
+      {['POST', 'PUT', 'PATCH'].includes(c.method ?? 'GET') && (
+        <Field label="REQUEST BODY">
+          <KVEditor
+            pairs={Object.entries(body).length ? Object.entries(body) : [['', '']]}
+            onChange={pairs => set('body', Object.fromEntries(pairs))}
+            keyPlaceholder="field"
+            valuePlaceholder="value or {{ref}}"
+          />
+        </Field>
+      )}
     </>
   )
 }
@@ -323,7 +344,7 @@ function JdbcFields({ c, set }: { c: Partial<NexusNodeConfig>; set: (k: keyof Ne
           value={c.queryType ?? 'SELECT'}
           onChange={e => set('queryType', e.target.value)}
         >
-          {QUERY_TYPES.map(q => <option key={q}>{q}</option>)}
+          {QUERY_TYPES.map(q => <option key={q} value={q}>{q}</option>)}
         </select>
       </Field>
 
@@ -331,7 +352,7 @@ function JdbcFields({ c, set }: { c: Partial<NexusNodeConfig>; set: (k: keyof Ne
         <textarea
           rows={6}
           className="input-base"
-          style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', resize: 'vertical' }}
+          style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', resize: 'vertical', minHeight: '8rem' }}
           value={c.query ?? ''}
           placeholder={`SELECT *\nFROM users\nWHERE id = '{{variables.userId}}'`}
           spellCheck={false}

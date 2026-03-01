@@ -217,7 +217,7 @@ export default function AboutPage() {
                 border: "1px solid #1E293B",
                 borderRadius: "4px",
                 marginBottom: "40px",
-                fontSize: "10px",
+                fontSize: "15px",
                 color: "#00D4FF",
                 letterSpacing: "0.2em",
               }}
@@ -355,7 +355,7 @@ export default function AboutPage() {
             <div>
               <div
                 style={{
-                  fontSize: "10px",
+                  fontSize: "20px",
                   color: "#94A3B8",
                   letterSpacing: "0.2em",
                   marginBottom: "16px",
@@ -373,7 +373,7 @@ export default function AboutPage() {
               />
               <div
                 style={{
-                  fontSize: "11px",
+                  fontSize: "17px",
                   color: "#CBD5E1",
                   letterSpacing: "0.1em",
                   lineHeight: "2",
@@ -444,10 +444,11 @@ export default function AboutPage() {
         >
           <div
             style={{
-              fontSize: "10px",
+              fontSize: "16px",
               color: "#94A3B8",
               letterSpacing: "0.2em",
               marginBottom: "64px",
+              fontWeight: "900",
             }}
           >
             DESIGN PRINCIPLES
@@ -467,7 +468,7 @@ export default function AboutPage() {
                 key={p.title}
                 style={{
                   background: "#050810",
-                  padding: "48px 36px",
+                  padding: "48px 5px",
                   transition: "background 0.2s",
                   cursor: "default",
                 }}
@@ -490,7 +491,7 @@ export default function AboutPage() {
                 </div>
                 <div
                   style={{
-                    fontSize: "13px",
+                    fontSize: "17px",
                     fontWeight: "600",
                     color: "#F1F5F9",
                     marginBottom: "14px",
@@ -501,7 +502,7 @@ export default function AboutPage() {
                 </div>
                 <div
                   style={{
-                    fontSize: "13px",
+                    fontSize: "15px",
                     color: "#94A3B8",
                     lineHeight: "1.8",
                   }}

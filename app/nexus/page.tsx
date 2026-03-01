@@ -1,320 +1,1230 @@
-'use client'
+  'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Edit2, Check, X, Loader2, Link, Key, Globe } from 'lucide-react'
 import { api } from '@/api'
-import CardMenu from '@/CardMenu'
-import type { NexusConnector, AuthType } from '@/types'
-import { usePagination, PaginationControls } from '@/Pagination'
-import { MillennialLoader } from '@/MillennialLoader'
+import type { NexusConnector as ApiNexusConnector } from '@/index'
 
-const AUTH_TYPES: AuthType[] = ['NONE', 'BEARER', 'API_KEY', 'BASIC']
+  const DRIVERS = [
+    { label: 'PostgreSQL', value: 'postgresql', prefix: 'jdbc:postgresql://localhost:5432/mydb' },
+    { label: 'MySQL',      value: 'mysql',      prefix: 'jdbc:mysql://localhost:3306/mydb' },
+    { label: 'MariaDB',    value: 'mariadb',    prefix: 'jdbc:mariadb://localhost:3306/mydb' },
+    { label: 'Oracle',     value: 'oracle',     prefix: 'jdbc:oracle:thin:@localhost:1521:orcl' },
+    { label: 'SQL Server', value: 'sqlserver',  prefix: 'jdbc:sqlserver://localhost:1433;databaseName=mydb' },
+    { label: 'Other',      value: 'other',      prefix: 'jdbc:' },
+  ]
 
-export default function NexusPage() {
-  const [connectors, setConnectors] = useState<NexusConnector[]>([])
-  const [loading, setLoading] = useState(true)
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState<NexusConnector | null>(null)
-  const [viewing, setViewing] = useState<NexusConnector | null>(null)
+  type KVPair = [string, string]
 
-  function reload() {
-    setLoading(true)
-    api.nexus.list()
-      .then(setConnectors)
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }
-
-  useEffect(() => { reload() }, [])
-
-  const {
-    pageItems: pagedConnectors,
-    page,
-    totalPages,
-    totalItems,
-    pageSize,
-    setPage,
-    setPageSize,
-  } = usePagination(connectors, 10)
-
-  async function deleteConnector(id: string) {
-    if (!confirm('Delete this connector?')) return
-    await api.nexus.delete(id)
-    setConnectors(cs => cs.filter(c => c.id !== id))
-  }
-
-  function openCreate() { setEditing(null); setViewing(null); setFormOpen(true) }
-  function openEdit(c: NexusConnector) { setEditing(c); setViewing(null); setFormOpen(true) }
-  function openView(c: NexusConnector) { setViewing(c); setFormOpen(false); setEditing(null) }
-  function closeForm() { setFormOpen(false); setEditing(null); setViewing(null) }
-
-  async function onSave(data: Partial<NexusConnector>) {
-    if (editing?.id) {
-      await api.nexus.update(editing.id, data)
-    } else {
-      await api.nexus.create(data)
-    }
-    closeForm()
-    reload()
-  }
-
-  return (
-    <div className="dashboard-page">
-      <div className="dashboard-header">
-        <div>
-          <p className="dashboard-label">CONNECTIONS</p>
-          <h1 className="dashboard-title">Nexus</h1>
-          <p className="dashboard-subtitle">
-            Manage reusable API connectors. Use them in HTTP Call (Nexus) nodes or configure a quick URL inline in Studio.
-          </p>
-        </div>
-        <button type="button" onClick={openCreate} className="dashboard-btn-primary">
-          <Plus size={16} />
-          New Connector
-        </button>
-      </div>
-
-      {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-          <MillennialLoader label="Loading connectors…" />
-        </div>
-      ) : connectors.length === 0 ? (
-        <EmptyState onCreate={openCreate} />
-      ) : (
-        <>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {pagedConnectors.map(c => (
-              <ConnectorCard
-                key={c.id}
-                connector={c}
-                onView={() => openView(c)}
-                onEdit={() => openEdit(c)}
-                onDelete={() => deleteConnector(c.id!)}
-              />
-            ))}
-          </div>
-          <PaginationControls
-            page={page}
-            totalPages={totalPages}
-            totalItems={totalItems}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onPageSizeChange={setPageSize}
-          />
-        </>
-      )}
-
-      {(formOpen || viewing) && (
-        <ConnectorModal
-          initial={editing ?? viewing}
-          onSave={onSave}
-          onClose={closeForm}
-          readOnly={!!viewing}
-        />
-      )}
-    </div>
-  )
+type NexusConnector = {
+  id?: string
+  name: string
+  description?: string
+  connectorType: 'REST' | 'JDBC'
+  baseUrl?: string
+  authType?: 'NONE' | 'BEARER' | 'API_KEY' | 'BASIC'
+  authToken?: string
+  apiKeyHeader?: string
+  apiKeyValue?: string
+  /** Request body template e.g. {{variables.body}} or JSON */
+  bodyTemplate?: string
+  jdbcUrl?: string
+  username?: string
+  password?: string
+  driver?: string
+  ssl?: boolean
+  headers?: KVPair[]
+  queryParams?: KVPair[]
 }
 
-function ConnectorCard({ connector, onView, onEdit, onDelete }: {
-  connector: NexusConnector
-  onView: () => void
-  onEdit: () => void
-  onDelete: () => void
-}) {
-  const authColor = connector.authType === 'NONE' ? 'var(--color-muted)' : 'var(--color-accent)'
+type TestResult = {
+  success: boolean
+  message: string
+  latencyMs?: number
+  statusCode?: number
+  responseHeaders?: Record<string, string>
+  responseBody?: string | null
+}
 
+const EMPTY_CONNECTOR: NexusConnector = {
+  name: '',
+  description: '',
+  connectorType: 'REST',
+  baseUrl: '',
+  authType: 'NONE',
+  authToken: '',
+  apiKeyHeader: 'X-API-Key',
+  apiKeyValue: '',
+  bodyTemplate: '',
+  jdbcUrl: '',
+  username: '',
+  password: '',
+  driver: 'postgresql',
+  ssl: false,
+  headers: [],
+  queryParams: [],
+}
+
+/** Map API connector to local form shape (headers/queryParams as KVPair[], username/password) */
+function fromApi(c: ApiNexusConnector & { id?: string }): NexusConnector {
+  const headers = c.defaultHeaders ?? (c as unknown as { headers?: Record<string, string> }).headers
+  const rawHeaders = typeof headers === 'object' && headers !== null && !Array.isArray(headers) ? headers : {}
+  const qp = c.queryParams
+  const rawQp = typeof qp === 'object' && qp !== null && !Array.isArray(qp) ? qp : {}
+  const auth = c.authConfig ?? {}
+  const bodyMap = (c as unknown as { body?: Record<string, string> }).body
+  const bodyTemplate = typeof bodyMap === 'object' && bodyMap !== null && bodyMap.body != null
+    ? String(bodyMap.body)
+    : ''
+  return {
+    id: c.id,
+    name: c.name ?? '',
+    description: c.description,
+    connectorType: (c.connectorType === 'JDBC' ? 'JDBC' : 'REST') as 'REST' | 'JDBC',
+    baseUrl: c.baseUrl,
+    authType: (c.authType as NexusConnector['authType']) ?? 'NONE',
+    authToken: typeof auth.token === 'string' ? auth.token : '',
+    apiKeyHeader: typeof auth.headerName === 'string' ? auth.headerName : 'X-API-Key',
+    apiKeyValue: typeof auth.key === 'string' ? auth.key : '',
+    bodyTemplate: bodyTemplate || undefined,
+    jdbcUrl: c.jdbcUrl,
+    username: c.dbUsername,
+    password: c.dbPassword,
+    driver: (c as unknown as { jdbcDriver?: string }).jdbcDriver,
+    headers: Object.entries(rawHeaders as Record<string, string>).length ? (Object.entries(rawHeaders as Record<string, string>) as KVPair[]) : [],
+    queryParams: Object.entries(rawQp as Record<string, string>).length ? (Object.entries(rawQp as Record<string, string>) as KVPair[]) : [],
+  }
+}
+
+/** Map local form to API payload (defaultHeaders, authConfig, dbUsername, dbPassword) */
+function toApiPayload(e: NexusConnector): Partial<ApiNexusConnector> {
+  const headersObj = Object.fromEntries(e.headers ?? [])
+  const queryObj = Object.fromEntries(e.queryParams ?? [])
+  const authType = e.authType ?? 'NONE'
+  const authConfig: Record<string, string> = {}
+  if (authType === 'BEARER' && e.authToken) authConfig.token = e.authToken
+  if (authType === 'API_KEY') {
+    if (e.apiKeyHeader) authConfig.headerName = e.apiKeyHeader
+    if (e.apiKeyValue) authConfig.key = e.apiKeyValue
+  }
+  if (authType === 'BASIC') {
+    if (e.username) authConfig.username = e.username
+    if (e.password) authConfig.password = e.password
+  }
+  const bodyPayload =
+    e.bodyTemplate != null && e.bodyTemplate.trim() !== ''
+      ? { body: e.bodyTemplate.trim() }
+      : undefined
+  const baseUrl = normalizeBaseUrl(e.baseUrl)
+  return {
+    name: e.name,
+    description: e.description ?? undefined,
+    connectorType: e.connectorType,
+    baseUrl: baseUrl ?? undefined,
+    authType: authType,
+    headers: Object.keys(headersObj).length ? headersObj : undefined,
+    body: bodyPayload,
+    queryParams: Object.keys(queryObj).length ? queryObj : undefined,
+    authConfig: Object.keys(authConfig).length ? authConfig : undefined,
+    jdbcUrl: (e.jdbcUrl ?? '').trim() || undefined,
+    jdbcDriver: e.driver,
+    dbUsername: (e.username ?? '').trim() || undefined,
+    dbPassword: (e.password ?? '').trim() || undefined,
+  }
+}
+
+function normalizeBaseUrl(value: string | undefined): string | undefined {
+  const v = (value ?? '').trim()
+  if (!v) return undefined
+  if (v.startsWith('http://') || v.startsWith('https://')) return v
+  if (v.startsWith('ttp://')) return 'h' + v
+  return 'https://' + v.replace(/^\/+/, '')
+}
+
+  // ── KV Editor ─────────────────────────────────────────────────────────────────
+  function KVEditor({
+    pairs,
+    onChange,
+    keyPlaceholder = 'Key',
+    valuePlaceholder = 'Value',
+  }: {
+    pairs: KVPair[]
+    onChange: (pairs: KVPair[]) => void
+    keyPlaceholder?: string
+    valuePlaceholder?: string
+  }) {
   return (
-    <div className="dashboard-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-      <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem', background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Link size={15} style={{ color: 'var(--color-accent)' }} />
-      </div>
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
-          <h3 className="dashboard-card-title" style={{ margin: 0 }}>{connector.name}</h3>
-          <span style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', padding: '0.1rem 0.4rem', borderRadius: '4px', background: 'var(--color-panel)', color: authColor, border: '1px solid var(--color-border)' }}>
-            {connector.authType}
-          </span>
-        </div>
-        {connector.description && (
-          <p className="dashboard-card-meta" style={{ marginBottom: '0.25rem' }}>{connector.description}</p>
-        )}
-        {connector.baseUrl && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <Globe size={11} style={{ color: 'var(--color-muted)' }} />
-            <span style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)' }}>{connector.baseUrl}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+        {pairs.map(([k, v], i) => (
+          <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%', minWidth: 0 }}>
+            <input
+              value={k}
+              placeholder={keyPlaceholder}
+              onChange={e => {
+                const next: KVPair[] = pairs.map((p, j) => (j === i ? [e.target.value, p[1]] : p))
+                onChange(next)
+              }}
+              style={{ ...inputStyle, flexShrink: 0, width: '140px', minWidth: '100px' }}
+            />
+            <input
+              value={v}
+              placeholder={valuePlaceholder}
+              onChange={e => {
+                const next: KVPair[] = pairs.map((p, j) => (j === i ? [p[0], e.target.value] : p))
+                onChange(next)
+              }}
+              style={{ ...inputStyle, flex: 1, minWidth: '200px' }}
+            />
+            <button
+              type="button"
+              onClick={() => onChange(pairs.filter((_, j) => j !== i) as KVPair[])}
+              style={{
+                background: 'none', border: 'none',
+                color: '#CBD5E1', cursor: 'pointer',
+                fontSize: '18px', lineHeight: 1,
+                padding: '0 2px', flexShrink: 0,
+                transition: 'color 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = '#EF4444'}
+              onMouseLeave={e => e.currentTarget.style.color = '#CBD5E1'}
+            >×</button>
           </div>
-        )}
+        ))}
+        <button
+          type="button"
+          onClick={() => onChange([...pairs, ['', '']] as KVPair[])}
+          style={{
+            alignSelf: 'flex-start',
+            fontSize: '12px',
+            color: '#3B82F6',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            letterSpacing: '0.02em',
+            opacity: 0.8,
+            transition: 'opacity 0.15s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '0.8'}
+        >
+          <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span> Add row
+        </button>
       </div>
+    )
+  }
 
-      {connector.defaultHeaders && Object.keys(connector.defaultHeaders).length > 0 && (
-        <span style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)', flexShrink: 0 }}>
-          {Object.keys(connector.defaultHeaders).length} header{Object.keys(connector.defaultHeaders).length !== 1 ? 's' : ''}
+  // ── Password Field ─────────────────────────────────────────────────────────────
+  function PasswordInput({
+    value,
+    onChange,
+    placeholder,
+  }: {
+    value?: string
+    onChange: (v: string) => void
+    placeholder?: string
+  }) {
+    const [show, setShow] = useState(false)
+    return (
+      <div style={{ position: 'relative' }}>
+        <input
+          type={show ? 'text' : 'password'}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          style={{ ...inputStyle, paddingRight: '44px' }}
+        />
+        <button
+          type="button"
+          onClick={() => setShow(s => !s)}
+          style={{
+            position: 'absolute', right: '10px', top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'none', border: 'none',
+            color: '#CBD5E1', cursor: 'pointer',
+            fontSize: '11px', letterSpacing: '0.05em',
+            padding: '2px 4px',
+          }}
+        >
+          {show ? 'HIDE' : 'SHOW'}
+        </button>
+      </div>
+    )
+  }
+
+  // ── Section Label ──────────────────────────────────────────────────────────────
+  function SectionLabel({ children }: { children: React.ReactNode }) {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '12px',
+        margin: '32px 0 20px',
+      }}>
+        <span style={{
+          fontSize: '10px', color: '#E2E8F0',
+          letterSpacing: '0.15em', fontWeight: '600',
+          whiteSpace: 'nowrap',
+        }}>
+          {children}
         </span>
-      )}
-
-      <div style={{ flexShrink: 0 }}>
-        <CardMenu
-          items={[
-            { label: 'View', onClick: onView },
-            { label: 'Edit', onClick: onEdit },
-            { label: 'Delete', onClick: onDelete, danger: true },
-          ]}
-        />
+        <div style={{ flex: 1, height: '1px', background: '#0F172A' }} />
       </div>
-    </div>
-  )
-}
-
-function ConnectorModal({ initial, onSave, onClose, readOnly = false }: {
-  initial: NexusConnector | null
-  onSave: (data: Partial<NexusConnector>) => Promise<void>
-  onClose: () => void
-  readOnly?: boolean
-}) {
-  const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState<Partial<NexusConnector>>({
-    name: initial?.name ?? '',
-    description: initial?.description ?? '',
-    baseUrl: initial?.baseUrl ?? '',
-    authType: initial?.authType ?? 'NONE',
-    defaultHeaders: initial?.defaultHeaders ?? {},
-    authConfig: initial?.authConfig ?? {},
-  })
-
-  const [headerRows, setHeaderRows] = useState<[string, string][]>(
-    Object.entries(initial?.defaultHeaders ?? {})
-  )
-  const [authRows, setAuthRows] = useState<[string, string][]>(
-    Object.entries(initial?.authConfig ?? {})
-  )
-
-  function rowsToObj(rows: [string, string][]) {
-    return Object.fromEntries(rows.filter(([k]) => k.trim()))
+    )
   }
 
-  async function submit() {
-    setSaving(true)
-    try {
-      await onSave({ ...form, defaultHeaders: rowsToObj(headerRows), authConfig: rowsToObj(authRows) })
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="dashboard-modal-backdrop" onClick={onClose}>
-      <div className="dashboard-modal" onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-          <h2 className="dashboard-title" style={{ fontSize: '1.125rem', margin: 0 }}>{readOnly ? 'View Connector' : initial ? 'Edit Connector' : 'New Connector'}</h2>
-          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', fontSize: '1.25rem', lineHeight: 1 }}>×</button>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <Field label="Name *">
-            <input className="input-base" value={form.name ?? ''} placeholder="e.g. Stripe Production" onChange={e => setForm(f => ({ ...f, name: e.target.value }))} readOnly={readOnly} disabled={readOnly} />
-          </Field>
-          <Field label="Description">
-            <input className="input-base" value={form.description ?? ''} placeholder="Optional description" onChange={e => setForm(f => ({ ...f, description: e.target.value }))} readOnly={readOnly} disabled={readOnly} />
-          </Field>
-          <Field label="Base URL">
-            <input className="input-base" value={form.baseUrl ?? ''} placeholder="https://api.example.com" onChange={e => setForm(f => ({ ...f, baseUrl: e.target.value }))} readOnly={readOnly} disabled={readOnly} />
-          </Field>
-          <Field label="Auth Type">
-            <select className="input-base" value={form.authType} onChange={e => setForm(f => ({ ...f, authType: e.target.value as AuthType }))} disabled={readOnly}>
-              {AUTH_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </Field>
-          <Field label="Default Headers">
-            <KVEditor rows={headerRows} onChange={setHeaderRows} keyPlaceholder="Header-Name" valuePlaceholder="value" readOnly={readOnly} />
-          </Field>
-          {form.authType !== 'NONE' && (
-            <Field label={`Auth Config (${form.authType})`}>
-              <p className="dashboard-card-meta" style={{ marginBottom: '0.4rem' }}>
-                {form.authType === 'BEARER' && 'Add key "token" with your Bearer token value.'}
-                {form.authType === 'API_KEY' && 'Add key "key" with your API key value.'}
-                {form.authType === 'BASIC' && 'Add keys "username" and "password".'}
-              </p>
-              <KVEditor rows={authRows} onChange={setAuthRows} keyPlaceholder="key" valuePlaceholder="value" readOnly={readOnly} />
-            </Field>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-          {readOnly ? (
-            <button type="button" onClick={onClose} className="dashboard-btn-primary">Close</button>
-          ) : (
-            <>
-              <button type="button" onClick={onClose} className="studio-toolbar-btn">Cancel</button>
-              <button type="button" onClick={submit} disabled={saving || !form.name?.trim()} className="dashboard-btn-primary">
-                {saving ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={14} />}
-                {saving ? 'Saving…' : 'Save'}
-              </button>
-            </>
-          )}
-        </div>
+  // ── Field wrapper ──────────────────────────────────────────────────────────────
+  function Field({
+    label,
+    hint,
+    children,
+  }: {
+    label: string
+    hint?: string
+    children: React.ReactNode
+  }) {
+    return (
+      <div style={{ marginBottom: '20px' }}>
+        <label style={{
+          display: 'block',
+          fontSize: '11px', color: '#CBD5E1',
+          letterSpacing: '0.08em', marginBottom: '7px',
+          fontWeight: '500',
+        }}>
+          {label}
+        </label>
+        {children}
+        {hint && (
+          <p style={{ fontSize: '11px', color: '#E2E8F0', marginTop: '5px', lineHeight: 1.5 }}>
+            {hint}
+          </p>
+        )}
       </div>
-    </div>
-  )
-}
-
-function KVEditor({ rows, onChange, keyPlaceholder, valuePlaceholder, readOnly = false }: {
-  rows: [string, string][]
-  onChange: (r: [string, string][]) => void
-  keyPlaceholder: string
-  valuePlaceholder: string
-  readOnly?: boolean
-}) {
-  function update(i: number, side: 0 | 1, val: string) {
-    const next = [...rows] as [string, string][]
-    next[i] = [next[i][0], next[i][1]]
-    next[i][side] = val
-    onChange(next)
+    )
   }
-  function add() { onChange([...rows, ['', '']]) }
-  function remove(i: number) { onChange(rows.filter((_, j) => j !== i)) }
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-      {rows.map(([k, v], i) => (
-        <div key={i} style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-          <input className="input-base" value={k} placeholder={keyPlaceholder} onChange={e => update(i, 0, e.target.value)} style={{ flex: 1 }} readOnly={readOnly} disabled={readOnly} />
-          <input className="input-base" value={v} placeholder={valuePlaceholder} onChange={e => update(i, 1, e.target.value)} style={{ flex: 2 }} readOnly={readOnly} disabled={readOnly} />
-          {!readOnly && (
-            <button type="button" onClick={() => remove(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', padding: 2 }}>
-              <X size={13} />
+  // ── Toast ──────────────────────────────────────────────────────────────────────
+  function Toast({
+    message,
+    type,
+    onClose,
+  }: {
+    message: string
+    type: string
+    onClose: () => void
+  }) {
+    useEffect(() => {
+      const t = setTimeout(onClose, 3000)
+      return () => clearTimeout(t)
+    }, [])
+    return (
+      <div style={{
+        position: 'fixed', bottom: '28px', right: '28px',
+        padding: '12px 20px',
+        background: type === 'success' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+        border: `1px solid ${type === 'success' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+        borderRadius: '8px',
+        color: type === 'success' ? '#10B981' : '#EF4444',
+        fontSize: '13px',
+        zIndex: 9999,
+        display: 'flex', alignItems: 'center', gap: '10px',
+        backdropFilter: 'blur(8px)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        animation: 'slideUp 0.2s ease',
+      }}>
+        <span>{type === 'success' ? '✓' : '✗'}</span>
+        {message}
+      </div>
+    )
+  }
+
+  // ── Delete confirm dialog ──────────────────────────────────────────────────────
+  function DeleteDialog({
+    name,
+    onConfirm,
+    onCancel,
+  }: {
+    name: string
+    onConfirm: () => void
+    onCancel: () => void
+  }) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(0,0,0,0.7)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 9998, backdropFilter: 'blur(4px)',
+      }}>
+        <div style={{
+          background: '#080D18',
+          border: '1px solid #1E293B',
+          borderRadius: '12px',
+          padding: '32px',
+          width: '400px',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+        }}>
+          <div style={{ fontSize: '18px', fontWeight: '600', color: '#F1F5F9', marginBottom: '12px' }}>
+            Delete connector?
+          </div>
+          <p style={{ fontSize: '14px', color: '#CBD5E1', lineHeight: 1.6, marginBottom: '28px' }}>
+            <strong style={{ color: '#CBD5E1' }}>{name}</strong> will be permanently deleted.
+            Any flow using this connector will fail.
+          </p>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button onClick={onCancel} style={{ ...btnStyle, background: '#0F172A', color: '#E2E8F0', border: '1px solid #1E293B' }}>
+              Cancel
             </button>
-          )}
+            <button onClick={onConfirm} style={{ ...btnStyle, background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)' }}>
+              Delete
+            </button>
+          </div>
         </div>
-      ))}
-      {!readOnly && (
-        <button type="button" onClick={add} style={{ alignSelf: 'flex-start', fontSize: '0.75rem', color: 'var(--color-accent)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.2rem 0' }}>
-          <Plus size={12} /> Add
-        </button>
-      )}
-    </div>
-  )
-}
+      </div>
+    )
+  }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="dashboard-label" style={{ display: 'block', marginBottom: '0.4rem' }}>{label}</label>
-      {children}
-    </div>
-  )
-}
+  // ── MAIN PAGE ──────────────────────────────────────────────────────────────────
+  export default function NexusPage() {
+    const [connectors,       setConnectors]       = useState<NexusConnector[]>([])
+    const [selectedId,       setSelectedId]       = useState<string | null>(null)
+    const [editing,          setEditing]          = useState<NexusConnector | null>(null)
+    const [isNew,            setIsNew]            = useState(false)
+    const [isDirty,          setIsDirty]          = useState(false)
+    const [saving,           setSaving]           = useState(false)
+    const [testing,          setTesting]          = useState(false)
+    const [testResult,       setTestResult]       = useState<TestResult | null>(null)
+    const [testMethod,       setTestMethod]       = useState<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'>('POST')
+    const [testBody,         setTestBody]         = useState('')
+    const [showDelete,       setShowDelete]       = useState(false)
+    const [toast,            setToast]            = useState<{ message: string; type: string } | null>(null)
+    const [loading,          setLoading]          = useState(true)
 
-function EmptyState({ onCreate }: { onCreate: () => void }) {
-  return (
-    <div className="dashboard-empty">
-      <Key size={32} style={{ opacity: 0.3 }} />
-      <h2 className="dashboard-title" style={{ fontSize: '1rem' }}>No connectors yet</h2>
-      <p className="dashboard-subtitle">Create a connector to store API credentials and reuse them in your flows.</p>
-      <button type="button" onClick={onCreate} className="dashboard-btn-primary">
-        Create Connector
-      </button>
-    </div>
-  )
-}
+    // Load connectors on mount
+    useEffect(() => {
+      loadConnectors()
+    }, [])
+
+    async function loadConnectors() {
+      try {
+        setLoading(true)
+        const list = await api.nexus.list()
+        setConnectors(Array.isArray(list) ? list.map(fromApi) : [])
+      } catch {
+        showToast('Failed to load connectors', 'error')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    function selectConnector(c: NexusConnector) {
+      setSelectedId(c.id ?? null)
+      setEditing({
+        ...EMPTY_CONNECTOR,
+        ...c,
+        headers:     Array.isArray(c.headers)     ? c.headers     : (Object.entries((c.headers ?? {}) as Record<string, string>) as KVPair[]),
+        queryParams: Array.isArray(c.queryParams) ? c.queryParams : (Object.entries((c.queryParams ?? {}) as Record<string, string>) as KVPair[]),
+      })
+      setIsNew(false)
+      setIsDirty(false)
+      setTestResult(null)
+    }
+
+    function newConnector() {
+      setSelectedId(null)
+      setEditing({ ...EMPTY_CONNECTOR })
+      setIsNew(true)
+      setIsDirty(false)
+      setTestResult(null)
+    }
+
+    function update<K extends keyof NexusConnector>(key: K, value: NexusConnector[K]) {
+      setEditing(e => (e ? { ...e, [key]: value } : e))
+      setIsDirty(true)
+      setTestResult(null)
+    }
+
+    async function save() {
+      if (!editing) return
+      if (!editing.name?.trim()) {
+        showToast('Name is required', 'error')
+        return
+      }
+      setSaving(true)
+      try {
+        const payload = toApiPayload(editing)
+        const saved = isNew
+          ? await api.nexus.create(payload)
+          : await api.nexus.update(selectedId!, payload)
+
+        showToast(isNew ? 'Connector created' : 'Connector saved', 'success')
+        await loadConnectors()
+        setSelectedId(saved.id ?? null)
+        setIsNew(false)
+        setIsDirty(false)
+      } catch (e: unknown) {
+        showToast('Save failed: ' + (e instanceof Error ? e.message : String(e)), 'error')
+      } finally {
+        setSaving(false)
+      }
+    }
+
+    async function testConnection() {
+      if (!selectedId) { showToast('Save connector first to test', 'error'); return }
+      setTesting(true)
+      setTestResult(null)
+      try {
+        const payload: Record<string, unknown> = { method: testMethod }
+        if (testBody.trim()) {
+          try {
+            Object.assign(payload, JSON.parse(testBody.trim()) as Record<string, unknown>)
+          } catch {
+            showToast('Test body must be valid JSON', 'error')
+            setTesting(false)
+            return
+          }
+        }
+        const r = await api.nexus.test(selectedId, payload)
+        setTestResult(r)
+      } catch (e: unknown) {
+        const err = e instanceof Error ? e.message : String(e)
+        setTestResult({ success: false, message: err.includes('404') ? 'Connector not found. Save the connector and try again, or check that the backend is running.' : err })
+      } finally {
+        setTesting(false)
+      }
+    }
+
+    async function deleteConnector() {
+      setShowDelete(false)
+      if (!selectedId) return
+      try {
+        await api.nexus.delete(selectedId)
+        showToast('Connector deleted', 'success')
+        setEditing(null)
+        setSelectedId(null)
+        await loadConnectors()
+      } catch {
+        showToast('Delete failed', 'error')
+      }
+    }
+
+    function showToast(message: string, type: string) {
+      setToast({ message, type })
+    }
+
+    return (
+      <div
+        className="nexus-page"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 'calc(100vh - 3.5rem)',
+          background: '#050810',
+          color: '#E2E8F0',
+          fontFamily: "'DM Mono', 'Fira Code', monospace",
+          overflow: 'hidden',
+        }}
+      >
+        {/* ── BODY ─────────────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+
+          {/* ── LEFT PANEL ───────────────────────────────────────────── */}
+          <div style={{
+            width: '300px',
+            flexShrink: 0,
+            borderRight: '1px solid #0F172A',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            background: '#030609',
+          }}>
+            {/* Search / count */}
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid #0F172A',
+              fontSize: '10px', color: '#E2E8F0',
+              letterSpacing: '0.1em',
+            }}>
+              {loading ? 'LOADING...' : `${connectors.length} CONNECTOR${connectors.length !== 1 ? 'S' : ''}`}
+            </div>
+
+            {/* List */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+              {loading ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: '#E2E8F0', fontSize: '12px' }}>
+                  Loading...
+                </div>
+              ) : connectors.length === 0 ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '24px', marginBottom: '12px', opacity: 0.5, color: '#E2E8F0' }}>⬡</div>
+                  <div style={{ fontSize: '12px', color: '#E2E8F0' }}>No connectors yet</div>
+                  <div style={{ fontSize: '11px', color: '#CBD5E1', marginTop: '6px' }}>
+                    Click + New Connector
+                  </div>
+                </div>
+              ) : (
+                connectors.map(c => {
+                  const isSelected = selectedId === c.id
+                  const isThisDirty = isSelected && isDirty
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => selectConnector(c)}
+                      style={{
+                        padding: '14px 20px',
+                        cursor: 'pointer',
+                        borderLeft: `3px solid ${isSelected ? '#3B82F6' : 'transparent'}`,
+                        background: isSelected ? 'rgba(59,130,246,0.05)' : 'transparent',
+                        transition: 'all 0.15s',
+                        borderBottom: '1px solid #0A0F1A',
+                      }}
+                      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.02)' }}
+                      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
+                        {/* Status dot */}
+                        <div style={{
+                          width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0,
+                          background: isThisDirty ? '#F59E0B' : '#10B981',
+                          boxShadow: isThisDirty ? '0 0 6px #F59E0B' : '0 0 6px rgba(16,185,129,0.5)',
+                        }} />
+                        <span style={{
+                          fontSize: '13px', fontWeight: '500',
+                          color: isSelected ? '#F1F5F9' : '#94A3B8',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          flex: 1,
+                        }}>
+                          {c.name}
+                        </span>
+                        {/* Type badge */}
+                        <span style={{
+                          fontSize: '9px', padding: '2px 6px', borderRadius: '3px',
+                          background: c.connectorType === 'REST' ? 'rgba(59,130,246,0.08)' : 'rgba(59,130,246,0.08)',
+                          color:      c.connectorType === 'REST' ? '#3B82F6'              : '#3B82F6',
+                          border:     `1px solid ${c.connectorType === 'REST' ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.15)'}`,
+                          letterSpacing: '0.05em',
+                          flexShrink: 0,
+                        }}>
+                          {c.connectorType}
+                        </span>
+                      </div>
+                      <div style={{
+                        fontSize: '11px', color: '#E2E8F0',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        paddingLeft: '15px',
+                      }}>
+                        {(c.baseUrl || c.jdbcUrl || 'No URL set').substring(0, 38)}
+                        {(c.baseUrl || c.jdbcUrl || '').length > 38 ? '…' : ''}
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+
+            {/* Bottom new link */}
+            <div style={{ padding: '14px 20px', borderTop: '1px solid #0F172A' }}>
+              <button
+                onClick={newConnector}
+                style={{
+                  background: 'none', border: 'none',
+                  color: '#E2E8F0', cursor: 'pointer',
+                  fontSize: '12px', letterSpacing: '0.05em',
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  transition: 'color 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = '#3B82F6'}
+                onMouseLeave={e => e.currentTarget.style.color = '#E2E8F0'}
+              >
+                <span style={{ fontSize: '16px' }}>+</span> New connector
+              </button>
+            </div>
+          </div>
+
+          {/* ── RIGHT PANEL ──────────────────────────────────────────── */}
+          <div style={{ flex: 1, overflowY: 'auto', background: '#050810' }}>
+            {!editing ? (
+              /* Empty state */
+              <div style={{
+                height: '100%', display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                gap: '16px',
+              }}>
+                <div style={{
+                  width: '64px', height: '64px',
+                  border: '1px solid #0F172A',
+                  borderRadius: '16px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '28px', opacity: 0.3,
+                }}>⬡</div>
+                <div style={{ fontSize: '14px', color: '#E2E8F0' }}>
+                  Select a connector or create a new one
+                </div>
+                <button
+                  onClick={newConnector}
+                  style={{
+                    padding: '8px 20px',
+                    background: 'rgba(59,130,246,0.08)',
+                    border: '1px solid rgba(59,130,246,0.2)',
+                    borderRadius: '6px',
+                    color: '#3B82F6', fontSize: '12px', cursor: 'pointer',
+                  }}
+                >
+                  + New Connector
+                </button>
+              </div>
+            ) : (
+              <div style={{ maxWidth: '800px', padding: '40px 48px', margin: '0 auto' }}>
+
+                {/* Panel header */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  marginBottom: '36px',
+                }}>
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#E2E8F0', letterSpacing: '0.15em', marginBottom: '6px' }}>
+                      {isNew ? 'NEW CONNECTOR' : 'CONNECTOR DETAIL'}
+                    </div>
+                    <div style={{ fontSize: '20px', fontWeight: '600', color: '#F1F5F9' }}>
+                      {editing.name || <span style={{ color: '#E2E8F0' }}>Untitled</span>}
+                    </div>
+                  </div>
+                  {isDirty && (
+                    <span style={{
+                      fontSize: '10px', color: '#F59E0B',
+                      border: '1px solid rgba(245,158,11,0.3)',
+                      padding: '3px 10px', borderRadius: '4px',
+                      letterSpacing: '0.1em',
+                      background: 'rgba(245,158,11,0.06)',
+                    }}>
+                      ● UNSAVED
+                    </span>
+                  )}
+                </div>
+
+                {/* ── Basic Info ── */}
+                <SectionLabel>BASIC INFO</SectionLabel>
+
+                <Field label="NAME *">
+                  <input
+                    value={editing.name}
+                    onChange={e => update('name', e.target.value)}
+                    placeholder="e.g. Shopify Production API"
+                    style={inputStyle}
+                  />
+                </Field>
+
+                <Field label="DESCRIPTION" hint="Optional — shown in the connector list and search">
+                  <input
+                    value={editing.description}
+                    onChange={e => update('description', e.target.value)}
+                    placeholder="What does this connector connect to?"
+                    style={inputStyle}
+                  />
+                </Field>
+
+                {/* ── Connector Type ── */}
+                <SectionLabel>CONNECTOR TYPE</SectionLabel>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '28px' }}>
+                  {([
+                    {
+                      type: 'REST' as const,
+                      icon: '🌐',
+                      title: 'REST API',
+                      desc: 'Call HTTP APIs, webhooks, and web services',
+                      color: '#3B82F6',
+                    },
+                    {
+                      type: 'JDBC' as const,
+                      icon: '🗄️',
+                      title: 'Database',
+                      desc: 'Query PostgreSQL, MySQL, and JDBC databases',
+                      color: '#3B82F6',
+                    },
+                  ] as const).map(opt => {
+                    const active = editing.connectorType === opt.type
+                    return (
+                      <div
+                        key={opt.type}
+                        onClick={() => update('connectorType', opt.type)}
+                        style={{
+                          padding: '20px',
+                          border: `1px solid ${active ? opt.color + '40' : '#0F172A'}`,
+                          borderRadius: '10px',
+                          cursor: 'pointer',
+                          background: active ? `${opt.color}08` : '#030609',
+                          transition: 'all 0.15s',
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}
+                        onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = '#1E293B' }}
+                        onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = '#0F172A' }}
+                      >
+                        {active && (
+                          <div style={{
+                            position: 'absolute', top: '12px', right: '12px',
+                            width: '8px', height: '8px', borderRadius: '50%',
+                            background: opt.color,
+                            boxShadow: `0 0 8px ${opt.color}`,
+                          }} />
+                        )}
+                        <div style={{ fontSize: '22px', marginBottom: '10px' }}>{opt.icon}</div>
+                        <div style={{
+                          fontSize: '14px', fontWeight: '600',
+                          color: active ? opt.color : '#64748B',
+                          marginBottom: '6px',
+                        }}>
+                          {opt.title}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#E2E8F0', lineHeight: 1.6 }}>
+                          {opt.desc}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* ── REST Fields ── */}
+                {editing.connectorType === 'REST' && (
+                  <>
+                    <SectionLabel>REST CONFIGURATION</SectionLabel>
+
+                    <Field label="BASE URL" hint="Paste full URL with ?params — query params will be auto-filled below.">
+                      <input
+                        value={editing.baseUrl}
+                        onChange={e => update('baseUrl', e.target.value)}
+                        onBlur={e => {
+                          const raw = e.target.value?.trim()
+                          if (!raw) return
+                          try {
+                            const url = new URL(raw.startsWith('http') ? raw : `https://${raw}`)
+                            if (url.search && url.searchParams.toString()) {
+                              const params: KVPair[] = Array.from(url.searchParams.entries()) as KVPair[]
+                              update('queryParams', params)
+                              const base = url.origin + url.pathname
+                              if (base !== raw) update('baseUrl', base.replace(/\/$/, '') || base)
+                            }
+                          } catch {
+                            /* ignore invalid URL */
+                          }
+                        }}
+                        placeholder="https://api.example.com/path?key=value"
+                        style={inputStyle}
+                      />
+                    </Field>
+
+                    <Field label="AUTHENTICATION">
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+                        {(['NONE', 'BEARER', 'API_KEY'] as const).map(t => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => update('authType', t)}
+                            style={{
+                              padding: '6px 14px',
+                              fontSize: '11px',
+                              letterSpacing: '0.05em',
+                              border: `1px solid ${editing.authType === t ? 'rgba(59,130,246,0.4)' : '#0F172A'}`,
+                              borderRadius: '5px',
+                              background: editing.authType === t ? 'rgba(59,130,246,0.08)' : '#030609',
+                              color: editing.authType === t ? '#3B82F6' : '#334155',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s',
+                            }}
+                          >
+                            {t === 'API_KEY' ? 'API Key' : t === 'BEARER' ? 'Bearer Token' : 'None'}
+                          </button>
+                        ))}
+                      </div>
+
+                      {editing.authType === 'BEARER' && (
+                        <PasswordInput
+                          value={editing.authToken}
+                          onChange={(v: any) => update('authToken', v)}
+                          placeholder="Bearer token value"
+                        />
+                      )}
+
+                      {editing.authType === 'API_KEY' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <input
+                            value={editing.apiKeyHeader}
+                            onChange={e => update('apiKeyHeader', e.target.value)}
+                            placeholder="Header name, e.g. X-API-Key"
+                            style={inputStyle}
+                          />
+                          <PasswordInput
+                            value={editing.apiKeyValue}
+                            onChange={(v: any) => update('apiKeyValue', v)}
+                            placeholder="API key value"
+                          />
+                        </div>
+                      )}
+                    </Field>
+
+                    <Field
+                      label="DEFAULT HEADERS"
+                      hint="Sent with every request using this connector. Override per-node in Studio."
+                    >
+                      <KVEditor
+                        pairs={editing.headers ?? []}
+                        onChange={v => update('headers', v)}
+                        keyPlaceholder="Header-Name"
+                        valuePlaceholder="value"
+                      />
+                    </Field>
+
+                    <Field
+                      label="BODY TEMPLATE"
+                      hint="Default request body. Use {{variables.body}} to pass body from a Variable node (e.g. define 'body' in a Variable, then reference here)."
+                    >
+                      <textarea
+                        value={editing.bodyTemplate ?? ''}
+                        onChange={e => update('bodyTemplate', e.target.value)}
+                        placeholder='e.g. {{variables.body}} or {"username":"{{variables.user}}","password":"{{variables.pass}}"}'
+                        rows={4}
+                        style={{ ...inputStyle, resize: 'vertical', minHeight: '80px' }}
+                      />
+                    </Field>
+
+                    <Field
+                      label="DEFAULT QUERY PARAMS"
+                      hint="Appended to every request URL."
+                    >
+                      <KVEditor
+                        pairs={editing.queryParams ?? []}
+                        onChange={v => update('queryParams', v)}
+                        keyPlaceholder="param"
+                        valuePlaceholder="value"
+                      />
+                    </Field>
+                  </>
+                )}
+
+                {/* ── JDBC Fields ── */}
+                {editing.connectorType === 'JDBC' && (
+                  <>
+                    <SectionLabel>DATABASE CONFIGURATION</SectionLabel>
+
+                    <Field label="DATABASE DRIVER">
+                      <select
+                        value={editing.driver}
+                        onChange={e => {
+                          const d = DRIVERS.find(dr => dr.value === e.target.value)
+                          update('driver', e.target.value)
+                          if (d && !editing.jdbcUrl) update('jdbcUrl', d.prefix)
+                        }}
+                        style={inputStyle}
+                      >
+                        {DRIVERS.map(d => (
+                          <option key={d.value} value={d.value}>{d.label}</option>
+                        ))}
+                      </select>
+                    </Field>
+
+                    <Field label="JDBC URL" hint="Full connection string including host, port, and database name">
+                      <input
+                        value={editing.jdbcUrl}
+                        onChange={e => update('jdbcUrl', e.target.value)}
+                        placeholder="jdbc:postgresql://localhost:5432/mydb"
+                        style={{ ...inputStyle, fontFamily: 'DM Mono, monospace' }}
+                      />
+                    </Field>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <Field label="USERNAME">
+                        <input
+                          value={editing.username}
+                          onChange={e => update('username', e.target.value)}
+                          placeholder="db_user"
+                          style={inputStyle}
+                        />
+                      </Field>
+                      <Field label="PASSWORD">
+                        <PasswordInput
+                          value={editing.password}
+                          onChange={(v: any) => update('password', v)}
+                          placeholder="••••••••"
+                        />
+                      </Field>
+                    </div>
+
+                    <Field label="SSL">
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={editing.ssl ?? false}
+                          onChange={e => update('ssl', e.target.checked)}
+                          style={{ accentColor: '#3B82F6', width: '14px', height: '14px' }}
+                        />
+                        <span style={{ fontSize: '12px', color: '#CBD5E1' }}>
+                          Require SSL connection
+                        </span>
+                      </label>
+                    </Field>
+                  </>
+                )}
+
+                {/* ── Test Connection ── */}
+                <SectionLabel>TEST CONNECTION</SectionLabel>
+
+                <Field
+                  label="HTTP METHOD"
+                  hint="Select the method for the test request (e.g. POST for login APIs)."
+                >
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const).map(m => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setTestMethod(m)}
+                        style={{
+                          padding: '6px 14px',
+                          fontSize: '12px',
+                          letterSpacing: '0.05em',
+                          border: `1px solid ${testMethod === m ? 'rgba(59,130,246,0.5)' : '#0F172A'}`,
+                          borderRadius: '6px',
+                          background: testMethod === m ? 'rgba(59,130,246,0.12)' : '#030609',
+                          color: testMethod === m ? '#3B82F6' : '#E2E8F0',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+
+                <Field
+                  label="REQUEST BODY (for test)"
+                  hint={'Optional JSON body (for POST/PUT/PATCH). e.g. {"userEmail":"...", "userPassword":"..."}. Leave empty for GET.'}
+                >
+                  <textarea
+                    value={testBody}
+                    onChange={e => setTestBody(e.target.value)}
+                    placeholder='{"userEmail":"you@example.com","userPassword":"••••••"}'
+                    rows={3}
+                    style={{ ...inputStyle, resize: 'vertical', minHeight: '60px', fontFamily: 'DM Mono, monospace' }}
+                  />
+                </Field>
+
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '16px',
+                  marginBottom: '36px', flexWrap: 'wrap',
+                }}>
+                  <button
+                    type="button"
+                    onClick={testConnection}
+                    disabled={testing || isNew}
+                    style={{
+                      padding: '9px 20px',
+                      background: 'rgba(59,130,246,0.06)',
+                      border: '1px solid rgba(59,130,246,0.2)',
+                      borderRadius: '6px',
+                      color: (testing || isNew) ? '#334155' : '#3B82F6',
+                      fontSize: '12px',
+                      cursor: (testing || isNew) ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      letterSpacing: '0.05em',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {testing ? (
+                      <>
+                        <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>↻</span>
+                        Testing...
+                      </>
+                    ) : '⚡ Test Connection'}
+                  </button>
+
+                  {isNew && (
+                    <span style={{ fontSize: '11px', color: '#E2E8F0' }}>
+                      Save connector first to test
+                    </span>
+                  )}
+
+                  {testResult && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        padding: '8px 14px',
+                        borderRadius: '6px',
+                        background: testResult.success ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
+                        border: `1px solid ${testResult.success ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`,
+                      }}>
+                        <span style={{
+                          width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
+                          background: testResult.success ? '#10B981' : '#EF4444',
+                          boxShadow: testResult.success ? '0 0 6px #10B981' : '0 0 6px #EF4444',
+                        }} />
+                        <span style={{
+                          fontSize: '12px',
+                          color: testResult.success ? '#10B981' : '#EF4444',
+                        }}>
+                          {testResult.success
+                            ? `Connected · ${testResult.latencyMs ?? 0}ms`
+                            : testResult.message}
+                        </span>
+                      </div>
+                      {(testResult.statusCode != null || (testResult.responseBody != null && testResult.responseBody !== '')) && (
+                        <div style={{
+                          background: '#030609',
+                          border: '1px solid #0F172A',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                        }}>
+                          <div style={{
+                            padding: '8px 12px',
+                            borderBottom: '1px solid #0F172A',
+                            fontSize: '10px',
+                            color: '#94A3B8',
+                            letterSpacing: '0.08em',
+                          }}>
+                            RESPONSE PREVIEW — use in nodes e.g. {'{{'}nodes.nexusId.successOutput.body{'}}'}
+                          </div>
+                          {testResult.statusCode != null && (
+                            <div style={{ padding: '6px 12px', fontSize: '11px', color: '#CBD5E1', borderBottom: '1px solid #0F172A' }}>
+                              Status: <strong>{testResult.statusCode}</strong>
+                            </div>
+                          )}
+                          {testResult.responseBody != null && testResult.responseBody !== '' && (
+                            <pre style={{
+                              margin: 0,
+                              padding: '12px',
+                              fontSize: '11px',
+                              fontFamily: 'DM Mono, monospace',
+                              color: '#E2E8F0',
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              maxHeight: '280px',
+                              overflow: 'auto',
+                            }}>
+                              {(() => {
+                                try {
+                                  const parsed = JSON.parse(testResult.responseBody)
+                                  return JSON.stringify(parsed, null, 2)
+                                } catch {
+                                  return testResult.responseBody
+                                }
+                              })()}
+                            </pre>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Actions ── */}
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  paddingTop: '24px',
+                  borderTop: '1px solid #0F172A',
+                  gap: '12px',
+                }}>
+                  {/* Delete — only show for existing */}
+                  <div>
+                    {!isNew && (
+                      <button
+                        type="button"
+                        onClick={() => setShowDelete(true)}
+                        style={{
+                          padding: '9px 18px',
+                          background: 'rgba(239,68,68,0.06)',
+                          border: '1px solid rgba(239,68,68,0.15)',
+                          borderRadius: '6px',
+                          color: '#EF4444',
+                          fontSize: '12px', cursor: 'pointer',
+                          letterSpacing: '0.05em',
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.06)';  e.currentTarget.style.borderColor = 'rgba(239,68,68,0.15)' }}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Save */}
+                  <button
+                    type="button"
+                    onClick={save}
+                    disabled={saving}
+                    style={{
+                      padding: '9px 28px',
+                      background: saving
+                        ? 'rgba(59,130,246,0.05)'
+                        : 'rgba(59,130,246,0.12)',
+                      border: `1px solid ${saving ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.35)'}`,
+                      borderRadius: '6px',
+                      color: saving ? '#64748B' : '#3B82F6',
+                      fontSize: '12px',
+                      cursor: saving ? 'not-allowed' : 'pointer',
+                      letterSpacing: '0.05em',
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      transition: 'all 0.15s',
+                      fontWeight: '500',
+                    }}
+                    onMouseEnter={e => { if (!saving) { e.currentTarget.style.background = 'rgba(59,130,246,0.18)'; e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)' } }}
+                    onMouseLeave={e => { if (!saving) { e.currentTarget.style.background = 'rgba(59,130,246,0.12)'; e.currentTarget.style.borderColor = 'rgba(59,130,246,0.35)' } }}
+                  >
+                    {saving ? (
+                      <>
+                        <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>↻</span>
+                        Saving...
+                      </>
+                    ) : (
+                      isNew ? 'Create Connector' : 'Save Changes'
+                    )}
+                  </button>
+                </div>
+
+                {/* Bottom spacer */}
+                <div style={{ height: '60px' }} />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Dialogs + Toasts */}
+        {showDelete && (
+          <DeleteDialog
+            name={editing?.name ?? 'Connector'}
+            onConfirm={deleteConnector}
+            onCancel={() => setShowDelete(false)}
+          />
+        )}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+      </div>
+    )
+  }
+  // ── Shared styles ──────────────────────────────────────────────────────────────
+  const inputStyle = {
+    width: '100%',
+    padding: '9px 12px',
+    background: '#030609',
+    border: '1px solid #0F172A',
+    borderRadius: '6px',
+    color: '#CBD5E1',
+    fontSize: '13px',
+    transition: 'border-color 0.15s',
+    outline: 'none',
+  }
+
+  const btnStyle = {
+    padding: '9px 18px',
+    borderRadius: '6px',
+    fontSize: '12px',
+    cursor: 'pointer',
+    letterSpacing: '0.05em',
+    transition: 'all 0.15s',
+  }
+

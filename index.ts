@@ -220,6 +220,10 @@ export interface NexusConnector {
   baseUrl?:        string
   authType?:       AuthType
   defaultHeaders?: Record<string, string>
+  /** API may return as "headers" (alias for defaultHeaders) */
+  headers?:        Record<string, string>
+  body?:           Record<string, string>
+  queryParams?:    Record<string, string>
   authConfig?:     Record<string, string>
 
   // JDBC mode

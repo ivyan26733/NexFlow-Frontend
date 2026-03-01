@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -604,6 +604,28 @@ select.input-base { appearance: none; cursor: pointer; }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes slideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* ── Nexus page (avoids inline <style> hydration mismatch) ─────────────────── */
+.nexus-page input,
+.nexus-page select,
+.nexus-page textarea {
+  font-family: 'DM Mono', 'Fira Code', monospace;
+  outline: none;
+}
+.nexus-page input::placeholder,
+.nexus-page textarea::placeholder {
+  color: #94A3B8;
+}
+.nexus-page select option {
+  background: #080D18;
+}
+.nexus-page ::-webkit-scrollbar { width: 4px; height: 4px; }
+.nexus-page ::-webkit-scrollbar-track { background: transparent; }
+.nexus-page ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 2px; }
 
 /* ── Node config panel (side panel when a node is opened) ───────────────────── */
 .node-config-panel {

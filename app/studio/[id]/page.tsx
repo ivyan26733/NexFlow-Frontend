@@ -180,6 +180,10 @@ export default function StudioPage() {
     setSelectedEdge(null)
   }
 
+  function beautifyLayout() {
+    setNodes(ns => applyBeautifyLayout(ns, edges))
+  }
+
   /* ───────────────────────── Render ───────────────────────── */
 
   if (loading) {
@@ -201,6 +205,7 @@ export default function StudioPage() {
           onSave={saveCanvas}
           onFlowNameChange={updateFlowName}
           onTrigger={triggerFlow}
+          onBeautify={beautifyLayout}
           viewMode={viewMode}
         />
 
@@ -373,6 +378,70 @@ function EdgePanel({ edge, nodes, onClose, onDelete, viewMode }: {
       </div>
     </aside>
   )
+}
+
+/* ───────────────────────── Beautify layout ───────────────────────── */
+
+const LAYOUT_DX = 240
+const LAYOUT_DY = 120
+
+function applyBeautifyLayout(nodes: Node[], edges: Edge[]): Node[] {
+  if (nodes.length === 0) return nodes
+  const idToNode = new Map(nodes.map(n => [n.id, n]))
+  const outgoing = new Map<string, string[]>()
+  const incoming = new Map<string, string[]>()
+  nodes.forEach(n => { outgoing.set(n.id, []); incoming.set(n.id, []) })
+  edges.forEach(e => {
+    outgoing.get(e.source)?.push(e.target)
+    incoming.get(e.target)?.push(e.source)
+  })
+
+  const roots = nodes.filter(n => incoming.get(n.id)?.length === 0)
+  const startNode = roots.find(n => n.type === 'START') ?? roots[0]
+  const queue = startNode ? [startNode.id] : roots.map(n => n.id)
+  const rest = roots.filter(n => !queue.includes(n))
+  queue.push(...rest.map(n => n.id))
+  const level = new Map<string, number>()
+  queue.forEach(id => level.set(id, 0))
+  let head = 0
+  while (head < queue.length) {
+    const id = queue[head++]
+    const d = level.get(id) ?? 0
+    for (const targetId of outgoing.get(id) ?? []) {
+      if (!level.has(targetId)) {
+        level.set(targetId, d + 1)
+        queue.push(targetId)
+      }
+    }
+  }
+  nodes.forEach(n => { if (!level.has(n.id)) level.set(n.id, 999) })
+
+  const byLevel = new Map<number, Node[]>()
+  nodes.forEach(n => {
+    const L = level.get(n.id) ?? 999
+    if (!byLevel.has(L)) byLevel.set(L, [])
+    byLevel.get(L)!.push(n)
+  })
+  const levels = [...byLevel.keys()].sort((a, b) => a - b)
+  levels.forEach(L => byLevel.get(L)!.sort((a, b) => a.id.localeCompare(b.id)))
+
+  let y = 0
+  const positioned = new Map<string, { x: number; y: number }>()
+  levels.forEach(L => {
+    const row = byLevel.get(L)!
+    const rowWidth = (row.length - 1) * LAYOUT_DX
+    let x = -rowWidth / 2
+    row.forEach(n => {
+      positioned.set(n.id, { x, y })
+      x += LAYOUT_DX
+    })
+    y += LAYOUT_DY
+  })
+
+  return nodes.map(n => {
+    const pos = positioned.get(n.id) ?? { x: 0, y: 0 }
+    return { ...n, position: pos }
+  })
 }
 
 /* ───────────────────────── Default START node ───────────────────────── */

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Save, Play, Loader2, ChevronRight, HelpCircle, Pencil } from 'lucide-react'
+import { Save, Play, Loader2, ChevronRight, HelpCircle, Pencil, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 interface Props {
@@ -12,10 +12,11 @@ interface Props {
   onSave:    () => void
   onFlowNameChange?: (name: string) => void
   onTrigger: (payload: Record<string, unknown>) => void
+  onBeautify?: () => void
   viewMode?: boolean
 }
 
-export default function StudioToolbar({ flowId, flowName, flowSlug, saving, onSave, onFlowNameChange, onTrigger, viewMode }: Props) {
+export default function StudioToolbar({ flowId, flowName, flowSlug, saving, onSave, onFlowNameChange, onTrigger, onBeautify, viewMode }: Props) {
   const router = useRouter()
   const [showTrigger, setShowTrigger] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
@@ -76,6 +77,12 @@ export default function StudioToolbar({ flowId, flowName, flowSlug, saving, onSa
             <HelpCircle size={16} />
             Help
           </button>
+          {!viewMode && onBeautify && (
+            <button type="button" onClick={onBeautify} className="studio-toolbar-btn" title="Align all nodes in order (no overlap)">
+              <Sparkles size={16} />
+              Beautify
+            </button>
+          )}
           {!viewMode && (
             <>
               <button type="button" onClick={onSave} disabled={saving} className="studio-toolbar-btn">

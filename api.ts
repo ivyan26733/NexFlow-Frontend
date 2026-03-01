@@ -118,5 +118,11 @@ export const api = {
       request<void>(`/api/nexus/connectors/${id}`, {
         method: 'DELETE',
       }),
+
+    test: (id: string, body?: Record<string, unknown>) =>
+      request<{ success: boolean; message: string; latencyMs: number }>(
+        `/api/nexus/connectors/${id}/test`,
+        { method: 'POST', ...(body != null ? { body: JSON.stringify(body) } : {}) }
+      ),
   },
 }
