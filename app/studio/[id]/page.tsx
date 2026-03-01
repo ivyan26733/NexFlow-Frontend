@@ -399,7 +399,7 @@ function applyBeautifyLayout(nodes: Node[], edges: Edge[]): Node[] {
   const roots = nodes.filter(n => incoming.get(n.id)?.length === 0)
   const startNode = roots.find(n => n.type === 'START') ?? roots[0]
   const queue = startNode ? [startNode.id] : roots.map(n => n.id)
-  const rest = roots.filter(n => !queue.includes(n))
+  const rest = roots.filter(n => !queue.includes(n.id))
   queue.push(...rest.map(n => n.id))
   const level = new Map<string, number>()
   queue.forEach(id => level.set(id, 0))
