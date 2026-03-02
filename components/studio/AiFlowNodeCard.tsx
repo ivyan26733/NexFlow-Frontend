@@ -31,13 +31,27 @@ const STATUS_COLORS: Record<string, string> = {
   RETRYING: '#F59E0B',
 }
 
+interface AiNodeData {
+  label?: string
+  config?: {
+    provider?: string
+    model?: string
+    prompt?: string
+    inputBindings?: Array<{ name: string }>
+    saveOutputAs?: string
+  }
+  liveStatus?: string | null
+}
+
 export default function AiFlowNodeCard({ data, selected }: NodeProps) {
-  const provider    = (data.config?.provider as string) ?? 'ANTHROPIC'
-  const model       = (data.config?.model as string)    ?? ''
-  const prompt      = (data.config?.prompt as string)   ?? ''
-  const bindings    = (data.config?.inputBindings as Array<{ name: string }>) ?? []
-  const liveStatus  = data.liveStatus as string | undefined
-  const saveOutputAs = data.config?.saveOutputAs as string | undefined
+  const d = data as unknown as AiNodeData
+
+  const provider    = d.config?.provider ?? 'ANTHROPIC'
+  const model       = d.config?.model ?? ''
+  const prompt      = d.config?.prompt ?? ''
+  const bindings    = d.config?.inputBindings ?? []
+  const liveStatus  = d.liveStatus ?? undefined
+  const saveOutputAs = d.config?.saveOutputAs
 
   const accentColor = PROVIDER_COLORS[provider] ?? '#8B5CF6'
   const icon        = PROVIDER_ICONS[provider]  ?? '✦'
@@ -174,7 +188,7 @@ export default function AiFlowNodeCard({ data, selected }: NodeProps) {
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               letterSpacing: '0.02em',
             }}>
-              {data.label || 'AI Node'}
+              {d.label || 'AI Node'}
             </div>
             {/* Provider + model */}
             <div style={{
