@@ -295,7 +295,7 @@ export interface LoopNodeConfig {
 
 // ─── AI / LLM node types ─────────────────────────────────────────────────────
 
-export type LlmProvider = 'ANTHROPIC' | 'OPENAI' | 'GEMINI' | 'GROQ' | 'MISTRAL' | 'CUSTOM'
+export type LlmProvider = 'ANTHROPIC' | 'OPENAI' | 'GEMINI' | 'GROQ' | 'MISTRAL' | 'MLVOCA' | 'CUSTOM'
 
 export interface InputBinding {
   name:    string   // what the prompt references as {{name}}
