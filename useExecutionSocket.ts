@@ -7,8 +7,13 @@ import type { NodeExecutionEvent } from './index'
 
 const WS_URL =
   process.env.NEXT_PUBLIC_WS_URL ??
-  (process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '')}/ws` : null) ??
-  'http://localhost:8090/ws'
+  (process.env.NEXT_PUBLIC_API_URL
+    ? process.env.NEXT_PUBLIC_API_URL
+        .replace(/^https:/, 'wss:')
+        .replace(/^http:/, 'ws:')
+        .replace(/\/$/, '') + '/ws'
+    : null) ??
+  'ws://localhost:8090/ws'
 
 interface Options {
   executionId: string | null
