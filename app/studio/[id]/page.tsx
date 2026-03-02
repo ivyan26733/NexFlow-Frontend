@@ -27,6 +27,7 @@ import NodeSidebar     from '@/NodeSidebar'
 import NodeConfigPanel from '@/NodeConfigPanel'
 import StudioToolbar   from '@/StudioToolbar'
 import { FlowNodeCard } from '@/FlowNodeCard'
+import AiFlowNodeCard from '@/components/studio/AiFlowNodeCard'
 import { MillennialLoader } from '@/MillennialLoader'
 
 /* ───────────────────────── Node Types ───────────────────────── */
@@ -40,6 +41,7 @@ const nodeTypes: NodeTypes = {
   MAPPER:   FlowNodeCard,
   DECISION: FlowNodeCard,
   LOOP:     FlowNodeCard,
+  AI:       AiFlowNodeCard,
   SUCCESS:  FlowNodeCard,
   FAILURE:  FlowNodeCard,
 }
@@ -71,29 +73,39 @@ export default function StudioPage() {
   const nodesRef = useRef(nodes)
   const edgesRef = useRef(edges)
   const saveInProgressRef = useRef(false)
+  const flowIdRef = useRef(flowId)
   nodesRef.current = nodes
   edgesRef.current = edges
+  flowIdRef.current = flowId
 
   /* ───────────────────────── Load flow ───────────────────────── */
 
   useEffect(() => {
+    const loadingFlowId = flowId
     setLoading(true)
     async function load() {
-      const [flow, canvas] = await Promise.all([
-        api.flows.get(flowId),
-        api.canvas.load(flowId),
-      ])
-      setFlowName(flow.name)
-      setFlowSlug(flow.slug)
-      let initialNodes = canvas.nodes.map(apiNodeToRfNode)
-      const hasStart = initialNodes.some(n => n.type === 'START')
-      if (!hasStart) {
-        initialNodes = [createDefaultStartNode(), ...initialNodes]
+      try {
+        const [flow, canvas] = await Promise.all([
+          api.flows.get(loadingFlowId),
+          api.canvas.load(loadingFlowId),
+        ])
+        if (flowIdRef.current !== loadingFlowId) return
+        setFlowName(flow.name)
+        setFlowSlug(flow.slug)
+        let initialNodes = canvas.nodes.map(apiNodeToRfNode)
+        const hasStart = initialNodes.some(n => n.type === 'START')
+        if (!hasStart) {
+          initialNodes = [createDefaultStartNode(), ...initialNodes]
+        }
+        setNodes(initialNodes)
+        setEdges(canvas.edges.map(apiEdgeToRfEdge))
+      } catch (e) {
+        console.error(e)
+      } finally {
+        if (flowIdRef.current === loadingFlowId) setLoading(false)
       }
-      setNodes(initialNodes)
-      setEdges(canvas.edges.map(apiEdgeToRfEdge))
     }
-    load().catch(console.error).finally(() => setLoading(false))
+    load()
   }, [flowId])
 
   /* ───────────────────────── Live execution ───────────────────────── */

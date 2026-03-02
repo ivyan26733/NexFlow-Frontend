@@ -20,4 +20,10 @@ export type {
   ScriptLanguage,
   ScriptNodeConfig,
   LoopNodeConfig,
+  LlmProvider,
+  InputBinding,
+  AiNodeConfig,
+  LlmProviderInfo,
+  AiNodeOutput,
+  LlmTestResult,
 } from '../index'

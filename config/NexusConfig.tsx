@@ -25,8 +25,8 @@ export default function NexusConfig({ config, onChange }: Props) {
   const [error,       setError]       = useState<string | null>(null)
   const [selected,    setSelected]    = useState<NexusConnector | null>(null)
 
-  // Inline = no connectorId, just url/method/headers/body (same page, no redirect)
-  const mode: RequestMode = c.connectorId ? 'connector' : 'inline'
+  // Respect explicit requestMode so "Use connector" works before a connector is picked
+  const mode: RequestMode = (c.requestMode ?? (c.connectorId ? 'connector' : 'inline')) as RequestMode
 
   useEffect(() => {
     setError(null)
@@ -52,12 +52,13 @@ export default function NexusConfig({ config, onChange }: Props) {
     if (m === 'inline') {
       onChange({
         ...c,
+        requestMode: 'inline',
         connectorId: '', connectorName: '', connectorType: undefined,
         url: c.url ?? '', method: c.method ?? 'GET', headers: c.headers ?? {}, body: c.body ?? {},
       })
       setSelected(null)
     } else {
-      onChange({ ...c, url: undefined })
+      onChange({ ...c, requestMode: 'connector', url: undefined })
     }
   }
 
@@ -66,12 +67,13 @@ export default function NexusConfig({ config, onChange }: Props) {
     setSelected(connector)
 
     if (!connector) {
-      onChange({ ...c, connectorId: '', connectorName: '', connectorType: undefined })
+      onChange({ ...c, requestMode: 'connector', connectorId: '', connectorName: '', connectorType: undefined })
       return
     }
 
     onChange({
       ...c,
+      requestMode:   'connector',
       connectorId:   connector.id!,
       connectorName: connector.name,
       connectorType: connector.connectorType,

@@ -19,6 +19,7 @@ export type NodeType =
   | 'LOOP'
   | 'SUCCESS'
   | 'FAILURE'
+  | 'AI'
 
 // Edge routing rules
 export type EdgeCondition =
@@ -238,7 +239,12 @@ export interface NexusConnector {
 
 // ─── Config stored inside a NEXUS node ────────────────────────────────────────
 
+/** User choice: inline = quick URL request, connector = use a saved Nexus connector */
+export type NexusRequestMode = 'inline' | 'connector'
+
 export interface NexusNodeConfig {
+  /** When 'connector', show connector picker even if connectorId not set yet */
+  requestMode?:   NexusRequestMode
   connectorId?:   string
   connectorName?: string
   connectorType?: ConnectorType
@@ -285,4 +291,51 @@ export interface LoopNodeConfig {
   condition:     string   // e.g. "{{loop.index}} < 5"
   maxIterations: number   // default 100
   description?:  string   // optional note
+}
+
+// ─── AI / LLM node types ─────────────────────────────────────────────────────
+
+export type LlmProvider = 'ANTHROPIC' | 'OPENAI' | 'GEMINI' | 'GROQ' | 'MISTRAL' | 'CUSTOM'
+
+export interface InputBinding {
+  name:    string   // what the prompt references as {{name}}
+  nexPath: string   // where to read from in nco, e.g. "nex.shopify.body.items"
+}
+
+export interface AiNodeConfig {
+  provider:      LlmProvider
+  model:         string
+  prompt:        string
+  inputBindings: InputBinding[]
+  outputSchema:  string        // optional JSON shape hint
+  maxTokens:     number        // default 1000
+  temperature:   number        // 0.0 – 1.0, default 0.0
+}
+
+export interface LlmProviderInfo {
+  provider:       LlmProvider
+  displayName:    string
+  configured:     boolean
+  enabled:        boolean
+  knownModels:    string[]
+  defaultModel:   string
+  apiKeyMasked:   string | null
+  customEndpoint: string | null
+  configId:       string | null
+}
+
+export interface AiNodeOutput {
+  result:       unknown
+  model:        string
+  inputTokens:  number
+  outputTokens: number
+  provider:     LlmProvider
+  rawResponse:  string
+}
+
+export interface LlmTestResult {
+  success:    boolean
+  message:    string
+  latencyMs?: number
+  model?:     string
 }

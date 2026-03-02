@@ -92,6 +92,16 @@ export const NODE_META: Record<NodeType, NodeMeta> = {
     description: 'Terminal — flow ended with failure',
     isTerminal:  true,
   },
+
+  AI: {
+    label:       'AI',
+    color:       '#8B5CF6',
+    bgColor:     '#1a0a2e',
+    description: 'Transform or classify data using any LLM',
+    isTerminal:  false,
+    icon:        '✦',
+    group:       'AI',
+  },
 }
 
 // Sidebar draggable nodes — order controls vertical order
@@ -103,6 +113,7 @@ export const DRAGGABLE_NODES: NodeType[] = [
   'MAPPER',
   'DECISION',
   'LOOP',
+  'AI',
   'SUCCESS',
   'FAILURE',
 ]
@@ -111,5 +122,6 @@ export const DRAGGABLE_NODES: NodeType[] = [
 export const NODE_GROUPS: { label: string; types: NodeType[] }[] = [
   { label: 'CALL',     types: ['NEXUS', 'SUB_FLOW'] },
   { label: 'LOGIC',    types: ['SCRIPT', 'VARIABLE', 'MAPPER', 'DECISION', 'LOOP'] },
+  { label: 'AI',       types: ['AI'] },
   { label: 'TERMINAL', types: ['SUCCESS', 'FAILURE'] },
 ]

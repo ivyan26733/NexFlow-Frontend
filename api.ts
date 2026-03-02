@@ -6,6 +6,8 @@ import type {
   ExecutionDetail,
   NexusConnector,
   NexMap,
+  LlmProviderInfo,
+  LlmTestResult,
 } from './index'
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'
@@ -124,5 +126,29 @@ export const api = {
         `/api/nexus/connectors/${id}/test`,
         { method: 'POST', ...(body != null ? { body: JSON.stringify(body) } : {}) }
       ),
+  },
+
+  // ─── LLM PROVIDERS (AI node) ────────────────────────────────────────────────
+  llmProviders: {
+    list: () =>
+      request<LlmProviderInfo[]>('/api/llm-providers'),
+
+    save: (body: { provider: string; apiKey: string; customEndpoint?: string | null }) =>
+      request<{ success: boolean; provider: string; configured: boolean; enabled: boolean; apiKeyMasked: string }>(
+        '/api/llm-providers',
+        { method: 'POST', body: JSON.stringify(body) }
+      ),
+
+    toggle: (provider: string) =>
+      request<{ provider: string; enabled: boolean }>(
+        `/api/llm-providers/${provider}/toggle`,
+        { method: 'PATCH' }
+      ),
+
+    delete: (provider: string) =>
+      request<void>(`/api/llm-providers/${provider}`, { method: 'DELETE' }),
+
+    test: (provider: string) =>
+      request<LlmTestResult>(`/api/llm-providers/${provider}/test`, { method: 'POST' }),
   },
 }

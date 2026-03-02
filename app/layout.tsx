@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import '@xyflow/react/dist/style.css'
 import './globals.css'
+import NavSettingsDropdown from '@/components/nav/NavSettingsDropdown'
 
 export const metadata: Metadata = {
   title:       'Nexflow',
@@ -33,6 +34,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <a href="/transactions">Transactions</a>
           <a href="/nexus">Nexus</a>
           <a href="/about">About</a>
+          <div className="nav-divider" />
+          <NavSettingsDropdown />
           <div className="nav-spacer" />
           <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)' }}>v1.0 MVP</span>
         </nav>

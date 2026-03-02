@@ -29,7 +29,7 @@ export function FlowNodeCard({ data, selected }: NodeProps) {
   const borderColor = selected ? '#00d4ff' : (glowColor ?? (isLoop ? loopColor : meta.color))
 
   // Dual-output nodes: SUCCESS + FAILURE handles; LOOP has CONTINUE + EXIT
-  const hasDualOutputs = ['NEXUS', 'DECISION', 'SUB_FLOW', 'SCRIPT'].includes(d.nodeType)
+  const hasDualOutputs = ['NEXUS', 'DECISION', 'SUB_FLOW', 'SCRIPT', 'AI'].includes(d.nodeType)
 
   return (
     <div style={{ minWidth: 140, maxWidth: 200 }}>
@@ -102,7 +102,7 @@ export function FlowNodeCard({ data, selected }: NodeProps) {
               color: isLoop ? loopColor : meta.color,
             }}
           >
-            {d.nodeType === 'NEXUS' ? 'Nexus' : d.nodeType === 'LOOP' ? '↺ LOOP' : d.nodeType.replace('_', ' ')}
+            {d.nodeType === 'NEXUS' ? 'Nexus' : d.nodeType === 'LOOP' ? '↺ LOOP' : d.nodeType === 'AI' ? '✦ AI' : d.nodeType.replace('_', ' ')}
           </span>
 
           {d.liveStatus && (
@@ -337,6 +337,15 @@ function getConfigPreview(
       return config.condition
         ? `↺ ${(config.condition as string).slice(0, 24)}…`
         : '↺ condition'
+
+    case 'AI': {
+      const provider = config.provider as string
+      const model = config.model as string
+      const prompt = config.prompt as string
+      if (prompt) return `✦ ${(provider ?? 'AI')} · ${(prompt.slice(0, 20))}…`
+      if (model) return `✦ ${provider ?? 'AI'} · ${model}`
+      return provider ? `✦ ${provider}` : '✦ AI'
+    }
 
     default:
       return null

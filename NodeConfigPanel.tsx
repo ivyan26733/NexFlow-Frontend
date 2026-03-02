@@ -13,6 +13,7 @@ import VariableConfig from './config/VariableConfig'
 import MapperConfig   from './config/MapperConfig'
 import DecisionConfig from './config/DecisionConfig'
 import LoopConfig from './config/LoopConfig'
+import AiConfig from './config/AiConfig'
 import TerminalConfig from './config/TerminalConfig'
 import SaveOutputAsField from './config/SaveOutputAsField'
 
@@ -163,6 +164,7 @@ function NodeForm({ nodeType, config, currentFlowId, onChange, nodeLabel }: {
     case 'MAPPER':   return (<> <MapperConfig   config={config} onChange={onChange} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
     case 'DECISION': return (<> <DecisionConfig config={config} onChange={onChange} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
     case 'LOOP':     return (<> <LoopConfig config={config} onChange={onChange} nodeLabel={nodeLabel} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
+    case 'AI':       return (<> <AiConfig config={config} onChange={onChange} nodeLabel={nodeLabel} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
     case 'SUCCESS':
     case 'FAILURE':  return (<> <TerminalConfig config={config} onChange={onChange} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
     case 'START':    return (<> <StartHint /> <SaveOutputAsField config={config} onChange={onChange} /> </>)

@@ -907,6 +907,21 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                   <>
                     <SectionLabel>DATABASE CONFIGURATION</SectionLabel>
 
+                    <div style={{
+                      marginBottom: '20px',
+                      padding: '12px 14px',
+                      background: 'rgba(59,130,246,0.06)',
+                      border: '1px solid rgba(59,130,246,0.2)',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      color: '#94A3B8',
+                      lineHeight: 1.55,
+                    }}>
+                      <strong style={{ color: '#E2E8F0' }}>How to use DB connectors</strong>
+                      <br />
+                      This section only defines the <em>connection</em> (URL and credentials). To run SQL, add a <strong>Nexus</strong> node in a flow (Studio), choose this connector, then enter your <strong>SQL query</strong> and query type (SELECT / INSERT / UPDATE / DELETE) in the node config.
+                    </div>
+
                     <Field label="DATABASE DRIVER">
                       <select
                         value={editing.driver}

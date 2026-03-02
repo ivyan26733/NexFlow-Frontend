@@ -92,6 +92,7 @@ function getShortDescription(type: NodeType): string {
     case 'MAPPER':   return 'Reshape data'
     case 'DECISION': return 'Branch on condition'
     case 'LOOP':     return 'Draw CONTINUE + EXIT edges'
+    case 'AI':       return 'LLM task — configure in AI Providers first'
     case 'SUCCESS':  return 'End — success'
     case 'FAILURE':  return 'End — failure'
     default:         return ''
