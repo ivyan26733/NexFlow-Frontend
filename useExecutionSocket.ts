@@ -5,15 +5,17 @@ import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import type { NodeExecutionEvent } from './index'
 
+// SockJS expects an HTTP(S) URL (it negotiates WebSocket/XHR itself).
+// Strategy:
+// 1) If NEXT_PUBLIC_WS_URL is set, use it as-is (e.g. https://api.example.com/ws)
+// 2) Else if NEXT_PUBLIC_API_URL is set, append /ws to that base (http or https)
+// 3) Else fall back to local dev backend: http://localhost:8090/ws
 const WS_URL =
   process.env.NEXT_PUBLIC_WS_URL ??
   (process.env.NEXT_PUBLIC_API_URL
-    ? process.env.NEXT_PUBLIC_API_URL
-        .replace(/^https:/, 'wss:')
-        .replace(/^http:/, 'ws:')
-        .replace(/\/$/, '') + '/ws'
+    ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '')}/ws`
     : null) ??
-  'ws://localhost:8090/ws'
+  'http://localhost:8090/ws'
 
 interface Options {
   executionId: string | null
