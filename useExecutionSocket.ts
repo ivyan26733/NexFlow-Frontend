@@ -41,7 +41,7 @@ export function useExecutionSocket({ executionId, onEvent }: Options) {
     const client = new Client({
       webSocketFactory: () => new SockJS(WS_URL),
       onConnect: () => {
-        const topic = `/topic/execution/${executionId}`
+        const topic = `/topic/execution.${executionId}`
         // eslint-disable-next-line no-console
         console.info('[useExecutionSocket] STOMP connected, subscribing to', topic)
         client.subscribe(topic, (msg) => {
