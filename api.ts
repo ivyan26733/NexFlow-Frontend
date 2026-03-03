@@ -81,17 +81,32 @@ export const api = {
         .then(r => r.ok ? r.json() : Promise.resolve({ transactionId: id, nex: {} }))
         .then((body: { transactionId: string; nex?: NexMap }) => ({ transactionId: body.transactionId, nex: body.nex ?? {} })),
 
-    triggerBySlug: (slug: string, payload: Record<string, unknown>, waitForSubscriber?: boolean) =>
+    // Phase 1: Create execution record, get ID back. Does NOT start execution.
+    prepare: (slug: string, payload: Record<string, unknown>) =>
       request<Execution>(`/api/pulse/${slug}`, {
         method: 'POST',
-        headers: waitForSubscriber ? { 'Content-Type': 'application/json', 'X-Wait-For-Subscriber': '1' } : { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       }),
 
-    triggerById: (flowId: string, payload: Record<string, unknown>, waitForSubscriber?: boolean) =>
+    // Phase 2: Start the execution. Called AFTER the WS subscription is established.
+    start: (executionId: string) =>
+      request<void>(`/api/executions/${executionId}/start`, {
+        method: 'POST',
+      }),
+
+    // Legacy helpers used by non-Studio flows (can be refactored later)
+    triggerBySlug: (slug: string, payload: Record<string, unknown>) =>
+      request<Execution>(`/api/pulse/${slug}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+
+    triggerById: (flowId: string, payload: Record<string, unknown>) =>
       request<Execution>(`/api/pulse/${flowId}`, {
         method: 'POST',
-        headers: waitForSubscriber ? { 'Content-Type': 'application/json', 'X-Wait-For-Subscriber': '1' } : { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       }),
   },

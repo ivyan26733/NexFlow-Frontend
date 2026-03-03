@@ -74,6 +74,7 @@ export default function StudioPage() {
   const edgesRef = useRef(edges)
   const saveInProgressRef = useRef(false)
   const flowIdRef = useRef(flowId)
+  const pendingStartRef = useRef<string | null>(null)
   nodesRef.current = nodes
   edgesRef.current = edges
   flowIdRef.current = flowId
@@ -114,6 +115,19 @@ export default function StudioPage() {
     executionId,
     onEvent: (ev: NodeExecutionEvent) =>
       setNodeStatuses(prev => ({ ...prev, [ev.nodeId]: ev.status })),
+    onReady: async () => {
+      const idToStart = pendingStartRef.current
+      if (!idToStart) return
+      pendingStartRef.current = null
+      try {
+        // eslint-disable-next-line no-console
+        console.info('[Studio] STOMP subscription confirmed, starting execution', idToStart)
+        await api.executions.start(idToStart)
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('[Studio] Failed to start execution', e)
+      }
+    },
   })
 
   const nodesWithStatus = nodes.map(n => ({
@@ -163,8 +177,17 @@ export default function StudioPage() {
   }
 
   async function triggerFlow(payload: Record<string, unknown>) {
-    const exec = await api.executions.triggerBySlug(flowSlug, payload, true)
     setNodeStatuses({})
+
+    // Phase 1: prepare execution (create record, do NOT start)
+    const exec = await api.executions.prepare(flowSlug, payload)
+    // eslint-disable-next-line no-console
+    console.info('[Studio] Execution prepared, id=', exec.id)
+
+    // Store ID so onReady can start it once WS subscription is established
+    pendingStartRef.current = exec.id
+
+    // Setting executionId triggers useExecutionSocket to connect & subscribe
     setExecutionId(exec.id)
   }
 

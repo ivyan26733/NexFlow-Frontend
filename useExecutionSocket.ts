@@ -28,12 +28,15 @@ if (typeof window !== 'undefined') {
 interface Options {
   executionId: string | null
   onEvent: (event: NodeExecutionEvent) => void
+  onReady?: () => void
 }
 
-export function useExecutionSocket({ executionId, onEvent }: Options) {
+export function useExecutionSocket({ executionId, onEvent, onReady }: Options) {
   const clientRef = useRef<Client | null>(null)
   const onEventRef = useRef(onEvent)
+  const onReadyRef = useRef(onReady)
   onEventRef.current = onEvent
+  onReadyRef.current = onReady
 
   useEffect(() => {
     if (!executionId) return
@@ -41,10 +44,10 @@ export function useExecutionSocket({ executionId, onEvent }: Options) {
     const client = new Client({
       webSocketFactory: () => new SockJS(WS_URL),
       onConnect: () => {
-        const topic = `/topic/execution.${executionId}`
+        const destination = `/queue/execution.${executionId}`
         // eslint-disable-next-line no-console
-        console.info('[useExecutionSocket] STOMP connected, subscribing to', topic)
-        client.subscribe(topic, (msg) => {
+        console.info('[useExecutionSocket] STOMP connected, subscribing to', destination)
+        client.subscribe(destination, (msg) => {
           // eslint-disable-next-line no-console
           console.info(
             '[useExecutionSocket] RAW STOMP',
@@ -60,6 +63,12 @@ export function useExecutionSocket({ executionId, onEvent }: Options) {
             console.error('[useExecutionSocket] Failed to parse WS event', e, msg.body)
           }
         })
+
+        // Subscription frame has been sent; at this point the queue exists on the broker.
+        // Safe to notify callers so they can start the execution.
+        // eslint-disable-next-line no-console
+        console.info('[useExecutionSocket] Subscription sent, firing onReady')
+        onReadyRef.current?.()
       },
       onStompError: (frame) => {
         // eslint-disable-next-line no-console
