@@ -75,6 +75,7 @@ export default function StudioPage() {
   const saveInProgressRef = useRef(false)
   const flowIdRef = useRef(flowId)
   const pendingStartRef = useRef<string | null>(null)
+  const pendingPayloadRef = useRef<Record<string, unknown> | null>(null)
   nodesRef.current = nodes
   edgesRef.current = edges
   flowIdRef.current = flowId
@@ -117,12 +118,14 @@ export default function StudioPage() {
       setNodeStatuses(prev => ({ ...prev, [ev.nodeId]: ev.status })),
     onReady: async () => {
       const idToStart = pendingStartRef.current
-      if (!idToStart) return
+      const payload = pendingPayloadRef.current
+      if (!idToStart || !payload) return
       pendingStartRef.current = null
+      pendingPayloadRef.current = null
       try {
         // eslint-disable-next-line no-console
         console.info('[Studio] STOMP subscription confirmed, starting execution', idToStart)
-        await api.executions.start(idToStart)
+        await api.executions.start(idToStart, payload)
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error('[Studio] Failed to start execution', e)
@@ -186,6 +189,7 @@ export default function StudioPage() {
 
     // Store ID so onReady can start it once WS subscription is established
     pendingStartRef.current = exec.id
+    pendingPayloadRef.current = payload
 
     // Setting executionId triggers useExecutionSocket to connect & subscribe
     setExecutionId(exec.id)

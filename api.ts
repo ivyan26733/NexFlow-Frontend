@@ -90,9 +90,11 @@ export const api = {
       }),
 
     // Phase 2: Start the execution. Called AFTER the WS subscription is established.
-    start: (executionId: string) =>
+    start: (executionId: string, payload: Record<string, unknown>) =>
       request<void>(`/api/executions/${executionId}/start`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       }),
 
     // Legacy helpers used by non-Studio flows (can be refactored later)

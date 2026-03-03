@@ -115,7 +115,7 @@ function PulseCard({ flow, onOpenView, onOpenEdit, onDelete }: {
       // Phase 1: prepare execution
       const exec = await api.executions.prepare(slug, parsed)
       // Immediately start it (Pulses page does not rely on WebSocket timing)
-      await api.executions.start(exec.id)
+      await api.executions.start(exec.id, parsed)
       setLastResult(exec)
     } catch (err: unknown) {
       setLastError(err instanceof Error ? err.message : 'Trigger failed')

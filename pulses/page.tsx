@@ -76,7 +76,7 @@ function PulseCard({ flow, onOpenStudio }: { flow: Flow; onOpenStudio: () => voi
     setLastError(null)
     try {
       const exec = await api.executions.prepare(flow.slug, parsed)
-      await api.executions.start(exec.id)
+      await api.executions.start(exec.id, parsed)
       setLastResult(exec)
     } catch (err: unknown) {
       setLastError(err instanceof Error ? err.message : 'Trigger failed')
