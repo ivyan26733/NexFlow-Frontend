@@ -45,6 +45,13 @@ export function useExecutionSocket({ executionId, onEvent }: Options) {
         // eslint-disable-next-line no-console
         console.info('[useExecutionSocket] STOMP connected, subscribing to', topic)
         client.subscribe(topic, (msg) => {
+          // eslint-disable-next-line no-console
+          console.info(
+            '[useExecutionSocket] RAW STOMP',
+            msg.command,
+            msg.headers,
+            msg.body,
+          )
           try {
             const event: NodeExecutionEvent = JSON.parse(msg.body)
             onEventRef.current(event)
