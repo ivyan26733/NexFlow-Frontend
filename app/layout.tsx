@@ -37,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="nav-divider" />
           <NavSettingsDropdown />
           <div className="nav-spacer" />
-          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)' }}>v1.0 MVP</span>
+          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)' }}>v1.1 Parallel MVP</span>
         </nav>
 
         <main style={{ minHeight: 'calc(100vh - 3.5rem)' }}>{children}</main>

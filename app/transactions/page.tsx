@@ -71,8 +71,8 @@ export default function TransactionsPage() {
         ))}
       </div>
 
-      <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.75rem', overflow: 'hidden' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 40px', padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--color-border)', background: 'var(--color-panel)' }}>
+      <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.75rem', overflowX: 'auto', overflowY: 'hidden' }}>
+        <div style={{ minWidth: '640px', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 40px', padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--color-border)', background: 'var(--color-panel)' }}>
           {['Flow', 'Status', 'Triggered', 'Started', 'Duration', ''].map(h => (
             <span key={h} className="dashboard-label" style={{ marginBottom: 0, textTransform: 'uppercase' }}>{h}</span>
           ))}
@@ -95,6 +95,7 @@ export default function TransactionsPage() {
               onClick={() => router.push(`/transactions/${ex.id}`)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/transactions/${ex.id}`) } }}
               style={{
+                minWidth: '640px',
                 display: 'grid',
                 gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 40px',
                 padding: '0.875rem 1.25rem',

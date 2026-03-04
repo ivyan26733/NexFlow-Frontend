@@ -24,6 +24,7 @@ import type {
   FlowEdge as ApiEdge,
   BranchStatus,
   ForkNodeConfig,
+  NodeType as NodeKind,
 } from '@/types'
 
 import NodeSidebar     from '@/NodeSidebar'
@@ -322,6 +323,25 @@ export default function StudioPage() {
     setNodes(ns => applyBeautifyLayout(ns, edges))
   }
 
+  const handleAddNode = useCallback((nodeType: NodeKind) => {
+    if (viewMode) return
+
+    setNodes(ns => [
+      ...ns,
+      {
+        id: crypto.randomUUID(),
+        type: nodeType,
+        position: { x: 0, y: 0 },
+        data: {
+          label: NODE_META[nodeType as keyof typeof NODE_META]?.label ?? nodeType,
+          nodeType,
+          config: {},
+          liveStatus: null,
+        },
+      },
+    ])
+  }, [setNodes, viewMode])
+
   /* ───────────────────────── Render ───────────────────────── */
 
   if (loading) {
@@ -331,7 +351,7 @@ export default function StudioPage() {
   return (
     <div className="studio-root">
       <div className={`studio-sidebar-wrapper ${sidebarOpen ? 'open' : 'collapsed'}`}>
-        <NodeSidebar />
+        <NodeSidebar onAddNode={handleAddNode} />
       </div>
 
       <div className="studio-main">

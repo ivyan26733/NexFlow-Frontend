@@ -3,7 +3,7 @@
 import { NODE_GROUPS, NODE_META } from './nodeConfig'
 import type { NodeType } from '@/types'
 
-export default function NodeSidebar() {
+export default function NodeSidebar({ onAddNode }: { onAddNode?: (t: NodeType) => void }) {
   function onDragStart(event: React.DragEvent, nodeType: NodeType) {
     event.dataTransfer.setData('nodeType', nodeType)
     event.dataTransfer.effectAllowed = 'move'
@@ -14,7 +14,7 @@ export default function NodeSidebar() {
 
       <div className="studio-sidebar-header">
         <p className="title">NODES</p>
-        <p className="subtitle">Drag onto canvas</p>
+        <p className="subtitle">Drag onto canvas · tap to add on mobile</p>
       </div>
 
       <div className="studio-sidebar-body">
@@ -27,7 +27,12 @@ export default function NodeSidebar() {
             <p className="studio-sidebar-section-label">{group.label}</p>
             <div className="studio-sidebar-nodes">
               {group.types.map(type => (
-                <SidebarNode key={type} nodeType={type} onDragStart={onDragStart} />
+                <SidebarNode
+                  key={type}
+                  nodeType={type}
+                  onDragStart={onDragStart}
+                  onAddNode={onAddNode}
+                />
               ))}
             </div>
           </div>
@@ -46,16 +51,32 @@ export default function NodeSidebar() {
 function SidebarNode({
   nodeType,
   onDragStart,
+  onAddNode,
 }: {
   nodeType: NodeType
   onDragStart: (e: React.DragEvent, t: NodeType) => void
+  onAddNode?: (t: NodeType) => void
 }) {
   const meta = NODE_META[nodeType]
+
+  function handleClick() {
+    if (!onAddNode) return
+    if (typeof window === 'undefined') return
+
+    const isTouch =
+      ('ontouchstart' in window) ||
+      (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+      (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+
+    if (!isTouch) return
+    onAddNode(nodeType)
+  }
 
   return (
     <div
       draggable
       onDragStart={e => onDragStart(e, nodeType)}
+      onClick={handleClick}
       className="studio-sidebar-node"
       style={{ borderLeftWidth: '3px', borderLeftColor: meta.color }}
     >

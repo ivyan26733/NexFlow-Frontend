@@ -398,11 +398,32 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
     const [showDelete,       setShowDelete]       = useState(false)
     const [toast,            setToast]            = useState<{ message: string; type: string } | null>(null)
     const [loading,          setLoading]          = useState(true)
+    const [sidebarOpen,      setSidebarOpen]      = useState(true)
+    const [isMobile,         setIsMobile]         = useState(false)
 
     // Load connectors on mount
     useEffect(() => {
       loadConnectors()
     }, [])
+
+    // Track viewport for responsive layout
+    useEffect(() => {
+      if (typeof window === 'undefined') return
+      const mq = window.matchMedia('(max-width: 768px)')
+      const update = () => setIsMobile(mq.matches)
+      update()
+      mq.addEventListener('change', update)
+      return () => mq.removeEventListener('change', update)
+    }, [])
+
+    // Collapse sidebar by default on mobile, expand on larger screens
+    useEffect(() => {
+      if (isMobile) {
+        setSidebarOpen(false)
+      } else {
+        setSidebarOpen(true)
+      }
+    }, [isMobile])
 
     async function loadConnectors() {
       try {
@@ -521,21 +542,52 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
           background: '#050810',
           color: '#E2E8F0',
           fontFamily: "'DM Mono', 'Fira Code', monospace",
+          position: 'relative',
           overflow: 'hidden',
         }}
       >
         {/* ── BODY ─────────────────────────────────────────────────────── */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', flexDirection: isMobile ? 'column' : 'row' }}>
+
+          {/* Mobile sidebar toggle */}
+          {isMobile && (
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(open => !open)}
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                zIndex: 40,
+                padding: '6px 10px',
+                borderRadius: '999px',
+                border: '1px solid #1E293B',
+                background: 'rgba(15,23,42,0.9)',
+                color: '#E2E8F0',
+                fontSize: '11px',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+              }}
+            >
+              {sidebarOpen ? 'Hide list' : 'Connectors'}
+            </button>
+          )}
 
           {/* ── LEFT PANEL ───────────────────────────────────────────── */}
           <div style={{
-            width: '300px',
+            width: isMobile ? '78vw' : '300px',
             flexShrink: 0,
             borderRight: '1px solid #0F172A',
-            display: 'flex',
+            display: sidebarOpen || !isMobile ? 'flex' : 'none',
             flexDirection: 'column',
             overflow: 'hidden',
             background: '#030609',
+            position: isMobile ? 'absolute' : 'relative',
+            zIndex: isMobile ? 35 : 'auto',
+            top: 0,
+            bottom: 0,
+            left: 0,
           }}>
             {/* Search / count */}
             <div style={{
