@@ -2,6 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA — unchanged from your version
+// ─────────────────────────────────────────────────────────────────────────────
+
 const milestones = [
   {
     phase: "01",
@@ -101,24 +105,505 @@ const principles = [
 ];
 
 const stack = [
-  { label: "Engine",    value: "Spring Boot + Java 17" },
-  { label: "Canvas",    value: "Next.js + ReactFlow" },
-  { label: "Database",  value: "PostgreSQL + Flyway" },
-  { label: "Realtime",  value: "RabbitMQ + STOMP (nodes + branches)" },
-  { label: "Scripts",   value: "Nashorn / GraalVM JS + Python3" },
-  { label: "Threads",   value: "Dedicated pool — core 20, max 50" },
-  { label: "Deploy",    value: "Railway + Vercel" },
-  { label: "Parallel",  value: "Fork-Join — CompletableFuture.allOf()" },
+  { label: "Engine",   value: "Spring Boot + Java 17" },
+  { label: "Canvas",   value: "Next.js + ReactFlow" },
+  { label: "Database", value: "PostgreSQL + Flyway" },
+  { label: "Realtime", value: "RabbitMQ + STOMP (nodes + branches)" },
+  { label: "Scripts",  value: "Nashorn / GraalVM JS + Python3" },
+  { label: "Threads",  value: "Dedicated pool — core 20, max 50" },
+  { label: "Deploy",   value: "Railway + Vercel" },
+  { label: "Parallel", value: "Fork-Join — CompletableFuture.allOf()" },
 ];
 
 const shipped = [
-  { label: "Node types",          value: "12" },
-  { label: "AI providers",        value: "5" },
-  { label: "Merge strategies",    value: "3" },
-  { label: "Production bugs fixed", value: "6" },
-  { label: "Exec thread pool",    value: "50" },
-  { label: "WebSocket queues",    value: "2" },
+  { label: "Node types",            value: "12" },
+  { label: "AI providers",          value: "5"  },
+  { label: "Merge strategies",      value: "3"  },
+  { label: "Production bugs fixed", value: "6"  },
+  { label: "Exec thread pool",      value: "50" },
+  { label: "WebSocket queues",      value: "2"  },
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WHY NEXFLOW — Live branch demo
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BRANCH_STAGES = [
+  { label: "branchA", ms: 200,  color: "#10B981", nodes: ["API Call", "Transform"] },
+  { label: "branchB", ms: 580,  color: "#6366F1", nodes: ["AI Node", "Extract"]   },
+  { label: "branchC", ms: 150,  color: "#F59E0B", nodes: ["DB Query"]              },
+];
+const TOTAL_PARALLEL_MS   = 580;
+const TOTAL_SEQUENTIAL_MS = BRANCH_STAGES.reduce((s, b) => s + b.ms, 0);
+
+type BranchState = "idle" | "running" | "done";
+
+function LiveBranchDemo() {
+  const [states,   setStates]   = useState<BranchState[]>(["idle", "idle", "idle"]);
+  const [forkDone, setForkDone] = useState(false);
+  const [joinDone, setJoinDone] = useState(false);
+  const [running,  setRunning]  = useState(false);
+  const [elapsed,  setElapsed]  = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function reset() {
+    setStates(["idle", "idle", "idle"]);
+    setForkDone(false);
+    setJoinDone(false);
+    setRunning(false);
+    setElapsed(0);
+    if (timerRef.current) clearInterval(timerRef.current);
+  }
+
+  function run() {
+    if (running) { reset(); return; }
+    reset();
+    setRunning(true);
+    const SPEED = 2.2;
+    setTimeout(() => setForkDone(true), 10);
+    setStates(["running", "running", "running"]);
+    BRANCH_STAGES.forEach((b, i) => {
+      setTimeout(() => {
+        setStates(prev => {
+          const next = [...prev] as BranchState[];
+          next[i] = "done";
+          return next;
+        });
+      }, b.ms / SPEED);
+    });
+    setTimeout(() => { setJoinDone(true); setRunning(false); }, (TOTAL_PARALLEL_MS / SPEED) + 60);
+    let t = 0;
+    timerRef.current = setInterval(() => {
+      t += 40;
+      setElapsed(t);
+      if (t >= TOTAL_PARALLEL_MS / SPEED + 100) {
+        if (timerRef.current) clearInterval(timerRef.current);
+      }
+    }, 40);
+  }
+
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
+
+  const saving  = Math.round((1 - TOTAL_PARALLEL_MS / TOTAL_SEQUENTIAL_MS) * 100);
+  const allDone = states.every(s => s === "done");
+
+  return (
+    <div style={{ fontFamily: "'DM Mono', monospace" }}>
+      <div style={{
+        background: "#030712", border: "1px solid #0F172A",
+        borderRadius: "12px", padding: "32px", position: "relative", overflow: "hidden",
+      }}>
+        {/* Subtle grid */}
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          backgroundImage: "linear-gradient(rgba(0,212,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.02) 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }} />
+
+        <div style={{ position: "absolute", top: 12, left: 16, fontSize: "9px", color: "#1E293B", letterSpacing: "0.15em" }}>
+          STUDIO CANVAS — LIVE
+        </div>
+        {running && (
+          <div style={{ position: "absolute", top: 12, right: 16, fontSize: "10px", color: "#00D4FF", letterSpacing: "0.1em" }}>
+            {Math.round(elapsed * 2.2)}ms
+          </div>
+        )}
+        {allDone && joinDone && (
+          <div style={{ position: "absolute", top: 12, right: 16, fontSize: "10px", color: "#10B981", letterSpacing: "0.1em" }}>
+            ✓ {TOTAL_PARALLEL_MS}ms
+          </div>
+        )}
+
+        {/* Flow row */}
+        <div style={{ display: "flex", alignItems: "center", position: "relative", zIndex: 1, marginTop: "16px", overflowX: "auto" }}>
+          <DemoFlowNode label="TRIGGER" sub="trigger" active={forkDone || running} done={forkDone} />
+          <DemoArrow />
+          <DemoDiamond label="FORK" symbol="⑃" color="#F59E0B" active={running && !forkDone} done={forkDone} />
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {BRANCH_STAGES.map((b, i) => (
+              <div key={b.label} style={{ display: "flex", alignItems: "center" }}>
+                <DemoBranchArrow />
+                <DemoBranchLane label={b.label} nodes={b.nodes} color={b.color} state={states[i]} ms={b.ms} />
+                <DemoBranchArrow />
+              </div>
+            ))}
+          </div>
+          <DemoDiamond label="JOIN" symbol="⑄" color="#10B981" active={states.some(s => s === "done") && !joinDone} done={joinDone} />
+          <DemoArrow />
+          <DemoFlowNode label="PROCESS" sub="process" active={joinDone} done={joinDone} />
+        </div>
+
+        {/* Timeline after completion */}
+        {allDone && joinDone && (
+          <div style={{ marginTop: "24px", borderTop: "1px solid #0F172A", paddingTop: "16px" }}>
+            <div style={{ fontSize: "10px", color: "#64748B", marginBottom: "12px", letterSpacing: "0.1em" }}>BRANCH TIMELINE</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              {BRANCH_STAGES.map(b => (
+                <div key={b.label} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <span style={{ fontSize: "9px", color: b.color, minWidth: "56px", letterSpacing: "0.08em" }}>{b.label}</span>
+                  <div style={{ flex: 1, height: "5px", background: "#0F172A", borderRadius: "3px", overflow: "hidden" }}>
+                    <div style={{ width: `${(b.ms / TOTAL_PARALLEL_MS) * 100}%`, height: "100%", background: b.color, borderRadius: "3px", transition: "width 0.6s ease" }} />
+                  </div>
+                  <span style={{ fontSize: "9px", color: "#64748B", minWidth: "36px", textAlign: "right" }}>{b.ms}ms</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: "20px", marginTop: "14px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "10px", color: "#64748B" }}>Parallel: <span style={{ color: "#10B981" }}>{TOTAL_PARALLEL_MS}ms</span></span>
+              <span style={{ fontSize: "10px", color: "#64748B" }}>Sequential equiv: <span style={{ color: "#475569" }}>{TOTAL_SEQUENTIAL_MS}ms</span></span>
+              <span style={{ fontSize: "10px", color: "#F59E0B", fontWeight: "600" }}>⚡ {saving}% faster</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
+        <button onClick={run} style={{
+          background: running ? "rgba(239,68,68,0.1)" : "rgba(0,212,255,0.08)",
+          border: `1px solid ${running ? "rgba(239,68,68,0.3)" : "rgba(0,212,255,0.25)"}`,
+          borderRadius: "6px", color: running ? "#ef4444" : "#00D4FF",
+          fontFamily: "'DM Mono', monospace", fontSize: "11px", letterSpacing: "0.12em",
+          padding: "10px 28px", cursor: "pointer", transition: "all 0.15s",
+        }}>
+          {running ? "◼ STOP" : allDone ? "↺ RUN AGAIN" : "▶ RUN FLOW"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DemoFlowNode({ label, sub, active, done }: { label: string; sub: string; active: boolean; done: boolean }) {
+  const color = done ? "#10B981" : active ? "#00D4FF" : "#1E293B";
+  return (
+    <div style={{
+      background: "#0a0f1e", border: `1px solid ${color}`, borderRadius: "6px",
+      padding: "8px 12px", minWidth: "64px", textAlign: "center", flexShrink: 0,
+      transition: "border-color 0.3s, box-shadow 0.3s",
+      boxShadow: active || done ? `0 0 10px ${color}30` : "none",
+    }}>
+      <div style={{ fontSize: "8px", color: "#475569", letterSpacing: "0.1em", marginBottom: "2px" }}>{sub.toUpperCase()}</div>
+      <div style={{ fontSize: "10px", color: done ? "#10B981" : active ? "#00D4FF" : "#475569", fontWeight: "600" }}>{label}</div>
+    </div>
+  );
+}
+
+function DemoDiamond({ label, symbol, color, active, done }: { label: string; symbol: string; color: string; active: boolean; done: boolean }) {
+  const c = done ? color : active ? color : "#1E293B";
+  return (
+    <div style={{
+      width: "56px", height: "56px", background: "#0a0f1e", border: `1.5px solid ${c}`,
+      transform: "rotate(45deg)", display: "flex", alignItems: "center", justifyContent: "center",
+      flexShrink: 0, margin: "0 4px",
+      transition: "border-color 0.3s, box-shadow 0.3s",
+      boxShadow: active || done ? `0 0 14px ${c}40` : "none",
+    }}>
+      <div style={{ transform: "rotate(-45deg)", textAlign: "center" }}>
+        <div style={{ fontSize: "16px", color: c, lineHeight: 1 }}>{symbol}</div>
+        <div style={{ fontSize: "7px", color: c, letterSpacing: "0.05em", marginTop: "1px" }}>{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function DemoBranchLane({ label, nodes, color, state, ms }: { label: string; nodes: string[]; color: string; state: BranchState; ms: number }) {
+  const isRunning = state === "running";
+  const isDone    = state === "done";
+  const c = isDone ? color : isRunning ? color : "#1E293B";
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: "4px",
+      background: isDone ? `${color}08` : isRunning ? `${color}05` : "transparent",
+      border: `1px solid ${c}30`, borderRadius: "6px",
+      padding: "6px 10px", minWidth: "180px", transition: "all 0.3s",
+    }}>
+      <span style={{ fontSize: "8px", color: c, minWidth: "44px", letterSpacing: "0.06em" }}>{label}</span>
+      {nodes.map(n => (
+        <div key={n} style={{
+          background: isDone ? `${color}20` : isRunning ? `${color}12` : "#0F172A",
+          border: `1px solid ${c}40`, borderRadius: "4px",
+          padding: "3px 6px", fontSize: "8px",
+          color: isDone ? color : isRunning ? color : "#334155",
+          transition: "all 0.3s",
+        }}>
+          {isDone ? "✓ " : isRunning ? "↻ " : ""}{n}
+        </div>
+      ))}
+      {isDone && <span style={{ fontSize: "8px", color: "#475569", marginLeft: "4px" }}>{ms}ms</span>}
+    </div>
+  );
+}
+
+function DemoArrow()       { return <div style={{ width: "16px", height: "1px", background: "#1E293B", flexShrink: 0 }} />; }
+function DemoBranchArrow() { return <div style={{ width: "12px", height: "1px", background: "#1E293B", flexShrink: 0 }} />; }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WHY NEXFLOW — nex comparison toggle
+// ─────────────────────────────────────────────────────────────────────────────
+
+function NexComparison() {
+  const [active, setActive] = useState<"them" | "us">("them");
+
+  const them = `// n8n
+$node["HTTP Request"]
+  .json["data"][0]
+  ["user"]["email"]
+
+// Make
+{{1.data[].user.email}}
+
+// Zapier
+{{153892.Body.data
+  .0.user.email}}`;
+
+  const us = `// Nexflow — you named it
+nex.fetchUser.email
+
+// In a Script node
+var email = nex.fetchUser.email;
+var name  = nex.fetchUser.name;
+
+// In an HTTP node body
+{ "to": "{{nex.fetchUser.email}}" }`;
+
+  return (
+    <div style={{ fontFamily: "'DM Mono', monospace" }}>
+      <div style={{ display: "flex", marginBottom: "16px", border: "1px solid #0F172A", borderRadius: "6px", overflow: "hidden", width: "fit-content" }}>
+        {(["them", "us"] as const).map(t => (
+          <button key={t} onClick={() => setActive(t)} style={{
+            background: active === t ? (t === "us" ? "rgba(0,212,255,0.1)" : "rgba(239,68,68,0.1)") : "#050810",
+            border: "none", borderRight: t === "them" ? "1px solid #0F172A" : "none",
+            color: active === t ? (t === "us" ? "#00D4FF" : "#ef4444") : "#475569",
+            fontFamily: "'DM Mono', monospace", fontSize: "10px", letterSpacing: "0.12em",
+            padding: "8px 20px", cursor: "pointer", transition: "all 0.15s",
+          }}>
+            {t === "them" ? "n8n / Make / Zapier" : "Nexflow"}
+          </button>
+        ))}
+      </div>
+      <div style={{
+        background: "#030712",
+        border: `1px solid ${active === "us" ? "rgba(0,212,255,0.15)" : "rgba(239,68,68,0.12)"}`,
+        borderRadius: "8px", padding: "24px",
+        transition: "border-color 0.3s", position: "relative",
+      }}>
+        <div style={{
+          position: "absolute", top: "10px", right: "12px",
+          fontSize: "9px", letterSpacing: "0.1em",
+          color: active === "us" ? "#00D4FF" : "#ef4444",
+          background: active === "us" ? "rgba(0,212,255,0.08)" : "rgba(239,68,68,0.08)",
+          border: `1px solid ${active === "us" ? "rgba(0,212,255,0.15)" : "rgba(239,68,68,0.15)"}`,
+          borderRadius: "3px", padding: "2px 7px",
+        }}>
+          {active === "us" ? "NEXFLOW" : "THEIR WAY"}
+        </div>
+        <pre style={{ margin: 0, fontSize: "12px", lineHeight: "1.9", color: active === "us" ? "#94A3B8" : "#64748B", whiteSpace: "pre-wrap" }}>
+          {active === "them" ? them : us}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WHY NEXFLOW — comparison table
+// ─────────────────────────────────────────────────────────────────────────────
+
+const COMPARE_ROWS = [
+  { feature: "Live parallel execution on canvas",  nexflow: true,  n8n: false, zapier: false, make: false },
+  { feature: "Per-branch real-time status dots",   nexflow: true,  n8n: false, zapier: false, make: false },
+  { feature: "Named data access (nex.name.field)", nexflow: true,  n8n: false, zapier: false, make: false },
+  { feature: "Real JavaScript / Python in flows",  nexflow: true,  n8n: true,  zapier: false, make: false },
+  { feature: "Merge strategies (ALL / FIRST / N)", nexflow: true,  n8n: false, zapier: false, make: false },
+  { feature: "Branch timing + savings visible",    nexflow: true,  n8n: false, zapier: false, make: false },
+  { feature: "Flows calling other flows",          nexflow: true,  n8n: true,  zapier: false, make: true  },
+  { feature: "Full execution JSON per node",       nexflow: true,  n8n: true,  zapier: false, make: false },
+  { feature: "Multi-instance WebSocket delivery",  nexflow: true,  n8n: false, zapier: false, make: false },
+  { feature: "Script reads nex directly",          nexflow: true,  n8n: false, zapier: false, make: false },
+];
+
+function CompareTable() {
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "'DM Mono', monospace" }}>
+        <thead>
+          <tr>
+            {[
+              { label: "FEATURE",  key: "feature", accent: "#94A3B8" },
+              { label: "NEXFLOW",  key: "nexflow", accent: "#00D4FF" },
+              { label: "N8N",      key: "n8n",     accent: "#64748B" },
+              { label: "ZAPIER",   key: "zapier",  accent: "#64748B" },
+              { label: "MAKE",     key: "make",    accent: "#64748B" },
+            ].map(c => (
+              <th key={c.key} style={{
+                padding: "12px 16px", textAlign: c.key === "feature" ? "left" : "center",
+                fontSize: "9px", letterSpacing: "0.15em", color: c.accent,
+                borderBottom: "1px solid #0F172A",
+                background: c.key === "nexflow" ? "rgba(0,212,255,0.03)" : "transparent",
+                whiteSpace: "nowrap",
+              }}>{c.label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {COMPARE_ROWS.map(row => (
+            <tr key={row.feature} style={{ borderBottom: "1px solid #0A0F1E" }}>
+              <td style={{ padding: "11px 16px", fontSize: "12px", color: "#94A3B8" }}>{row.feature}</td>
+              {(["nexflow", "n8n", "zapier", "make"] as const).map(tool => (
+                <td key={tool} style={{
+                  padding: "11px 16px", textAlign: "center",
+                  background: tool === "nexflow" ? "rgba(0,212,255,0.02)" : "transparent",
+                }}>
+                  {row[tool]
+                    ? <span style={{ color: tool === "nexflow" ? "#10B981" : "#334155", fontSize: "14px" }}>✓</span>
+                    : <span style={{ color: "#1E293B", fontSize: "12px" }}>—</span>
+                  }
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WHY NEXFLOW — full section
+// ─────────────────────────────────────────────────────────────────────────────
+
+function WhyNexflow() {
+  return (
+    <section style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
+      <div style={{ maxWidth: "1200px" }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: "72px" }}>
+          <div style={{ fontSize: "10px", color: "#94A3B8", letterSpacing: "0.2em", marginBottom: "16px" }}>WHY NEXFLOW</div>
+          <div style={{ width: "40px", height: "2px", background: "#00D4FF", marginBottom: "24px" }} />
+          <h2 style={{
+            fontSize: "clamp(24px, 3.5vw, 44px)", fontWeight: "700",
+            letterSpacing: "-0.02em", color: "#F1F5F9", lineHeight: "1.2",
+            margin: "0 0 16px", fontFamily: "'DM Mono', monospace",
+          }}>
+            Two things no other tool does.
+          </h2>
+          <p style={{ fontSize: "14px", color: "#64748B", maxWidth: "480px", lineHeight: "1.8", margin: 0 }}>
+            Not better versions of what exists. Genuinely absent features
+            that change how you think about workflow automation.
+          </p>
+        </div>
+
+        {/* Standout 1 — live parallel canvas */}
+        <div style={{ marginBottom: "96px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "64px", alignItems: "start" }}>
+            <div>
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: "8px",
+                fontSize: "9px", letterSpacing: "0.15em", color: "#F59E0B",
+                background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)",
+                borderRadius: "3px", padding: "4px 10px", marginBottom: "20px",
+              }}>
+                <span>⑃</span> STANDOUT FEATURE 01
+              </div>
+              <h3 style={{
+                fontSize: "clamp(18px, 2vw, 26px)", fontWeight: "700",
+                color: "#F1F5F9", lineHeight: "1.3", letterSpacing: "-0.01em",
+                margin: "0 0 16px", fontFamily: "'DM Mono', monospace",
+              }}>
+                Live parallel execution,<br />visible on the canvas.
+              </h3>
+              <p style={{ fontSize: "13px", color: "#94A3B8", lineHeight: "1.9", margin: "0 0 20px" }}>
+                n8n, Zapier, and Make show you execution results <em>after</em> they finish.
+                Nexflow shows you execution <em>as it happens</em> — each branch turns blue
+                the instant it starts, green when it completes, and the JOIN counts down live.
+              </p>
+              <p style={{ fontSize: "13px", color: "#94A3B8", lineHeight: "1.9", margin: "0 0 28px" }}>
+                When it's done, BranchTimeline tells you exactly how much time parallel
+                execution saved vs running sequentially. Not estimated — measured, from
+                actual thread timestamps.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {[
+                  { tool: "n8n",    note: "Has parallel execution — canvas shows nothing until done" },
+                  { tool: "Zapier", note: "Sequential only — no parallel execution concept"          },
+                  { tool: "Make",   note: "Sequential only — parallel requires workarounds"          },
+                ].map(c => (
+                  <div key={c.tool} style={{
+                    display: "flex", gap: "12px", alignItems: "flex-start",
+                    padding: "8px 12px",
+                    background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.08)",
+                    borderRadius: "5px",
+                  }}>
+                    <span style={{ fontSize: "10px", color: "#334155", minWidth: "48px", paddingTop: "1px" }}>{c.tool}</span>
+                    <span style={{ fontSize: "11px", color: "#475569", lineHeight: "1.6" }}>{c.note}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div><LiveBranchDemo /></div>
+          </div>
+        </div>
+
+        {/* Standout 2 — nex */}
+        <div style={{ marginBottom: "96px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "64px", alignItems: "start" }}>
+            <div><NexComparison /></div>
+            <div>
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: "8px",
+                fontSize: "9px", letterSpacing: "0.15em", color: "#6366F1",
+                background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)",
+                borderRadius: "3px", padding: "4px 10px", marginBottom: "20px",
+              }}>
+                <span>◈</span> STANDOUT FEATURE 02
+              </div>
+              <h3 style={{
+                fontSize: "clamp(18px, 2vw, 26px)", fontWeight: "700",
+                color: "#F1F5F9", lineHeight: "1.3", letterSpacing: "-0.01em",
+                margin: "0 0 16px", fontFamily: "'DM Mono', monospace",
+              }}>
+                Your data has a name.<br />One you chose.
+              </h3>
+              <p style={{ fontSize: "13px", color: "#94A3B8", lineHeight: "1.9", margin: "0 0 20px" }}>
+                Every other tool forces you to navigate its internal data structure —
+                position-based indexes, UUID node references, nested dot-paths that
+                break the moment you reorder a step.
+              </p>
+              <p style={{ fontSize: "13px", color: "#94A3B8", lineHeight: "1.9", margin: "0 0 20px" }}>
+                In Nexflow, you name a node's output once — say,{" "}
+                <code style={{ color: "#6366F1", fontSize: "12px" }}>fetchUser</code> — and from
+                that point every downstream node, every script, every HTTP body template
+                accesses it as <code style={{ color: "#00D4FF", fontSize: "12px" }}>nex.fetchUser.field</code>.
+              </p>
+              <p style={{ fontSize: "13px", color: "#94A3B8", lineHeight: "1.9", margin: 0 }}>
+                Scripts read it natively:{" "}
+                <code style={{ color: "#10B981", fontSize: "12px" }}>var email = nex.fetchUser.email</code>.
+                No binding helpers. No adapter layers. The JavaScript engine receives
+                the live nex object before your script runs.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Full comparison table */}
+        <div>
+          <div style={{ fontSize: "10px", color: "#64748B", letterSpacing: "0.15em", marginBottom: "20px" }}>FULL COMPARISON</div>
+          <div style={{ background: "#050810", border: "1px solid #0F172A", borderRadius: "8px", overflow: "hidden" }}>
+            <CompareTable />
+          </div>
+          <p style={{ fontSize: "11px", color: "#334155", marginTop: "12px", textAlign: "right" }}>
+            ✓ = supported natively — as of March 2026
+          </p>
+        </div>
+
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ANIMATED COUNTER — unchanged from your version
+// ─────────────────────────────────────────────────────────────────────────────
 
 function AnimatedCounter({ target, duration = 1500 }: { target: number; duration?: number }) {
   const [count, setCount] = useState(0);
@@ -151,6 +636,10 @@ function AnimatedCounter({ target, duration = 1500 }: { target: number; duration
 
   return <span ref={ref}>{count}</span>;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE — your exact code, with <WhyNexflow /> injected after THE PROBLEM
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function AboutPage() {
   const [hoveredMilestone, setHoveredMilestone] = useState<number | null>(null);
@@ -420,6 +909,9 @@ export default function AboutPage() {
           </div>
         </section>
 
+        {/* ── WHY NEXFLOW ──────────────────────────────────────── */}
+        <WhyNexflow />
+
         {/* ── WHAT WE'VE SHIPPED ───────────────────────────────── */}
         <section style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
           <div style={{ maxWidth: "1200px" }}>
@@ -550,7 +1042,8 @@ export default function AboutPage() {
                 top: "0",
                 bottom: "0",
                 width: "1px",
-                background: "linear-gradient(to bottom, #0F172A, #1E293B 30%, #1E293B 70%, #0F172A)",
+                background:
+                  "linear-gradient(to bottom, #0F172A, #1E293B 30%, #1E293B 70%, #0F172A)",
               }}
             />
 
