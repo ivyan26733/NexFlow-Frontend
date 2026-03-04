@@ -15,18 +15,22 @@ import { PanelLeftOpen } from 'lucide-react'
 
 import { api } from '@/api'
 import { useExecutionSocket } from '@/useExecutionSocket'
+import { useBranchSocket } from '@/useBranchSocket'
 import { NODE_META } from '@/lib/nodeConfig'
 import type {
   NodeStatus,
   NodeExecutionEvent,
   FlowNode as ApiNode,
   FlowEdge as ApiEdge,
+  BranchStatus,
+  ForkNodeConfig,
 } from '@/types'
 
 import NodeSidebar     from '@/NodeSidebar'
 import NodeConfigPanel from '@/NodeConfigPanel'
 import StudioToolbar   from '@/StudioToolbar'
 import { FlowNodeCard } from '@/FlowNodeCard'
+import ForkJoinNodeCard from '@/ForkJoinNodeCard'
 import AiFlowNodeCard from '@/components/studio/AiFlowNodeCard'
 import { MillennialLoader } from '@/MillennialLoader'
 
@@ -44,6 +48,8 @@ const nodeTypes: NodeTypes = {
   AI:       AiFlowNodeCard,
   SUCCESS:  FlowNodeCard,
   FAILURE:  FlowNodeCard,
+  FORK:     ForkJoinNodeCard,
+  JOIN:     ForkJoinNodeCard,
 }
 
 /* ───────────────────────── Page ───────────────────────── */
@@ -61,6 +67,9 @@ export default function StudioPage() {
 
   const [executionId,  setExecutionId]  = useState<string | null>(null)
   const [nodeStatuses, setNodeStatuses] = useState<Record<string, NodeStatus>>({})
+  const [branchStatuses, setBranchStatuses] = useState<
+    Record<string, Record<string, BranchStatus>>
+  >({})
   const [saving,       setSaving]       = useState(false)
 
   const [flowName, setFlowName] = useState('')
@@ -133,16 +142,73 @@ export default function StudioPage() {
     },
   })
 
-  const nodesWithStatus = nodes.map(n => ({
-    ...n,
-    data: { ...n.data, liveStatus: nodeStatuses[n.id] ?? null },
-  }))
+  useBranchSocket({
+    executionId,
+    onBranchEvent: (event) => {
+      setBranchStatuses(prev => ({
+        ...prev,
+        [event.forkNodeId]: {
+          ...(prev[event.forkNodeId] ?? {}),
+          [event.branchName]: event.status,
+        },
+      }))
+    },
+  })
+
+  const nodesWithStatus = nodes.map(n => {
+    const liveStatus = nodeStatuses[n.id] ?? null
+    const data: any = { ...n.data, liveStatus }
+
+    if (n.type === 'FORK') {
+      data.branchStatuses = branchStatuses[n.id] ?? {}
+    }
+    if (n.type === 'JOIN') {
+      const forkId = (n.data.config as any)?.forkNodeId
+      data.branchStatuses = forkId ? (branchStatuses[forkId] ?? {}) : {}
+    }
+
+    return { ...n, data }
+  })
 
   /* ───────────────────────── Edge connect ───────────────────────── */
 
-  const onConnect = useCallback((c: Connection) => {
-    const sourceHandle = c.sourceHandle ?? undefined
-    const conditionType = sourceHandle === 'continue' ? 'CONTINUE' : sourceHandle === 'failure' ? 'FAILURE' : 'SUCCESS'
+  const onConnect = useCallback((connection: Connection) => {
+    if (viewMode) return
+
+    const { source, sourceHandle, target } = connection
+
+    // If source is a FORK branch handle, record target in branchNodeIds for that branch
+    const sourceNode = nodes.find(n => n.id === source)
+    if (sourceNode?.data?.nodeType === 'FORK' && sourceHandle && target) {
+      const branchName = sourceHandle
+
+      setNodes(prevNodes => prevNodes.map(n => {
+        if (n.id !== source) return n
+
+        const prevConfig = (n.data.config ?? {}) as ForkNodeConfig & { branchNodeIds?: Record<string, string[]> }
+        const prevBranchNodeIds = prevConfig.branchNodeIds ?? {}
+        const prevList = prevBranchNodeIds[branchName] ?? []
+
+        const newList = prevList.includes(target) ? prevList : [...prevList, target]
+
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            config: {
+              ...prevConfig,
+              branchNodeIds: {
+                ...prevBranchNodeIds,
+                [branchName]: newList,
+              },
+            },
+          },
+        }
+      }))
+    }
+
+    const sourceHandleId = connection.sourceHandle ?? undefined
+    const conditionType = sourceHandleId === 'continue' ? 'CONTINUE' : sourceHandleId === 'failure' ? 'FAILURE' : 'SUCCESS'
     const style = conditionType === 'CONTINUE'
       ? { stroke: '#F59E0B', strokeWidth: 2, strokeDasharray: '6 3' }
       : conditionType === 'FAILURE'
@@ -151,7 +217,7 @@ export default function StudioPage() {
     setEdges(eds =>
       addEdge(
         {
-          ...c,
+          ...connection,
           id: crypto.randomUUID(),
           type: 'smoothstep',
           data: { conditionType },
@@ -160,7 +226,40 @@ export default function StudioPage() {
         eds
       )
     )
-  }, [])
+  }, [nodes, setNodes, setEdges, viewMode])
+
+  const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
+    if (viewMode) return
+
+    deletedEdges.forEach(edge => {
+      const sourceNode = nodes.find(n => n.id === edge.source)
+      if (sourceNode?.data?.nodeType === 'FORK' && edge.sourceHandle) {
+        const branchName = edge.sourceHandle
+
+        setNodes(prevNodes => prevNodes.map(n => {
+          if (n.id !== edge.source) return n
+
+          const prevConfig = (n.data.config ?? {}) as ForkNodeConfig & { branchNodeIds?: Record<string, string[]> }
+          const prevBranchNodeIds = prevConfig.branchNodeIds ?? {}
+          const prevList = prevBranchNodeIds[branchName] ?? []
+
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              config: {
+                ...prevConfig,
+                branchNodeIds: {
+                  ...prevBranchNodeIds,
+                  [branchName]: prevList.filter(id => id !== edge.target),
+                },
+              },
+            },
+          }
+        }))
+      }
+    })
+  }, [nodes, setNodes, viewMode])
 
   /* ───────────────────────── Actions ───────────────────────── */
 
@@ -265,6 +364,7 @@ export default function StudioPage() {
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
+                onEdgesDelete={onEdgesDelete}
                 nodeTypes={nodeTypes}
                 setSelectedNode={setSelectedNode}
                 setSelectedEdge={setSelectedEdge}
@@ -312,6 +412,7 @@ function StudioCanvas({
   onNodesChange,
   onEdgesChange,
   onConnect,
+  onEdgesDelete,
   nodeTypes,
   setSelectedNode,
   setSelectedEdge,
@@ -323,6 +424,7 @@ function StudioCanvas({
   onNodesChange: OnNodesChange<Node>
   onEdgesChange: OnEdgesChange<Edge>
   onConnect: (c: Connection) => void
+  onEdgesDelete: (edges: Edge[]) => void
   nodeTypes: NodeTypes
   setSelectedNode: (n: Node | null) => void
   setSelectedEdge: (e: Edge | null) => void
@@ -362,6 +464,7 @@ function StudioCanvas({
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={viewMode ? undefined : onConnect}
+      onEdgesDelete={viewMode ? undefined : onEdgesDelete}
       onNodeClick={(_, n) => { setSelectedNode(n); setSelectedEdge(null) }}
       onEdgeClick={(_, e) => { setSelectedEdge(e); setSelectedNode(null) }}
       onPaneClick={() => { setSelectedNode(null); setSelectedEdge(null) }}

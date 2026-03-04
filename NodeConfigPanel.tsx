@@ -15,6 +15,8 @@ import DecisionConfig from './config/DecisionConfig'
 import LoopConfig from './config/LoopConfig'
 import AiConfig from './config/AiConfig'
 import TerminalConfig from './config/TerminalConfig'
+import ForkConfig from './config/ForkConfig'
+import JoinConfig from './config/JoinConfig'
 import SaveOutputAsField from './config/SaveOutputAsField'
 
 interface Props {
@@ -165,6 +167,8 @@ function NodeForm({ nodeType, config, currentFlowId, onChange, nodeLabel }: {
     case 'DECISION': return (<> <DecisionConfig config={config} onChange={onChange} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
     case 'LOOP':     return (<> <LoopConfig config={config} onChange={onChange} nodeLabel={nodeLabel} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
     case 'AI':       return (<> <AiConfig config={config} onChange={onChange} nodeLabel={nodeLabel} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
+    case 'FORK':     return (<> <ForkConfig config={config as any} onChange={c => onChange(c as any)} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
+    case 'JOIN':     return (<> <JoinConfig config={config as any} onChange={c => onChange(c as any)} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
     case 'SUCCESS':
     case 'FAILURE':  return (<> <TerminalConfig config={config} onChange={onChange} /> <SaveOutputAsField config={config} onChange={onChange} /> </>)
     case 'START':    return (<> <StartHint /> <SaveOutputAsField config={config} onChange={onChange} /> </>)

@@ -27,3 +27,17 @@ export type {
   AiNodeOutput,
   LlmTestResult,
 } from '../index'
+
+// Fork / Join parallel execution types
+export type {
+  JoinStrategy,
+  BranchFailureMode,
+  TimeoutMode,
+  BranchStatus,
+  ForkNodeConfig,
+  JoinNodeConfig,
+  BranchExecutionEvent,
+  JoinMeta,
+  BranchMeta,
+  ForkJoinNodeData,
+} from '../fork-join-types'

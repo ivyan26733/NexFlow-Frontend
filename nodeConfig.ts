@@ -102,6 +102,26 @@ export const NODE_META: Record<NodeType, NodeMeta> = {
     icon:        '✦',
     group:       'AI',
   },
+
+  FORK: {
+    label:       'Fork',
+    color:       '#f59e0b',
+    bgColor:     '#1a1200',
+    description: 'Split flow into parallel branches — paired with JOIN',
+    isTerminal:  false,
+    icon:        '⑃',
+    group:       'PARALLEL',
+  },
+
+  JOIN: {
+    label:       'Join',
+    color:       '#10b981',
+    bgColor:     '#001a0e',
+    description: 'Merge parallel branches back into a single flow',
+    isTerminal:  false,
+    icon:        '⑄',
+    group:       'PARALLEL',
+  },
 }
 
 // Sidebar draggable nodes — order controls vertical order
@@ -113,6 +133,8 @@ export const DRAGGABLE_NODES: NodeType[] = [
   'MAPPER',
   'DECISION',
   'LOOP',
+  'FORK',
+  'JOIN',
   'AI',
   'SUCCESS',
   'FAILURE',
@@ -122,6 +144,7 @@ export const DRAGGABLE_NODES: NodeType[] = [
 export const NODE_GROUPS: { label: string; types: NodeType[] }[] = [
   { label: 'CALL',     types: ['NEXUS', 'SUB_FLOW'] },
   { label: 'LOGIC',    types: ['SCRIPT', 'VARIABLE', 'MAPPER', 'DECISION', 'LOOP'] },
+  { label: 'PARALLEL', types: ['FORK', 'JOIN'] },
   { label: 'AI',       types: ['AI'] },
   { label: 'TERMINAL', types: ['SUCCESS', 'FAILURE'] },
 ]

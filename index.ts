@@ -20,6 +20,8 @@ export type NodeType =
   | 'SUCCESS'
   | 'FAILURE'
   | 'AI'
+  | 'FORK'
+  | 'JOIN'
 
 // Edge routing rules
 export type EdgeCondition =
