@@ -7,8 +7,7 @@ export interface CardMenuItem {
   label: string
   onClick: () => void
   danger?: boolean
-}
-
+}
 interface CardMenuProps {
   items: CardMenuItem[]
   className?: string
