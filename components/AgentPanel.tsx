@@ -53,7 +53,7 @@ export function AgentPanel({ onFlowLoaded, onClose }: AgentPanelProps) {
       const message =
         err instanceof Error
           ? err.message
-          : 'Cannot reach agent — is it running on port 3002?'
+          : 'Cannot reach agent — is it running on port 3001?'
       setError(message)
     } finally {
       setLoading(false)

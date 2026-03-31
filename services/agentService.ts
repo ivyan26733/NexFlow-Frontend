@@ -1,6 +1,6 @@
 // Calls the Agentic Flow server to generate flows from prompts.
-// Matches nexflow-agent PORT in .env (default: 3001).
-const AGENT_BASE = 'http://localhost:3001'
+// Set NEXT_PUBLIC_AGENT_URL in .env.local to point to the agent server.
+const AGENT_BASE = process.env.NEXT_PUBLIC_AGENT_URL || 'http://localhost:3001'
 
 export interface AgentFlowNode {
   id:     string
