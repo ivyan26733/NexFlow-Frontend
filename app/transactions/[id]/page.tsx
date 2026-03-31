@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, Fragment } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, CheckCircle, XCircle, Loader2, Clock, ChevronDown, ChevronRight, Copy } from 'lucide-react'
 import { api } from '@/api'
-import type { ExecutionDetail, NodeLog, NodeStatus, NexMap, FlowNode } from '@/types'
+import type { ExecutionDetail, NodeLog, NodeStatus, NexMap, FlowNode, BranchExecution, NodeExecution } from '@/types'
 import { MillennialLoader } from '@/MillennialLoader'
 
 function copyToClipboard(text: string): Promise<void> {
@@ -74,6 +74,27 @@ export default function TransactionDetailPage() {
     }
     return logs
   }, [detail?.ncoSnapshot?.nodes, detail?.ncoSnapshot?.nodeExecutionOrder])
+
+  const branchesByForkNode = useMemo(() => {
+    const map: Record<string, BranchExecution[]> = {}
+    for (const branch of detail?.branches ?? []) {
+      const key = branch.forkNodeId
+      if (!map[key]) map[key] = []
+      map[key].push(branch)
+    }
+    return map
+  }, [detail?.branches])
+
+  const nodeExecutionsByBranch = useMemo(() => {
+    const map: Record<string, NodeExecution[]> = {}
+    for (const ne of detail?.nodeExecutions ?? []) {
+      const key = ne.branchName ?? ''
+      if (!key) continue
+      if (!map[key]) map[key] = []
+      map[key].push(ne)
+    }
+    return map
+  }, [detail?.nodeExecutions])
 
   function toggle(nodeId: string) {
     setExpanded(prev => ({ ...prev, [nodeId]: !prev[nodeId] }))
@@ -151,16 +172,27 @@ export default function TransactionDetailPage() {
         ) : (
           nodeLogs.map(log => {
             const saveAs = flowNodes.find(n => n.id === log.nodeId)?.config?.saveOutputAs as string | undefined
+            const forkBranches = log.nodeType === 'FORK' ? (branchesByForkNode[log.nodeId] ?? []) : []
             return (
-              <NodeLogCard
-                key={log.nodeId}
-                log={log}
-                saveOutputAs={saveAs}
-                isOpen={!!expanded[log.nodeId]}
-                onToggle={() => toggle(log.nodeId)}
-                rawOpen={!!rawOpen[log.nodeId]}
-                onRawToggle={() => setRawOpen(prev => ({ ...prev, [log.nodeId]: !prev[log.nodeId] }))}
-              />
+              <Fragment key={log.nodeId}>
+                <NodeLogCard
+                  log={log}
+                  saveOutputAs={saveAs}
+                  isOpen={!!expanded[log.nodeId]}
+                  onToggle={() => toggle(log.nodeId)}
+                  rawOpen={!!rawOpen[log.nodeId]}
+                  onRawToggle={() => setRawOpen(prev => ({ ...prev, [log.nodeId]: !prev[log.nodeId] }))}
+                />
+                {log.nodeType === 'FORK' && forkBranches.map(branch => (
+                  <BranchExecutionRow
+                    key={branch.id}
+                    branch={branch}
+                    nodeExecutions={nodeExecutionsByBranch[branch.branchName] ?? []}
+                    expanded={expanded}
+                    onToggle={toggle}
+                  />
+                ))}
+              </Fragment>
             )
           })
         )}
@@ -276,6 +308,130 @@ function NexJsonViewer({ data, basePath, depth = 0 }: { data: unknown; basePath:
     )
   }
   return null
+}
+
+function BranchExecutionRow({
+  branch,
+  nodeExecutions,
+  expanded,
+  onToggle,
+}: {
+  branch: BranchExecution
+  nodeExecutions: NodeExecution[]
+  expanded: Record<string, boolean>
+  onToggle: (key: string) => void
+}) {
+  const [branchExpanded, setBranchExpanded] = useState(false)
+  const isSuccess = branch.status === 'SUCCESS'
+  const color = isSuccess ? '#10B981' : '#EF4444'
+
+  return (
+    <div style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-panel)' }}>
+      <button
+        type="button"
+        onClick={() => setBranchExpanded(prev => !prev)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '8px 16px 8px 48px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          textAlign: 'left',
+          fontSize: '12px',
+          fontFamily: 'var(--font-mono)',
+        }}
+      >
+        <div style={{ width: '12px', height: '1px', background: '#1E293B', flexShrink: 0 }} />
+        {branchExpanded ? <ChevronDown size={14} style={{ color: 'var(--color-muted)' }} /> : <ChevronRight size={14} style={{ color: 'var(--color-muted)' }} />}
+        <span style={{ color, minWidth: '80px' }}>⑃ {branch.branchName}</span>
+        <span style={{
+          fontSize: '9px', padding: '2px 8px', borderRadius: '3px',
+          background: `${color}15`, color, border: `1px solid ${color}30`,
+          letterSpacing: '0.1em',
+        }}>
+          {branch.status}
+        </span>
+        <span style={{ marginLeft: 'auto', color: 'var(--color-muted)', fontSize: '11px' }}>
+          {branch.durationMs != null ? `${branch.durationMs}ms` : '—'}
+        </span>
+        {nodeExecutions.length > 0 && (
+          <span style={{ fontSize: '10px', color: 'var(--color-muted)' }}>
+            {nodeExecutions.length} node{nodeExecutions.length !== 1 ? 's' : ''}
+          </span>
+        )}
+        {!isSuccess && branch.errorMessage && (
+          <span style={{
+            color: '#EF4444', fontSize: '11px',
+            maxWidth: '280px', overflow: 'hidden',
+            textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {branch.errorMessage}
+          </span>
+        )}
+      </button>
+      {branchExpanded && nodeExecutions.length > 0 && (
+        <div style={{ paddingLeft: '48px', paddingRight: '16px', paddingBottom: '12px', borderTop: '1px solid var(--color-border)' }}>
+          {nodeExecutions.map(ne => (
+            <BranchNodeCard
+              key={ne.id}
+              nodeExecution={ne}
+              isOpen={!!expanded[`branch:${branch.id}:${ne.id}`]}
+              onToggle={() => onToggle(`branch:${branch.id}:${ne.id}`)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BranchNodeCard({
+  nodeExecution: ne,
+  isOpen,
+  onToggle,
+}: {
+  nodeExecution: NodeExecution
+  isOpen: boolean
+  onToggle: () => void
+}) {
+  const statusCol = ne.status === 'SUCCESS' ? 'var(--color-success)' : 'var(--color-failure)'
+  const inputNex = (ne.inputNex && Object.keys(ne.inputNex).length > 0) ? ne.inputNex : null
+  const outputNex = (ne.outputNex && Object.keys(ne.outputNex).length > 0) ? ne.outputNex : null
+
+  return (
+    <div className="dashboard-card" style={{ marginTop: '8px', overflow: 'hidden', borderColor: isOpen ? statusCol + '44' : undefined }}>
+      <button type="button" onClick={onToggle} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+        <NodeStatusIcon status={ne.status as NodeStatus} />
+        <div style={{ flex: 1 }}>
+          <span className="dashboard-card-title" style={{ margin: 0, fontSize: '0.9rem' }}>{ne.nodeLabel}</span>
+          <span className="dashboard-card-meta" style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>{ne.nodeType}</span>
+        </div>
+        <span style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: statusCol }}>{ne.status}</span>
+        {ne.durationMs != null && (
+          <span style={{ fontSize: '0.7rem', color: 'var(--color-muted)' }}>{ne.durationMs}ms</span>
+        )}
+        {isOpen ? <ChevronDown size={14} style={{ color: 'var(--color-muted)' }} /> : <ChevronRight size={14} style={{ color: 'var(--color-muted)' }} />}
+      </button>
+      {isOpen && (
+        <div style={{ borderTop: '1px solid var(--color-border)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {ne.errorMessage && (
+            <div style={{ background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.25)', borderRadius: '0.5rem', padding: '0.75rem 1rem' }}>
+              <p className="dashboard-label" style={{ color: 'var(--color-failure)', marginBottom: '0.25rem' }}>ERROR</p>
+              <p style={{ fontSize: '0.8rem', color: '#ff8080', fontFamily: 'var(--font-mono)', margin: 0 }}>{ne.errorMessage}</p>
+            </div>
+          )}
+          {inputNex && <JsonBlock label="INPUT (nex before node)" data={inputNex as Record<string, unknown>} color="var(--color-accent)" />}
+          {outputNex && <JsonBlock label="OUTPUT (nex after node)" data={outputNex as Record<string, unknown>} color="var(--color-success)" />}
+          {!inputNex && !outputNex && !ne.errorMessage && (
+            <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', margin: 0 }}>No input/output recorded.</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function NodeLogCard({ log, saveOutputAs, isOpen, onToggle, rawOpen, onRawToggle }: {

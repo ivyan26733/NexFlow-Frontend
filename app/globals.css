@@ -630,6 +630,7 @@ select.input-base { appearance: none; cursor: pointer; }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100% { opacity: 0.2; } 50% { opacity: 1; } }
 @keyframes slideUp {
   from { transform: translateY(12px); opacity: 0; }
   to   { transform: translateY(0); opacity: 1; }

@@ -11,6 +11,8 @@ export type {
   Execution,
   ExecutionSummary,
   ExecutionDetail,
+  BranchExecution,
+  NodeExecution,
   NexMap,
   NcoSnapshot,
   NodeLog,

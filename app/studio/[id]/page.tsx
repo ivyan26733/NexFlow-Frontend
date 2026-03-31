@@ -34,6 +34,10 @@ import { FlowNodeCard } from '@/FlowNodeCard'
 import ForkJoinNodeCard from '@/ForkJoinNodeCard'
 import AiFlowNodeCard from '@/components/studio/AiFlowNodeCard'
 import { MillennialLoader } from '@/MillennialLoader'
+import { loadAgentFlowOnCanvas } from '@/utils/agentFlowMapper'
+import type { AgentFlow } from '@/services/agentService'
+import { AgentPanel } from '@/components/AgentPanel'
+import { AssistantPanel } from '@/components/AssistantPanel'
 
 /* ───────────────────────── Node Types ───────────────────────── */
 
@@ -72,6 +76,8 @@ export default function StudioPage() {
     Record<string, Record<string, BranchStatus>>
   >({})
   const [saving,       setSaving]       = useState(false)
+  const [agentPanelOpen, setAgentPanelOpen] = useState(false)
+  const [assistantOpen, setAssistantOpen]   = useState(false)
 
   const [flowName, setFlowName] = useState('')
   const [flowSlug, setFlowSlug] = useState('')
@@ -262,6 +268,43 @@ export default function StudioPage() {
     })
   }, [nodes, setNodes, viewMode])
 
+  /* ───────────────────────── Agent integration ───────────────────────── */
+
+  // Receive flows from the external agent UI (localhost:3001) via postMessage
+  useEffect(() => {
+    function handleMessage(event: MessageEvent) {
+      if (event.origin !== 'http://localhost:3001') return
+      if (event.data?.type !== 'NEXFLOW_AGENT_FLOW') return
+
+      const flow: AgentFlow = event.data.flow
+      if (flow?.nodes?.length) {
+        loadAgentFlowOnCanvas(flow, setNodes, setEdges)
+        // eslint-disable-next-line no-console
+        console.log('[Studio] Flow loaded from agent window')
+      }
+    }
+
+    // Also read from sessionStorage when the page is opened by the agent
+    try {
+      const stored = sessionStorage.getItem('nexflow_agent_flow')
+      const params = new URLSearchParams(window.location.search)
+      if (stored && params.get('agentFlow') === '1') {
+        const flow: AgentFlow = JSON.parse(stored)
+        sessionStorage.removeItem('nexflow_agent_flow')
+        setTimeout(() => loadAgentFlowOnCanvas(flow, setNodes, setEdges), 400)
+      }
+    } catch {
+      // ignore parse errors
+    }
+
+    window.addEventListener('message', handleMessage as EventListener)
+    return () => window.removeEventListener('message', handleMessage as EventListener)
+  }, [setNodes, setEdges])
+
+  const handleAgentFlowLoaded = useCallback((flow: AgentFlow) => {
+    loadAgentFlowOnCanvas(flow, setNodes, setEdges)
+  }, [setNodes, setEdges])
+
   /* ───────────────────────── Actions ───────────────────────── */
 
   async function saveCanvas() {
@@ -364,6 +407,8 @@ export default function StudioPage() {
           onFlowNameChange={updateFlowName}
           onTrigger={triggerFlow}
           onBeautify={beautifyLayout}
+          onOpenAgentPanel={() => setAgentPanelOpen(true)}
+          onOpenAssistant={() => setAssistantOpen(true)}
           viewMode={viewMode}
         />
 
@@ -417,6 +462,17 @@ export default function StudioPage() {
           onClose={() => setSelectedEdge(null)}
           onDelete={viewMode ? undefined : deleteSelectedEdge}
           viewMode={viewMode}
+        />
+      )}
+      {agentPanelOpen && !viewMode && (
+        <AgentPanel
+          onFlowLoaded={handleAgentFlowLoaded}
+          onClose={() => setAgentPanelOpen(false)}
+        />
+      )}
+      {assistantOpen && (
+        <AssistantPanel
+          onClose={() => setAssistantOpen(false)}
         />
       )}
     </div>

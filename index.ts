@@ -151,10 +151,47 @@ export interface ExecutionSummary {
   durationMs:  number
 }
 
+// ─── Branch Execution (per-branch record for FORK in transaction UI) ──────────
+
+export interface BranchExecution {
+  id:            string
+  executionId:   string
+  forkNodeId:    string
+  branchName:    string
+  status:        string   // SUCCESS, FAILURE, PENDING, TIMEOUT, CANCELLED
+  nexSnapshot?:  Record<string, unknown>
+  startedAt?:    string
+  completedAt?:  string
+  durationMs?:   number | null
+  errorMessage?: string | null
+}
+
 // ─── Execution Detail (includes NCO snapshot) ─────────────────────────────────
+
+// ─── Node Execution (per-node record for branch nodes; request/response in transaction UI) ─
+
+export interface NodeExecution {
+  id:           string
+  executionId:  string
+  nodeId:       string
+  nodeLabel:    string
+  nodeType:     string
+  branchName:   string | null
+  status:       string   // RUNNING, SUCCESS, FAILURE
+  inputNex?:    Record<string, unknown>
+  outputNex?:   Record<string, unknown>
+  durationMs?:  number | null
+  errorMessage?: string | null
+  startedAt:    string
+  finishedAt?:  string | null
+}
 
 export interface ExecutionDetail extends ExecutionSummary {
   ncoSnapshot: NcoSnapshot | null
+  /** Per-fork branch execution records; used by transaction detail to show branch rows under each FORK. */
+  branches?: BranchExecution[]
+  /** Branch node runs with inputNex/outputNex for request/response in transaction detail. */
+  nodeExecutions?: NodeExecution[]
 }
 
 // ─── Nex (universal output container) ────────────────────────────────────────

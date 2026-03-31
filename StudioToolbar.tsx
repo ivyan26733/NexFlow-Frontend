@@ -1,22 +1,36 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Save, Play, Loader2, ChevronRight, HelpCircle, Pencil, Sparkles } from 'lucide-react'
+import { Save, Play, Loader2, ChevronRight, HelpCircle, Pencil, Sparkles, MessageCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 interface Props {
-  flowId:    string
-  flowName:  string
-  flowSlug?: string
-  saving:    boolean
-  onSave:    () => void
+  flowId:           string
+  flowName:         string
+  flowSlug?:        string
+  saving:           boolean
+  onSave:           () => void
   onFlowNameChange?: (name: string) => void
-  onTrigger: (payload: Record<string, unknown>) => void
-  onBeautify?: () => void
-  viewMode?: boolean
+  onTrigger:        (payload: Record<string, unknown>) => void
+  onBeautify?:      () => void
+  onOpenAgentPanel?: () => void
+  onOpenAssistant?:  () => void
+  viewMode?:        boolean
 }
 
-export default function StudioToolbar({ flowId, flowName, flowSlug, saving, onSave, onFlowNameChange, onTrigger, onBeautify, viewMode }: Props) {
+export default function StudioToolbar({
+  flowId,
+  flowName,
+  flowSlug,
+  saving,
+  onSave,
+  onFlowNameChange,
+  onTrigger,
+  onBeautify,
+  onOpenAgentPanel,
+  onOpenAssistant,
+  viewMode,
+}: Props) {
   const router = useRouter()
   const [showTrigger, setShowTrigger] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
@@ -78,9 +92,56 @@ export default function StudioToolbar({ flowId, flowName, flowSlug, saving, onSa
             Help
           </button>
           {!viewMode && onBeautify && (
-            <button type="button" onClick={onBeautify} className="studio-toolbar-btn" title="Align all nodes in order (no overlap)">
+            <button
+              type="button"
+              onClick={onBeautify}
+              className="studio-toolbar-btn"
+              title="Align all nodes in order (no overlap)"
+            >
               <Sparkles size={16} />
               Beautify
+            </button>
+          )}
+          {!viewMode && onOpenAssistant && (
+            <button
+              type="button"
+              onClick={onOpenAssistant}
+              className="studio-toolbar-btn"
+              title="Chat with NexFlow Assistant for help"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                borderColor: 'rgba(124,58,237,0.3)',
+                background:
+                  'linear-gradient(135deg,rgba(124,58,237,0.12),rgba(0,212,255,0.12))',
+                color: '#a78bfa',
+                fontWeight: 600,
+              }}
+            >
+              <MessageCircle size={16} />
+              Assistant
+            </button>
+          )}
+          {!viewMode && onOpenAgentPanel && (
+            <button
+              type="button"
+              onClick={onOpenAgentPanel}
+              className="studio-toolbar-btn"
+              title="Generate a flow from a natural language prompt"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                borderColor: 'rgba(0,212,255,0.3)',
+                background:
+                  'linear-gradient(135deg,rgba(0,212,255,0.12),rgba(124,58,237,0.12))',
+                color: '#00d4ff',
+                fontWeight: 600,
+              }}
+            >
+              <Sparkles size={16} />
+              Generate with AI
             </button>
           )}
           {!viewMode && (

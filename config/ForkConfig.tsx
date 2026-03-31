@@ -92,7 +92,7 @@ export default function ForkConfig({ config, onChange }: ForkConfigProps) {
   const safeConfig: ForkNodeConfig = {
     branches: config?.branches ?? [],
     strategy: config?.strategy ?? 'WAIT_ALL',
-    waitForCount: config?.waitForCount ?? 2,
+    waitForCount: config?.waitForCount, // allow undefined so user can clear and type
     timeoutSeconds: config?.timeoutSeconds ?? 60,
     onBranchFailure: config?.onBranchFailure ?? 'FAIL_FAST',
     onTimeout: config?.onTimeout ?? 'FAIL',
@@ -201,9 +201,18 @@ export default function ForkConfig({ config, onChange }: ForkConfigProps) {
       {safeConfig.strategy === 'WAIT_N' && (
         <Field
           label="WAIT FOR N BRANCHES"
-          value={String(safeConfig.waitForCount ?? 2)}
-          onChange={v => onChange({ ...safeConfig, waitForCount: parseInt(v, 10) || 2 })}
-          placeholder="2"
+          value={safeConfig.waitForCount != null ? String(safeConfig.waitForCount) : ''}
+          onChange={v => {
+            const branchCount = safeConfig.branches.length || 1
+            if (v === '') {
+              onChange({ ...safeConfig, waitForCount: undefined })
+              return
+            }
+            const num = parseInt(v, 10)
+            const n = !Number.isNaN(num) ? Math.max(1, Math.min(branchCount, num)) : (safeConfig.waitForCount ?? 1)
+            onChange({ ...safeConfig, waitForCount: n })
+          }}
+          placeholder="1"
         />
       )}
 
