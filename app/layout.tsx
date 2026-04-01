@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import '@xyflow/react/dist/style.css'
 import './globals.css'
 import NavSettingsDropdown from '@/components/nav/NavSettingsDropdown'
+import { Analytics } from '@vercel/analytics/next'
 
 export const metadata: Metadata = {
   title:       'Nexflow',
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </nav>
 
         <main style={{ minHeight: 'calc(100vh - 3.5rem)' }}>{children}</main>
+        <Analytics />
       </body>
     </html>
   )
