@@ -361,7 +361,7 @@ function JdbcFields({ c, set }: { c: Partial<NexusNodeConfig>; set: (k: keyof Ne
           onChange={e => set('query', e.target.value)}
         />
         <p style={{ fontSize: '0.65rem', color: 'var(--color-muted)', marginTop: '0.25rem' }}>
-          Use <span className="config-panel-code-inline">{'{{variables.key}}'}</span>, <span className="config-panel-code-inline">{'{{nodes.id.successOutput.body.field}}'}</span>, or <span className="config-panel-code-inline">{'{{nex.userData.field}}'}</span> (if a node saved as &quot;userData&quot;).
+          Use <span className="config-panel-code-inline">{'{{nex.userId}}'}</span> (variable or trigger field), <span className="config-panel-code-inline">{'{{nex.fetchUser.body.id}}'}</span> (node output), or legacy <span className="config-panel-code-inline">{'{{variables.key}}'}</span>.
         </p>
         <p style={{ fontSize: '0.65rem', color: '#ff8080', marginTop: '0.2rem' }}>
           ⚠ Refs are string-interpolated. Sanitize inputs to prevent SQL injection in production.

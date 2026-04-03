@@ -65,8 +65,8 @@ export default function MapperConfig({ config, onChange }: Props) {
     <Field label="OUTPUT SHAPE">
       <p className="config-panel-description">
         One row per output field. Use{' '}
-        <span className="config-panel-code-inline">{'{{nodes.x.successOutput.body.field}}'}</span>{' '}
-        or <span className="config-panel-code-inline">{'{{nex.name.field}}'}</span> as values.
+        <span className="config-panel-code-inline">{'{{nex.fetchUser.body.email}}'}</span>{' '}
+        or <span className="config-panel-code-inline">{'{{nex.userId}}'}</span> as values.
       </p>
       <div className="flex flex-col gap-2">
         {entries.map(({ id, key, value }) => (
@@ -80,7 +80,7 @@ export default function MapperConfig({ config, onChange }: Props) {
             <span className="text-muted text-xs">→</span>
             <input
               className="input-base flex-1 text-[11px]"
-              placeholder="{{ref}} or static value"
+              placeholder="{{nex.field}} or static value"
               value={value}
               onChange={e => updateValue(id, e.target.value)}
             />

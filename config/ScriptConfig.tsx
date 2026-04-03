@@ -21,12 +21,14 @@ type Language = 'javascript' | 'python'
 
 // Starter code shown when the user first switches to a language
 const STARTER_CODE: Record<Language, string> = {
-  javascript: `// input.variables  — all flow variables
-// input.nodes       — all previous node outputs
-// input.trigger     — original trigger payload
+  javascript: `// nex              — unified flat container (preferred)
+// nex.userId        — trigger field or variable named userId
+// nex.fetchOrders   — output of the node labelled "Fetch Orders"
+// nex.start         — full trigger payload {body: {...}}
 
-// Node labels become camelCase keys: 'Fetch Orders' → fetchOrders
-const items = input.nodes.fetchOrders?.successOutput?.body?.items ?? []
+// Legacy syntax still works: input.variables.x, input.nodes.x, input.trigger
+
+const items = nex.fetchOrders?.body?.items ?? []
 
 const filtered = items.filter(item => item.active && item.price > 100)
 
@@ -35,12 +37,14 @@ return {
   count: filtered.length
 }`,
 
-  python: `# input['variables']  — all flow variables
-# input['nodes']       — all previous node outputs
-# input['trigger']     — original trigger payload
+  python: `# nex              — unified flat container (preferred)
+# nex['userId']     — trigger field or variable named userId
+# nex['fetchOrders'] — output of the node labelled "Fetch Orders"
+# nex['start']      — full trigger payload {'body': {...}}
 
-# Node labels become camelCase keys: 'Fetch Orders' → fetchOrders
-items = input['nodes'].get('fetchOrders', {}).get('successOutput', {}).get('body', {}).get('items', [])
+# Legacy syntax still works: input['variables']['x'], input['nodes']['x']
+
+items = nex.get('fetchOrders', {}).get('body', {}).get('items', [])
 
 filtered = [item for item in items if item.get('active') and item.get('price', 0) > 100]
 
@@ -66,10 +70,9 @@ export default function ScriptConfig({ config, onChange }: Props) {
     }
     try {
       // new Function parses the code for syntax errors without executing it.
-      // We pass 'input' as the parameter name so references like input.variables
-      // don't cause ReferenceErrors during the parse check.
+      // Pass 'nex' and 'input' as parameter names matching the script wrapper.
       // eslint-disable-next-line no-new-func
-      new Function('input', code)
+      new Function('nex', 'input', code)
       setSyntaxResult({ ok: true })
     } catch (e) {
       if (e instanceof SyntaxError) {
@@ -113,34 +116,56 @@ export default function ScriptConfig({ config, onChange }: Props) {
         </div>
       </Field>
 
-      {/* Monaco editor */}
+      {/* Monaco editor with function(nex) wrapper displayed around user code */}
       <Field label="CODE">
-        <div style={{
-          borderRadius:  '0.5rem',
-          overflow:      'hidden',
-          border:        '1px solid var(--color-border)',
-          // A bit taller than the default to give room to write
-          height:        '280px',
-        }}>
-          <MonacoEditor
-            height="100%"
-            language={language}
-            value={code}
-            onChange={setCode}
-            theme="vs-dark"
-            options={{
-              fontSize:          13,
-              fontFamily:        "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
-              minimap:           { enabled: false },
-              scrollBeyondLastLine: false,
-              lineNumbers:       'on',
-              renderLineHighlight: 'line',
-              wordWrap:          'on',
-              tabSize:           2,
-              automaticLayout:   true,   // resize with panel
-              padding:           { top: 10 },
-            }}
-          />
+        <div style={{ borderRadius: '0.5rem', border: '1px solid var(--color-border)', overflow: 'hidden', background: '#1e1e1e' }}>
+          {/* Non-editable function header */}
+          <div style={{
+            padding:    '6px 14px 2px',
+            fontSize:   13,
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+            color:      '#569cd6',
+            background: '#1e1e1e',
+            userSelect: 'none',
+          }}>
+            {language === 'javascript'
+              ? <><span style={{ color: '#dcdcaa' }}>function</span><span style={{ color: '#cccccc' }}>(</span><span style={{ color: '#9cdcfe' }}>nex</span><span style={{ color: '#cccccc' }}>, </span><span style={{ color: '#9cdcfe' }}>input</span><span style={{ color: '#cccccc' }}>)</span> <span style={{ color: '#cccccc' }}>{'{'}</span></>
+              : <><span style={{ color: '#cccccc' }}># </span><span style={{ color: '#9cdcfe' }}>nex</span><span style={{ color: '#cccccc' }}> and </span><span style={{ color: '#9cdcfe' }}>input</span><span style={{ color: '#cccccc' }}> are available</span></>
+            }
+          </div>
+          {/* Editable code body */}
+          <div style={{ height: '260px', paddingLeft: language === 'javascript' ? '12px' : '0' }}>
+            <MonacoEditor
+              height="100%"
+              language={language}
+              value={code}
+              onChange={setCode}
+              theme="vs-dark"
+              options={{
+                fontSize:             13,
+                fontFamily:           "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+                minimap:              { enabled: false },
+                scrollBeyondLastLine: false,
+                lineNumbers:          'on',
+                renderLineHighlight:  'line',
+                wordWrap:             'on',
+                tabSize:              2,
+                automaticLayout:      true,
+                padding:              { top: 6 },
+              }}
+            />
+          </div>
+          {/* Non-editable closing brace (JS only) */}
+          {language === 'javascript' && (
+            <div style={{
+              padding:    '2px 14px 6px',
+              fontSize:   13,
+              fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+              color:      '#cccccc',
+              background: '#1e1e1e',
+              userSelect: 'none',
+            }}>{'}'}</div>
+          )}
         </div>
       </Field>
 
@@ -200,7 +225,7 @@ export default function ScriptConfig({ config, onChange }: Props) {
       >
         {helpOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
         <BookOpen size={13} />
-        What is available in <code style={{ fontFamily: 'monospace', color: 'var(--color-accent)' }}>input</code>
+        What is available in <code style={{ fontFamily: 'monospace', color: 'var(--color-accent)' }}>nex</code>
       </button>
 
       {helpOpen && <HelpPanel language={language} />}
@@ -247,7 +272,7 @@ function ReturnSyntaxHint({ language }: { language: Language }) {
     return (
       <div style={{ padding: '0.5rem 0.625rem', background: 'var(--color-panel)', borderRadius: '0.375rem', border: '1px solid var(--color-border)' }}>
         <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)', marginBottom: '0.2rem' }}>Use <code style={{ color: '#f0db4f' }}>return</code> to output a value:</p>
-        <code style={{ fontSize: '0.7rem', color: 'var(--color-text)', fontFamily: 'monospace' }}>return {'{ result: filtered }'}</code>
+        <code style={{ fontSize: '0.7rem', color: 'var(--color-text)', fontFamily: 'monospace' }}>return {'{ filtered, count: filtered.length }'}</code>
       </div>
     )
   }
@@ -268,40 +293,43 @@ function HelpPanel({ language }: { language: Language }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '0.75rem', background: 'var(--color-panel)', borderRadius: '0.5rem', border: '1px solid var(--color-border)' }}>
 
       <div>
-        <p style={{ fontSize: '0.7rem', fontFamily: 'monospace', color: 'var(--color-accent)', marginBottom: '0.375rem' }}>input.variables</p>
-        <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)' }}>All variables set by VARIABLE nodes upstream.</p>
+        <p style={{ fontSize: '0.7rem', fontFamily: 'monospace', color: 'var(--color-accent)', marginBottom: '0.375rem' }}>nex.&lt;variableName&gt;</p>
+        <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)' }}>Variables set by VARIABLE nodes — directly on nex.</p>
         <code style={{ fontSize: '0.68rem', color: 'var(--color-text)', fontFamily: 'monospace' }}>
-          {isJs ? 'input.variables.userId' : "input['variables']['userId']"}
+          {isJs ? 'nex.userId  //  set by a VARIABLE node' : "nex['userId']  #  set by a VARIABLE node"}
         </code>
       </div>
 
       <div>
-        <p style={{ fontSize: '0.7rem', fontFamily: 'monospace', color: 'var(--color-accent)', marginBottom: '0.375rem' }}>input.nodes</p>
-        <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)' }}>Outputs from all previous nodes. Use the node ID shown on the canvas.</p>
+        <p style={{ fontSize: '0.7rem', fontFamily: 'monospace', color: 'var(--color-accent)', marginBottom: '0.375rem' }}>nex.&lt;nodeLabelCamelCase&gt;</p>
+        <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)' }}>Output of any previous node. Label "Fetch Orders" → fetchOrders.</p>
         <code style={{ fontSize: '0.68rem', color: 'var(--color-text)', fontFamily: 'monospace' }}>
           {isJs
-            ? 'input.nodes.fetchOrders.successOutput.body.items'
-            : "input['nodes']['fetchOrders']['successOutput']['body']['items']"}
+            ? 'nex.fetchOrders.body.items'
+            : "nex['fetchOrders']['body']['items']"}
         </code>
         <p style={{ fontSize: '0.65rem', color: 'var(--color-muted)', marginTop: '0.25rem' }}>
-          The key is the camelCase version of the node label. "Fetch Orders" → fetchOrders
+          NEXUS nodes: <code style={{ fontFamily: 'monospace' }}>{isJs ? 'nex.fetchOrders.statusCode' : "nex['fetchOrders']['statusCode']"}</code>
         </p>
       </div>
 
       <div>
-        <p style={{ fontSize: '0.7rem', fontFamily: 'monospace', color: 'var(--color-accent)', marginBottom: '0.375rem' }}>input.trigger</p>
-        <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)' }}>The original payload sent to trigger this flow.</p>
+        <p style={{ fontSize: '0.7rem', fontFamily: 'monospace', color: 'var(--color-accent)', marginBottom: '0.375rem' }}>nex.start</p>
+        <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)' }}>Trigger payload. Top-level fields also available directly on nex.</p>
         <code style={{ fontSize: '0.68rem', color: 'var(--color-text)', fontFamily: 'monospace' }}>
-          {isJs ? 'input.trigger.userId' : "input['trigger']['userId']"}
+          {isJs ? 'nex.start.body.userId  //  or  nex.userId' : "nex['start']['body']['userId']  #  or  nex['userId']"}
         </code>
       </div>
 
       <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '0.625rem' }}>
         <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)' }}>
-          The value you return is stored under this node&apos;s label key. Downstream:{' '}
-          <code className="config-panel-code-inline">{'{{nodes.calculateDiscount.successOutput.result}}'}</code>
-          {' '}or, if you set &quot;Save output as&quot; e.g. userData:{' '}
-          <code className="config-panel-code-inline">{'{{nex.userData.result.userId}}'}</code>
+          Your return value is stored under this node&apos;s camelCase label. Reference downstream as{' '}
+          <code className="config-panel-code-inline">{'{{nex.calculateDiscount.result}}'}</code>
+          {' '}or, with &quot;Save output as&quot; set to e.g. discount:{' '}
+          <code className="config-panel-code-inline">{'{{nex.discount.result}}'}</code>
+        </p>
+        <p style={{ fontSize: '0.65rem', color: 'var(--color-muted)', marginTop: '0.375rem' }}>
+          Legacy syntax still works: <code style={{ fontFamily: 'monospace' }}>{isJs ? 'input.variables.x' : "input['variables']['x']"}</code>
         </p>
       </div>
     </div>

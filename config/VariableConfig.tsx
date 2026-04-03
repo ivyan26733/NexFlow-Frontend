@@ -70,7 +70,7 @@ export default function VariableConfig({ config, onChange }: Props) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {entries.length === 0 && (
           <p className="config-panel-description">
-            Add one or more variables. Use {'{{'} refs {'}}'} for dynamic values.
+            Add one or more variables. Use <code style={{ fontFamily: 'monospace' }}>{'{{nex.fieldName}}'}</code> to reference trigger fields or prior node outputs.
           </p>
         )}
         {entries.map(({ id, key, value }) => (
@@ -106,7 +106,7 @@ export default function VariableConfig({ config, onChange }: Props) {
             <input
               className="input-base"
               style={{ fontSize: '0.6875rem' }}
-              placeholder="value or {{nodes.x.output.field}} or {{nex.userData.field}}"
+              placeholder="static value or {{nex.fieldName}} or {{nex.fetchUser.body.email}}"
               value={value}
               onChange={e => updateValue(id, e.target.value)}
             />
