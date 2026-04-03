@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '@/api'
 
-// ── Static model registry (no API call needed) ────────────────────────────────
+// ── Static model registry (no API call needed) ────────────────────────────
 const PROVIDER_MODELS: Record<string, { models: string[]; default: string }> = {
   ANTHROPIC: {
     models: [
