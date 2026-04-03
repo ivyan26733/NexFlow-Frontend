@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
-import { Code2, BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
+import { Code2, BookOpen, ChevronDown, ChevronRight, CheckCircle2, XCircle } from 'lucide-react'
 import { Field } from '../NodeConfigPanel'
 import RetryConfig from './RetryConfig'
 
@@ -55,9 +55,34 @@ export default function ScriptConfig({ config, onChange }: Props) {
   const language = (config.language as Language) ?? 'javascript'
   const code     = (config.code     as string)   ?? STARTER_CODE[language]
 
-  const [helpOpen, setHelpOpen] = useState(false)
+  const [helpOpen,     setHelpOpen]     = useState(false)
+  const [syntaxResult, setSyntaxResult] = useState<{ ok: boolean; error?: string } | null>(null)
+
+  function checkSyntax() {
+    setSyntaxResult(null)
+    if (language !== 'javascript') {
+      setSyntaxResult({ ok: false, error: 'Client-side syntax check is JavaScript only. Use the AI Assistant to review Python code.' })
+      return
+    }
+    try {
+      // new Function parses the code for syntax errors without executing it.
+      // We pass 'input' as the parameter name so references like input.variables
+      // don't cause ReferenceErrors during the parse check.
+      // eslint-disable-next-line no-new-func
+      new Function('input', code)
+      setSyntaxResult({ ok: true })
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        setSyntaxResult({ ok: false, error: e.message })
+      } else {
+        // Non-SyntaxError means code parsed fine — runtime issues aren't syntax problems
+        setSyntaxResult({ ok: true })
+      }
+    }
+  }
 
   function setLanguage(lang: Language) {
+    setSyntaxResult(null)
     // Only reset code to starter if the editor is still empty / unchanged
     const currentCode = config.code as string ?? ''
     const isStarter   = !currentCode || Object.values(STARTER_CODE).includes(currentCode)
@@ -69,6 +94,7 @@ export default function ScriptConfig({ config, onChange }: Props) {
   }
 
   function setCode(val: string | undefined) {
+    setSyntaxResult(null)
     onChange({ ...config, code: val ?? '' })
   }
 
@@ -117,6 +143,47 @@ export default function ScriptConfig({ config, onChange }: Props) {
           />
         </div>
       </Field>
+
+      {/* Syntax check button + result */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          onClick={checkSyntax}
+          style={{
+            display:      'flex',
+            alignItems:   'center',
+            gap:          '0.3rem',
+            padding:      '0.35rem 0.75rem',
+            borderRadius: '0.375rem',
+            border:       '1px solid var(--color-border)',
+            background:   'var(--color-panel)',
+            color:        language === 'javascript' ? 'var(--color-text)' : 'var(--color-muted)',
+            fontSize:     '0.75rem',
+            cursor:       language === 'javascript' ? 'pointer' : 'default',
+            fontFamily:   'inherit',
+          }}
+        >
+          <CheckCircle2 size={12} />
+          Check JS Syntax
+        </button>
+
+        {syntaxResult && (
+          <div style={{
+            display:    'flex',
+            alignItems: 'flex-start',
+            gap:        '0.3rem',
+            fontSize:   '0.72rem',
+            color:      syntaxResult.ok ? '#10b981' : '#ef4444',
+            lineHeight: 1.4,
+            flex:       1,
+          }}>
+            {syntaxResult.ok
+              ? <><CheckCircle2 size={12} style={{ marginTop: 1, flexShrink: 0 }} />No syntax errors</>
+              : <><XCircle size={12} style={{ marginTop: 1, flexShrink: 0 }} />{syntaxResult.error}</>
+            }
+          </div>
+        )}
+      </div>
 
       {/* Return syntax reminder */}
       <ReturnSyntaxHint language={language} />

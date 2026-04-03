@@ -1,35 +1,69 @@
 'use client'
 
+import { useState } from 'react'
 import { Field } from '../NodeConfigPanel'
+
+interface VarEntry {
+  id:    string   // stable — never changes after creation, used as React key
+  key:   string   // variable name (editable)
+  value: string   // variable value (editable)
+}
 
 interface Props {
   config:   Record<string, unknown>
   onChange: (c: Record<string, unknown>) => void
 }
 
+function initEntries(variables: Record<string, string>): VarEntry[] {
+  return Object.entries(variables).map(([k, v], i) => ({
+    id:    `v_${i}_${k}`,
+    key:   k,
+    value: v,
+  }))
+}
+
 // Config form for VARIABLE nodes — multiple key/value pairs; values can be {{ref}} or static
 export default function VariableConfig({ config, onChange }: Props) {
   const variables = (config.variables as Record<string, string>) ?? {}
 
-  function updateVar(oldKey: string, newKey: string, val: string) {
-    const updated = { ...variables }
-    if (oldKey !== newKey) delete updated[oldKey]
-    if (newKey.trim() !== '' || val !== '') updated[newKey.trim() || oldKey] = val
-    onChange({ ...config, variables: updated })
+  // Internal state with stable IDs — prevents focus loss when renaming a key.
+  // React key={entry.id} never changes when the user edits the name, so the
+  // input element is never unmounted mid-keystroke.
+  const [entries, setEntries] = useState<VarEntry[]>(() => initEntries(variables))
+
+  function commit(next: VarEntry[]) {
+    const map: Record<string, string> = {}
+    for (const e of next) {
+      const k = e.key.trim()
+      if (k !== '') map[k] = e.value
+    }
+    onChange({ ...config, variables: map })
+  }
+
+  function updateKey(id: string, newKey: string) {
+    const next = entries.map(e => e.id === id ? { ...e, key: newKey } : e)
+    setEntries(next)
+    commit(next)
+  }
+
+  function updateValue(id: string, newValue: string) {
+    const next = entries.map(e => e.id === id ? { ...e, value: newValue } : e)
+    setEntries(next)
+    commit(next)
   }
 
   function addVar() {
-    const uniqueKey = `var_${Date.now()}`
-    onChange({ ...config, variables: { ...variables, [uniqueKey]: '' } })
+    const id = `v_${Date.now()}`
+    const next = [...entries, { id, key: '', value: '' }]
+    setEntries(next)
+    // Don't call commit yet — new entry has empty key, nothing to persist
   }
 
-  function removeVar(key: string) {
-    const updated = { ...variables }
-    delete updated[key]
-    onChange({ ...config, variables: updated })
+  function removeVar(id: string) {
+    const next = entries.filter(e => e.id !== id)
+    setEntries(next)
+    commit(next)
   }
-
-  const entries = Object.entries(variables)
 
   return (
     <Field label="VARIABLES">
@@ -39,17 +73,17 @@ export default function VariableConfig({ config, onChange }: Props) {
             Add one or more variables. Use {'{{'} refs {'}}'} for dynamic values.
           </p>
         )}
-        {entries.map(([k, v]) => (
+        {entries.map(({ id, key, value }) => (
           <div
-            key={k}
+            key={id}
             style={{
-              display: 'flex',
+              display:      'flex',
               flexDirection: 'column',
-              gap: '0.25rem',
-              padding: '0.5rem',
-              background: 'var(--color-panel)',
-              borderRadius: '0.5rem',
-              border: '1px solid var(--color-border)',
+              gap:           '0.25rem',
+              padding:       '0.5rem',
+              background:    'var(--color-panel)',
+              borderRadius:  '0.5rem',
+              border:        '1px solid var(--color-border)',
             }}
           >
             <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
@@ -57,12 +91,12 @@ export default function VariableConfig({ config, onChange }: Props) {
                 className="input-base"
                 style={{ flex: 1, fontSize: '0.6875rem', fontFamily: 'var(--font-mono)' }}
                 placeholder="variableName"
-                value={k}
-                onChange={e => updateVar(k, e.target.value, v)}
+                value={key}
+                onChange={e => updateKey(id, e.target.value)}
               />
               <button
                 type="button"
-                onClick={() => removeVar(k)}
+                onClick={() => removeVar(id)}
                 style={{ color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem', padding: '0.25rem' }}
                 aria-label="Remove variable"
               >
@@ -73,8 +107,8 @@ export default function VariableConfig({ config, onChange }: Props) {
               className="input-base"
               style={{ fontSize: '0.6875rem' }}
               placeholder="value or {{nodes.x.output.field}} or {{nex.userData.field}}"
-              value={v}
-              onChange={e => updateVar(k, k, e.target.value)}
+              value={value}
+              onChange={e => updateValue(id, e.target.value)}
             />
           </div>
         ))}

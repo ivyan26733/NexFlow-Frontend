@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Save, Play, Loader2, ChevronRight, HelpCircle, Pencil, Sparkles, MessageCircle } from 'lucide-react'
+import { Save, Play, Loader2, ChevronRight, HelpCircle, Pencil, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 interface Props {
@@ -13,8 +13,7 @@ interface Props {
   onFlowNameChange?: (name: string) => void
   onTrigger:        (payload: Record<string, unknown>) => void
   onBeautify?:      () => void
-  onOpenAgentPanel?: () => void
-  onOpenAssistant?:  () => void
+  onOpenAI?: () => void
   viewMode?:        boolean
 }
 
@@ -27,8 +26,7 @@ export default function StudioToolbar({
   onFlowNameChange,
   onTrigger,
   onBeautify,
-  onOpenAgentPanel,
-  onOpenAssistant,
+  onOpenAI,
   viewMode,
 }: Props) {
   const router = useRouter()
@@ -102,33 +100,12 @@ export default function StudioToolbar({
               Beautify
             </button>
           )}
-          {!viewMode && onOpenAssistant && (
+          {!viewMode && onOpenAI && (
             <button
               type="button"
-              onClick={onOpenAssistant}
+              onClick={onOpenAI}
               className="studio-toolbar-btn"
-              title="Chat with NexFlow Assistant for help"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                borderColor: 'rgba(124,58,237,0.3)',
-                background:
-                  'linear-gradient(135deg,rgba(124,58,237,0.12),rgba(0,212,255,0.12))',
-                color: '#a78bfa',
-                fontWeight: 600,
-              }}
-            >
-              <MessageCircle size={16} />
-              Assistant
-            </button>
-          )}
-          {!viewMode && onOpenAgentPanel && (
-            <button
-              type="button"
-              onClick={onOpenAgentPanel}
-              className="studio-toolbar-btn"
-              title="Generate a flow from a natural language prompt"
+              title="AI Assistant — generate flows or ask questions"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -141,7 +118,7 @@ export default function StudioToolbar({
               }}
             >
               <Sparkles size={16} />
-              Generate with AI
+              AI Assistant
             </button>
           )}
           {!viewMode && (

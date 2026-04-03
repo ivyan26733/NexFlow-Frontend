@@ -90,7 +90,7 @@ interface ForkConfigProps {
 
 export default function ForkConfig({ config, onChange }: ForkConfigProps) {
   const safeConfig: ForkNodeConfig = {
-    branches: config?.branches ?? [],
+    branches: Array.isArray(config?.branches) ? config.branches : [],
     strategy: config?.strategy ?? 'WAIT_ALL',
     waitForCount: config?.waitForCount, // allow undefined so user can clear and type
     timeoutSeconds: config?.timeoutSeconds ?? 60,
@@ -116,7 +116,12 @@ export default function ForkConfig({ config, onChange }: ForkConfigProps) {
   }
 
   function removeBranch(name: string) {
-    onChange({ ...safeConfig, branches: safeConfig.branches.filter(b => b !== name) })
+    const newBranches = safeConfig.branches.filter(b => b !== name)
+    // Clamp waitForCount so it never exceeds the remaining branch count
+    const newWaitForCount = safeConfig.waitForCount != null
+      ? Math.min(safeConfig.waitForCount, Math.max(1, newBranches.length))
+      : undefined
+    onChange({ ...safeConfig, branches: newBranches, waitForCount: newWaitForCount })
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {

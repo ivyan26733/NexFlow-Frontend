@@ -34,10 +34,7 @@ import { FlowNodeCard } from '@/FlowNodeCard'
 import ForkJoinNodeCard from '@/ForkJoinNodeCard'
 import AiFlowNodeCard from '@/components/studio/AiFlowNodeCard'
 import { MillennialLoader } from '@/MillennialLoader'
-import { loadAgentFlowOnCanvas } from '@/utils/agentFlowMapper'
-import type { AgentFlow } from '@/services/agentService'
-import { AgentPanel } from '@/components/AgentPanel'
-import { AssistantPanel } from '@/components/AssistantPanel'
+import { AIPanel } from '@/components/AIPanel'
 
 /* ───────────────────────── Node Types ───────────────────────── */
 
@@ -76,8 +73,7 @@ export default function StudioPage() {
     Record<string, Record<string, BranchStatus>>
   >({})
   const [saving,       setSaving]       = useState(false)
-  const [agentPanelOpen, setAgentPanelOpen] = useState(false)
-  const [assistantOpen, setAssistantOpen]   = useState(false)
+  const [aiPanelOpen, setAiPanelOpen] = useState(false)
 
   const [flowName, setFlowName] = useState('')
   const [flowSlug, setFlowSlug] = useState('')
@@ -184,33 +180,48 @@ export default function StudioPage() {
 
     const { source, sourceHandle, target } = connection
 
-    // If source is a FORK branch handle, record target in branchNodeIds for that branch
     const sourceNode = nodes.find(n => n.id === source)
-    if (sourceNode?.data?.nodeType === 'FORK' && sourceHandle && target) {
-      const branchName = sourceHandle
 
+    if (sourceNode?.data?.nodeType === 'FORK' && sourceHandle && target) {
+      // Direct FORK branch handle → node: record target in branchNodeIds
+      const branchName = sourceHandle
       setNodes(prevNodes => prevNodes.map(n => {
         if (n.id !== source) return n
-
         const prevConfig = (n.data.config ?? {}) as ForkNodeConfig & { branchNodeIds?: Record<string, string[]> }
         const prevBranchNodeIds = prevConfig.branchNodeIds ?? {}
         const prevList = prevBranchNodeIds[branchName] ?? []
-
         const newList = prevList.includes(target) ? prevList : [...prevList, target]
-
         return {
           ...n,
           data: {
             ...n.data,
             config: {
               ...prevConfig,
-              branchNodeIds: {
-                ...prevBranchNodeIds,
-                [branchName]: newList,
-              },
+              branchNodeIds: { ...prevBranchNodeIds, [branchName]: newList },
             },
           },
         }
+      }))
+    } else if (source && target) {
+      // Intra-branch edge: if the source already belongs to a FORK branch,
+      // cascade the target into that same branch so executeBranch sees all nodes.
+      setNodes(prevNodes => prevNodes.map(n => {
+        if (n.data.nodeType !== 'FORK') return n
+        const prevConfig = (n.data.config ?? {}) as ForkNodeConfig & { branchNodeIds?: Record<string, string[]> }
+        const prevBranchNodeIds = prevConfig.branchNodeIds ?? {}
+
+        let changed = false
+        const next: Record<string, string[]> = {}
+        for (const [branch, ids] of Object.entries(prevBranchNodeIds)) {
+          if (Array.isArray(ids) && ids.includes(source) && !ids.includes(target)) {
+            next[branch] = [...ids, target]
+            changed = true
+          } else {
+            next[branch] = ids as string[]
+          }
+        }
+        if (!changed) return n
+        return { ...n, data: { ...n.data, config: { ...prevConfig, branchNodeIds: next } } }
       }))
     }
 
@@ -238,18 +249,20 @@ export default function StudioPage() {
   const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
     if (viewMode) return
 
+    // Build a set of (source, target) pairs being removed so we can check reachability
+    const deletedPairs = new Set(deletedEdges.map(e => `${e.source}::${e.target}`))
+
     deletedEdges.forEach(edge => {
       const sourceNode = nodes.find(n => n.id === edge.source)
-      if (sourceNode?.data?.nodeType === 'FORK' && edge.sourceHandle) {
-        const branchName = edge.sourceHandle
 
+      if (sourceNode?.data?.nodeType === 'FORK' && edge.sourceHandle) {
+        // Direct FORK handle edge deleted — remove target and its transitive descendants
+        // from this branch (they are no longer reachable via the branch entry)
+        const branchName = edge.sourceHandle
         setNodes(prevNodes => prevNodes.map(n => {
           if (n.id !== edge.source) return n
-
           const prevConfig = (n.data.config ?? {}) as ForkNodeConfig & { branchNodeIds?: Record<string, string[]> }
           const prevBranchNodeIds = prevConfig.branchNodeIds ?? {}
-          const prevList = prevBranchNodeIds[branchName] ?? []
-
           return {
             ...n,
             data: {
@@ -258,52 +271,49 @@ export default function StudioPage() {
                 ...prevConfig,
                 branchNodeIds: {
                   ...prevBranchNodeIds,
-                  [branchName]: prevList.filter(id => id !== edge.target),
+                  [branchName]: (prevBranchNodeIds[branchName] ?? []).filter(id => id !== edge.target),
                 },
               },
             },
           }
         }))
+      } else if (edge.source && edge.target) {
+        // Intra-branch edge deleted: remove target from any branch where source is present
+        // but only if the deleted edge was the sole connection (no other surviving edge
+        // from a branch member leads to the same target).
+        const survivingEdges = edges.filter(e =>
+          !deletedPairs.has(`${e.source}::${e.target}`)
+        )
+        setNodes(prevNodes => prevNodes.map(n => {
+          if (n.data.nodeType !== 'FORK') return n
+          const prevConfig = (n.data.config ?? {}) as ForkNodeConfig & { branchNodeIds?: Record<string, string[]> }
+          const prevBranchNodeIds = prevConfig.branchNodeIds ?? {}
+
+          let changed = false
+          const next: Record<string, string[]> = {}
+          for (const [branch, ids] of Object.entries(prevBranchNodeIds)) {
+            const list = ids as string[]
+            if (!list.includes(edge.source) || !list.includes(edge.target)) {
+              next[branch] = list
+              continue
+            }
+            // Check if target is still reachable from any surviving branch member
+            const stillReachable = survivingEdges.some(
+              se => list.includes(se.source) && se.target === edge.target
+            )
+            if (stillReachable) {
+              next[branch] = list
+            } else {
+              next[branch] = list.filter(id => id !== edge.target)
+              changed = true
+            }
+          }
+          if (!changed) return n
+          return { ...n, data: { ...n.data, config: { ...prevConfig, branchNodeIds: next } } }
+        }))
       }
     })
-  }, [nodes, setNodes, viewMode])
-
-  /* ───────────────────────── Agent integration ───────────────────────── */
-
-  // Receive flows from the external agent UI (localhost:3001) via postMessage
-  useEffect(() => {
-    function handleMessage(event: MessageEvent) {
-      if (event.origin !== 'http://localhost:3001') return
-      if (event.data?.type !== 'NEXFLOW_AGENT_FLOW') return
-
-      const flow: AgentFlow = event.data.flow
-      if (flow?.nodes?.length) {
-        loadAgentFlowOnCanvas(flow, setNodes, setEdges)
-        // eslint-disable-next-line no-console
-        console.log('[Studio] Flow loaded from agent window')
-      }
-    }
-
-    // Also read from sessionStorage when the page is opened by the agent
-    try {
-      const stored = sessionStorage.getItem('nexflow_agent_flow')
-      const params = new URLSearchParams(window.location.search)
-      if (stored && params.get('agentFlow') === '1') {
-        const flow: AgentFlow = JSON.parse(stored)
-        sessionStorage.removeItem('nexflow_agent_flow')
-        setTimeout(() => loadAgentFlowOnCanvas(flow, setNodes, setEdges), 400)
-      }
-    } catch {
-      // ignore parse errors
-    }
-
-    window.addEventListener('message', handleMessage as EventListener)
-    return () => window.removeEventListener('message', handleMessage as EventListener)
-  }, [setNodes, setEdges])
-
-  const handleAgentFlowLoaded = useCallback((flow: AgentFlow) => {
-    loadAgentFlowOnCanvas(flow, setNodes, setEdges)
-  }, [setNodes, setEdges])
+  }, [nodes, edges, setNodes, viewMode])
 
   /* ───────────────────────── Actions ───────────────────────── */
 
@@ -407,8 +417,7 @@ export default function StudioPage() {
           onFlowNameChange={updateFlowName}
           onTrigger={triggerFlow}
           onBeautify={beautifyLayout}
-          onOpenAgentPanel={() => setAgentPanelOpen(true)}
-          onOpenAssistant={() => setAssistantOpen(true)}
+          onOpenAI={() => setAiPanelOpen(true)}
           viewMode={viewMode}
         />
 
@@ -464,15 +473,12 @@ export default function StudioPage() {
           viewMode={viewMode}
         />
       )}
-      {agentPanelOpen && !viewMode && (
-        <AgentPanel
-          onFlowLoaded={handleAgentFlowLoaded}
-          onClose={() => setAgentPanelOpen(false)}
-        />
-      )}
-      {assistantOpen && (
-        <AssistantPanel
-          onClose={() => setAssistantOpen(false)}
+      {aiPanelOpen && !viewMode && (
+        <AIPanel
+          onClose={() => setAiPanelOpen(false)}
+          nodes={nodes}
+          edges={edges}
+          flowId={flowId}
         />
       )}
     </div>

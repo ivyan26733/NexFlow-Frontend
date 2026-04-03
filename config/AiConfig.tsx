@@ -137,7 +137,7 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
   const provider      = (config.provider      as string) ?? 'ANTHROPIC'
   const model         = (config.model         as string) ?? ''
   const prompt        = (config.prompt        as string) ?? ''
-  const inputBindings = (config.inputBindings as InputBinding[]) ?? []
+  const inputBindings: InputBinding[] = Array.isArray(config.inputBindings) ? config.inputBindings as InputBinding[] : []
   const outputSchema  = (config.outputSchema  as string) ?? ''
   const maxTokens     = (config.maxTokens     as number) ?? 1000
   const temperature   = (config.temperature   as number) ?? 0
