@@ -14,6 +14,9 @@ export default function UserMenu() {
 
   useEffect(() => {
     setUser(getStoredUser())
+    function onAuthChange() { setUser(getStoredUser()) }
+    window.addEventListener('nexflow-auth-change', onAuthChange)
+    return () => window.removeEventListener('nexflow-auth-change', onAuthChange)
   }, [])
 
   useEffect(() => {

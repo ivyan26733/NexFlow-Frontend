@@ -10,17 +10,26 @@ export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY)
 }
 
+function dispatchAuthChange() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('nexflow-auth-change'))
+  }
+}
+
 export function setToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token)
+  dispatchAuthChange()
 }
 
 export function clearAuth(): void {
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(USER_KEY)
+  dispatchAuthChange()
 }
 
 export function saveUser(user: AuthUser): void {
   localStorage.setItem(USER_KEY, JSON.stringify(user))
+  dispatchAuthChange()
 }
 
 export function getStoredUser(): AuthUser | null {
