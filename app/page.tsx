@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Play, Clock, Zap, Search, X, Edit3, Eye } from 'lucide-react'
+import { Plus, Play, Clock, Zap, Search, X, Edit3, Eye, LogIn } from 'lucide-react'
 import CardMenu from '@/CardMenu'
 import { api } from '../api'
 import type { Flow } from '../index'
 import { usePagination, PaginationControls } from '../Pagination'
 import { MillennialLoader } from '../MillennialLoader'
+import { isLoggedIn } from '@/lib/auth'
+import { useAuthGuard } from '@/components/AuthGuardProvider'
 
 const STATUS_META: Record<string, { color: string; bg: string; dot: string }> = {
   DRAFT:    { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)',  dot: '#64748b' },
@@ -18,8 +20,10 @@ const STATUS_META: Record<string, { color: string; bg: string; dot: string }> = 
 
 export default function DashboardPage() {
   const router = useRouter()
+  const { requireAuth } = useAuthGuard()
   const [flows,     setFlows]     = useState<Flow[]>([])
   const [loading,   setLoading]   = useState(true)
+  const [guest,     setGuest]     = useState(false)
   const [creating,  setCreating]  = useState(false)
   const [submitting,setSubmitting]= useState(false)
   const [newName,   setNewName]   = useState('')
@@ -27,6 +31,11 @@ export default function DashboardPage() {
   const createRef = useRef(false)
 
   useEffect(() => {
+    if (!isLoggedIn()) {
+      setGuest(true)
+      setLoading(false)
+      return
+    }
     api.flows.list().then(setFlows).catch(console.error).finally(() => setLoading(false))
   }, [])
 
@@ -59,6 +68,14 @@ export default function DashboardPage() {
     setFlows(fs => fs.filter(f => f.id !== id))
   }
 
+  function handleNewFlow() {
+    requireAuth(() => setCreating(true))
+  }
+
+  function handleDeleteFlow(id: string) {
+    requireAuth(() => deleteFlow(id))
+  }
+
   const stats = {
     total:    flows.length,
     active:   flows.filter(f => f.status === 'ACTIVE').length,
@@ -78,7 +95,7 @@ export default function DashboardPage() {
             Build, connect and run your automation workflows
           </p>
         </div>
-        <button className="btn-primary" onClick={() => setCreating(true)} style={{ padding: '0.625rem 1.375rem', fontSize: '0.9375rem' }}>
+        <button className="btn-primary" onClick={handleNewFlow} style={{ padding: '0.625rem 1.375rem', fontSize: '0.9375rem' }}>
           <Plus size={16} /> New Flow
         </button>
       </div>
@@ -120,8 +137,10 @@ export default function DashboardPage() {
       {/* ── Grid ── */}
       {loading ? (
         <MillennialLoader label="Loading your flows…" />
+      ) : guest ? (
+        <GuestState />
       ) : flows.length === 0 ? (
-        <EmptyState onNew={() => setCreating(true)} />
+        <EmptyState onNew={handleNewFlow} />
       ) : filtered.length === 0 ? (
         <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-muted)' }}>
           <Search size={32} style={{ opacity: 0.3, marginBottom: '1rem' }} />
@@ -134,7 +153,7 @@ export default function DashboardPage() {
               <FlowCard key={flow.id} flow={flow}
                 onOpenView={() => router.push(`/studio/${flow.id}?mode=view`)}
                 onOpenEdit={() => router.push(`/studio/${flow.id}`)}
-                onDelete={() => deleteFlow(flow.id)}
+                onDelete={() => handleDeleteFlow(flow.id)}
               />
             ))}
           </div>
@@ -257,6 +276,28 @@ function FlowCard({ flow, onOpenView, onOpenEdit, onDelete }: { flow: Flow; onOp
   )
 }
 
+function GuestState() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '6rem 2rem', textAlign: 'center' }}>
+      <div style={{ width: '5rem', height: '5rem', borderRadius: '1.25rem', background: 'linear-gradient(135deg,rgba(0,212,255,0.15),rgba(99,102,241,0.15))', border: '1px solid rgba(0,212,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+        <Zap size={28} style={{ color: 'var(--color-accent)' }} />
+      </div>
+      <h2 style={{ fontSize: '1.375rem', fontWeight: 700, marginBottom: '0.625rem' }}>Welcome to NexFlow</h2>
+      <p style={{ color: 'var(--color-muted)', fontSize: '0.9375rem', maxWidth: '26rem', lineHeight: 1.6, marginBottom: '2rem' }}>
+        Build powerful no-code automation workflows with AI, scripts, parallel branches and more. Sign in to create and manage your flows.
+      </p>
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <a href="/signup" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.75rem', fontSize: '0.9375rem', color: '#0a0d14', textDecoration: 'none', background: 'linear-gradient(135deg, #00D4FF 0%, #6366F1 100%)', borderRadius: '0.625rem', fontWeight: 600 }}>
+          <Plus size={16} /> Create free account
+        </a>
+        <a href="/login" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.75rem', fontSize: '0.9375rem', color: 'var(--color-text)', textDecoration: 'none', border: '1px solid var(--color-border)', borderRadius: '0.625rem', fontWeight: 500 }}>
+          <LogIn size={16} /> Sign in
+        </a>
+      </div>
+    </div>
+  )
+}
+
 function EmptyState({ onNew }: { onNew: () => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '6rem 2rem', textAlign: 'center' }}>
@@ -268,7 +309,7 @@ function EmptyState({ onNew }: { onNew: () => void }) {
         Create your first flow to start building automated workflows with nodes, scripts, and AI.
       </p>
       <button className="btn-primary" onClick={onNew} style={{ padding: '0.75rem 1.75rem', fontSize: '0.9375rem' }}>
-        <Plus size={16} /> Create your first flow
+        <Plus size={16} /> Get started
       </button>
     </div>
   )

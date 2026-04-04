@@ -99,7 +99,12 @@ function LoginForm() {
           </div>
 
           <div>
-            <label className="dashboard-label" style={{ display: 'block', marginBottom: '0.375rem' }}>Password</label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.375rem' }}>
+              <label className="dashboard-label">Password</label>
+              <a href="/forgot-password" style={{ fontSize: '0.775rem', color: 'var(--color-accent)', textDecoration: 'none' }}>
+                Forgot password?
+              </a>
+            </div>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPw ? 'text' : 'password'} required value={password}

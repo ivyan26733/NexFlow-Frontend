@@ -35,11 +35,19 @@ export default function UserMenu() {
   if (!user) {
     if (!isLoggedIn()) {
       return (
-        <a href="/login" style={{
-          fontSize: '0.8rem', color: 'var(--color-accent)', textDecoration: 'none',
-          padding: '0.375rem 0.75rem', border: '1px solid var(--color-accent)',
-          borderRadius: '0.375rem', fontWeight: 500, whiteSpace: 'nowrap',
-        }}>Sign in</a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <a href="/login" style={{
+            fontSize: '0.8rem', color: 'var(--color-muted)', textDecoration: 'none',
+            padding: '0.375rem 0.75rem', border: '1px solid var(--color-border)',
+            borderRadius: '0.375rem', fontWeight: 500, whiteSpace: 'nowrap',
+          }}>Sign in</a>
+          <a href="/signup" style={{
+            fontSize: '0.8rem', color: '#0a0d14', textDecoration: 'none',
+            padding: '0.375rem 0.75rem',
+            background: 'linear-gradient(135deg, #00D4FF 0%, #6366F1 100%)',
+            borderRadius: '0.375rem', fontWeight: 600, whiteSpace: 'nowrap',
+          }}>Sign up</a>
+        </div>
       )
     }
     return null

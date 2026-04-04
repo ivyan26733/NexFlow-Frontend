@@ -3,6 +3,7 @@ import '@xyflow/react/dist/style.css'
 import './globals.css'
 import dynamic from 'next/dynamic'
 import NavSettingsDropdown from '@/components/nav/NavSettingsDropdown'
+import { AuthGuardProvider } from '@/components/AuthGuardProvider'
 
 const UserMenu    = dynamic(() => import('@/components/nav/UserMenu'),    { ssr: false })
 const AuthRedirect = dynamic(() => import('@/components/AuthRedirect'),   { ssr: false })
@@ -46,7 +47,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </nav>
 
         <AuthRedirect />
-        <main style={{ minHeight: 'calc(100vh - 3.5rem)' }}>{children}</main>
+        <AuthGuardProvider>
+          <main style={{ minHeight: 'calc(100vh - 3.5rem)' }}>{children}</main>
+        </AuthGuardProvider>
       </body>
     </html>
   )

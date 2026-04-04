@@ -505,7 +505,7 @@ function CompareTable() {
 
 function WhyNexflow() {
   return (
-    <section style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
+    <section className="about-section" style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
       <div style={{ maxWidth: "1200px" }}>
 
         {/* Header */}
@@ -527,7 +527,7 @@ function WhyNexflow() {
 
         {/* Standout 1 — live parallel canvas */}
         <div style={{ marginBottom: "96px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "64px", alignItems: "start" }}>
+          <div className="about-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "64px", alignItems: "start" }}>
             <div>
               <div style={{
                 display: "inline-flex", alignItems: "center", gap: "8px",
@@ -578,7 +578,7 @@ function WhyNexflow() {
 
         {/* Standout 2 — nex */}
         <div style={{ marginBottom: "96px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "64px", alignItems: "start" }}>
+          <div className="about-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "64px", alignItems: "start" }}>
             <div><NexComparison /></div>
             <div>
               <div style={{
@@ -750,9 +750,26 @@ export default function AboutPage() {
       />
 
       <div style={{ position: "relative", zIndex: 1 }}>
+        <style>{`
+          @media (max-width: 768px) {
+            .about-2col { grid-template-columns: 1fr !important; gap: 32px !important; }
+            .about-3col { grid-template-columns: 1fr 1fr !important; }
+            .about-eng-row { grid-template-columns: 1fr !important; gap: 8px !important; padding: 20px 16px !important; }
+            .about-milestone { gap: 20px !important; }
+            .about-section { padding: 60px 5vw !important; min-height: unset !important; }
+            .about-footer { flex-direction: column !important; gap: 8px !important; text-align: center !important; }
+          }
+          @media (max-width: 480px) {
+            .about-3col { grid-template-columns: 1fr !important; }
+            .about-section { padding: 48px 4vw !important; }
+            .about-eng-row { grid-template-columns: 1fr !important; }
+            .about-milestone { gap: 12px !important; margin-bottom: 40px !important; }
+          }
+        `}</style>
 
         {/* ── HERO ──────────────────────────────────────────────── */}
         <section
+          className="about-section"
           style={{
             minHeight: "100vh",
             display: "flex",
@@ -760,6 +777,7 @@ export default function AboutPage() {
             justifyContent: "center",
             padding: "48px 8vw 64px",
             borderBottom: "1px solid #0F172A",
+            boxSizing: "border-box",
           }}
         >
           <div style={{ maxWidth: "900px" }}>
@@ -894,8 +912,9 @@ export default function AboutPage() {
         </section>
 
         {/* ── THE PROBLEM ──────────────────────────────────────── */}
-        <section style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
+        <section className="about-section" style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
           <div
+            className="about-2col"
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 2fr",
@@ -945,7 +964,7 @@ export default function AboutPage() {
         <WhyNexflow />
 
         {/* ── WHAT WE'VE SHIPPED ───────────────────────────────── */}
-        <section style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
+        <section className="about-section" style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
           <div style={{ maxWidth: "1200px" }}>
             <div style={{ fontSize: "10px", color: "#94A3B8", letterSpacing: "0.2em", marginBottom: "16px" }}>
               WHAT SHIPS TODAY
@@ -953,6 +972,7 @@ export default function AboutPage() {
             <div style={{ width: "40px", height: "2px", background: "#10B981", marginBottom: "56px" }} />
 
             <div
+              className="about-3col"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3, 1fr)",
@@ -1027,7 +1047,7 @@ export default function AboutPage() {
         </section>
 
         {/* ── PRINCIPLES ───────────────────────────────────────── */}
-        <section style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
+        <section className="about-section" style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
           <div style={{ fontSize: "10px", color: "#94A3B8", letterSpacing: "0.2em", marginBottom: "64px" }}>
             DESIGN PRINCIPLES
           </div>
@@ -1060,7 +1080,7 @@ export default function AboutPage() {
         </section>
 
         {/* ── TIMELINE ─────────────────────────────────────────── */}
-        <section style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
+        <section className="about-section" style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
           <div style={{ fontSize: "10px", color: "#94A3B8", letterSpacing: "0.2em", marginBottom: "64px" }}>
             STORY + ROADMAP
           </div>
@@ -1082,6 +1102,7 @@ export default function AboutPage() {
             {milestones.map((m, i) => (
               <div
                 key={m.phase}
+                className="about-milestone"
                 style={{ display: "flex", gap: "48px", marginBottom: "64px", cursor: "default" }}
                 onMouseEnter={() => setHoveredMilestone(i)}
                 onMouseLeave={() => setHoveredMilestone(null)}
@@ -1138,8 +1159,9 @@ export default function AboutPage() {
         </section>
 
         {/* ── STACK ────────────────────────────────────────────── */}
-        <section style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
+        <section className="about-section" style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
           <div
+            className="about-2col"
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 2fr",
@@ -1182,7 +1204,7 @@ export default function AboutPage() {
         </section>
 
         {/* ── ENGINEERING PRINCIPLES EARNED ────────────────────── */}
-        <section style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
+        <section className="about-section" style={{ padding: "120px 8vw", borderBottom: "1px solid #0F172A" }}>
           <div style={{ maxWidth: "1200px" }}>
             <div style={{ fontSize: "10px", color: "#94A3B8", letterSpacing: "0.2em", marginBottom: "16px" }}>EARNED IN PRODUCTION</div>
             <div style={{ width: "40px", height: "2px", background: "#F59E0B", marginBottom: "16px" }} />
@@ -1225,6 +1247,7 @@ export default function AboutPage() {
               ].map((r, i) => (
                 <div
                   key={r.rule}
+                  className="about-eng-row"
                   style={{
                     display: "grid",
                     gridTemplateColumns: "80px 1fr 2fr",
@@ -1248,7 +1271,7 @@ export default function AboutPage() {
         </section>
 
         {/* ── COMMITMENT ───────────────────────────────────────── */}
-        <section style={{ padding: "120px 8vw 80px" }}>
+        <section className="about-section" style={{ padding: "120px 8vw 80px" }}>
           <div style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center" }}>
             <div style={{ fontSize: "10px", color: "#94A3B8", letterSpacing: "0.2em", marginBottom: "40px" }}>
               THE COMMITMENT
@@ -1330,6 +1353,7 @@ export default function AboutPage() {
 
         {/* Footer */}
         <div
+          className="about-footer"
           style={{
             borderTop: "1px solid #0F172A",
             padding: "24px 8vw",

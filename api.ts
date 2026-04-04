@@ -203,6 +203,16 @@ export const api = {
 
     me: () => request<AuthResponse>('/api/auth/me'),
 
+    forgotPassword: (email: string) =>
+      request<{ message: string }>('/api/auth/forgot-password', {
+        method: 'POST', body: JSON.stringify({ email }),
+      }),
+
+    resetPassword: (email: string, otp: string, newPassword: string) =>
+      request<{ message: string }>('/api/auth/reset-password', {
+        method: 'POST', body: JSON.stringify({ email, otp, newPassword }),
+      }),
+
     googleLogin: () => {
       window.location.href = `${BASE}/oauth2/authorization/google`
     },
