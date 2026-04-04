@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { Key, Zap, Shield, ChevronDown, ChevronUp, Eye, EyeOff, ExternalLink, CheckCircle, XCircle, Loader2, Plug, PlugZap } from 'lucide-react'
 import { api } from '@/api'
