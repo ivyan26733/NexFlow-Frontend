@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, RefreshCw } from 'lucide-react'
 import { api } from '@/api'
 import { setToken, saveUser } from '@/lib/auth'
 
-export default function VerifyOtpPage() {
+function VerifyOtpForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const email        = searchParams.get('email') ?? ''
@@ -48,7 +48,7 @@ export default function VerifyOtpPage() {
       await api.auth.resendOtp(email)
       setSuccess('New code sent!')
       setOtp('')
-    } catch (err: unknown) {
+    } catch {
       setError('Could not resend code')
     } finally {
       setResending(false)
@@ -134,5 +134,13 @@ export default function VerifyOtpPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function VerifyOtpPage() {
+  return (
+    <Suspense>
+      <VerifyOtpForm />
+    </Suspense>
   )
 }

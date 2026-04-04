@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { api } from '@/api'
 import { setToken, saveUser, isLoggedIn } from '@/lib/auth'
 
-export default function LoginPage() {
+function LoginForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
 
@@ -21,7 +21,6 @@ export default function LoginPage() {
     const token = searchParams.get('token')
     if (token) {
       setToken(token)
-      // Fetch user info
       api.auth.me().then(user => {
         saveUser({ id: user.id, email: user.email, name: user.name, role: user.role })
         router.replace('/')
@@ -160,5 +159,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }
