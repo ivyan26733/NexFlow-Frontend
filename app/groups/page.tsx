@@ -100,10 +100,10 @@ export default function GroupsPage() {
   ]
 
   return (
-    <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '2.5rem 2rem' }}>
+    <div className="page-wrapper" style={{ maxWidth: '80rem', margin: '0 auto', padding: '2.5rem 2rem' }}>
 
       {/* ── Header ─────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
+      <div className="page-header-row" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
         <div>
           <p className="dashboard-label" style={{ marginBottom: '0.5rem' }}>SETTINGS</p>
           <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.15 }}>Groups</h1>
@@ -121,7 +121,7 @@ export default function GroupsPage() {
       </div>
 
       {/* ── Stats ──────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="stats-grid-3">
         {[
           { label: 'Total Groups',    value: groups.length,                              color: '#e2e8f0', icon: <Users size={18} />  },
           { label: 'All-Access',      value: groups.filter(g => g.allFlowsAccess).length, color: '#00d4ff', icon: <Globe size={18} />  },
@@ -416,7 +416,7 @@ function GroupCard({
       {/* ── Expanded detail ── */}
       {expanded && (
         <div style={{ borderTop: '1px solid var(--color-border)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
+          <div className="two-col-panel">
 
             {/* Members panel */}
             <div style={{ padding: '1.5rem', borderRight: '1px solid var(--color-border)' }}>

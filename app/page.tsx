@@ -67,10 +67,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div style={{ maxWidth: '88rem', margin: '0 auto', padding: '2.5rem 2rem' }}>
+    <div className="page-wrapper" style={{ maxWidth: '88rem', margin: '0 auto', padding: '2.5rem 2rem' }}>
 
       {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header-row" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <p className="dashboard-label" style={{ marginBottom: '0.5rem' }}>WORKSPACE</p>
           <h1 style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1.15 }}>Your Flows</h1>
@@ -84,7 +84,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Stats ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="stats-grid-4">
         {[
           { label: 'Total Flows', value: stats.total,    color: '#e2e8f0' },
           { label: 'Active',      value: stats.active,   color: '#00e676' },

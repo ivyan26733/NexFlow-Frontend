@@ -42,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NavSettingsDropdown />
           <div className="nav-spacer" />
           <UserMenu />
-          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)', marginLeft: '0.5rem' }}>v1.2</span>
+          <span className="nav-version" style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)', marginLeft: '0.5rem' }}>v1.2</span>
         </nav>
 
         <AuthRedirect />

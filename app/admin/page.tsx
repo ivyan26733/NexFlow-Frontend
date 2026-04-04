@@ -65,7 +65,7 @@ export default function AdminPage() {
   ]
 
   return (
-    <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '2.5rem 2rem' }}>
+    <div className="page-wrapper" style={{ maxWidth: '80rem', margin: '0 auto', padding: '2.5rem 2rem' }}>
 
       {/* ── Header ─────────────────────────────────────────────── */}
       <div style={{ marginBottom: '2.5rem' }}>
@@ -79,7 +79,7 @@ export default function AdminPage() {
       </div>
 
       {/* ── Stats row ──────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="stats-grid-4">
         {[
           { label: 'Total Users',  value: stats.total,     icon: <Users size={18} />,    color: '#e2e8f0' },
           { label: 'Admins',       value: stats.admins,    icon: <Crown size={18} />,    color: '#00d4ff' },
@@ -107,9 +107,10 @@ export default function AdminPage() {
       </div>
 
       {/* ── User table ─────────────────────────────────────────── */}
+      <div className="table-scroll-wrap">
       <div style={{
         background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-        borderRadius: '1rem', overflow: 'hidden',
+        borderRadius: '1rem', overflow: 'hidden', minWidth: '600px',
       }}>
         {/* Table header */}
         <div style={{
@@ -248,6 +249,7 @@ export default function AdminPage() {
           )
         })}
       </div>
+      </div>{/* end table-scroll-wrap */}
     </div>
   )
 }

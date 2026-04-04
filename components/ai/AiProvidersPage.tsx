@@ -187,7 +187,7 @@ function ProviderCard({
       {/* ── Expanded panel ── */}
       {expanded && (
         <div style={{ borderTop: '1px solid var(--color-border)', padding: '1.75rem', background: 'var(--color-panel)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          <div className="two-col-panel" style={{ gap: '2rem' }}>
 
             {/* Left: key form */}
             <div>
@@ -454,7 +454,7 @@ export default function AiProvidersPage() {
   const totalCount      = providers.length
 
   return (
-    <div style={{ maxWidth: '88rem', margin: '0 auto', padding: '2.5rem 2rem' }}>
+    <div className="page-wrapper" style={{ maxWidth: '88rem', margin: '0 auto', padding: '2.5rem 2rem' }}>
 
       {/* ── Header ── */}
       <div style={{ marginBottom: '2.5rem' }}>
@@ -466,7 +466,7 @@ export default function AiProvidersPage() {
       </div>
 
       {/* ── Stats ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="stats-grid-3">
         {[
           { label: 'Providers',  value: totalCount,      color: '#e2e8f0' },
           { label: 'Configured', value: configuredCount, color: 'var(--color-accent)' },
@@ -483,9 +483,9 @@ export default function AiProvidersPage() {
       <div style={{
         background: 'var(--color-surface)', border: '1px solid var(--color-border)',
         borderRadius: '0.875rem', padding: '1.25rem 1.75rem',
-        display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1.5rem',
         marginBottom: '2rem',
       }}>
+      <div className="info-banner-grid">
         {[
           { icon: <Key size={16} />,    title: 'Add your key',      desc: 'API keys are stored in your database and never logged.' },
           { icon: <Zap size={16} />,    title: 'Use in AI nodes',   desc: 'Pick any configured provider in the AI node config panel.' },
@@ -500,6 +500,7 @@ export default function AiProvidersPage() {
           </div>
         ))}
       </div>
+      </div>{/* end info-banner-grid wrapper */}
 
       {/* ── Provider cards ── */}
       {loading ? (

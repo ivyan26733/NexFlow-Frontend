@@ -50,7 +50,7 @@ export default function TransactionsPage() {
   const searchActive = search.trim().length > 0
 
   return (
-    <div style={{ maxWidth: '88rem', margin: '0 auto', padding: '2.5rem 2rem' }}>
+    <div className="page-wrapper" style={{ maxWidth: '88rem', margin: '0 auto', padding: '2.5rem 2rem' }}>
 
       {/* ── Header ── */}
       <div style={{ marginBottom: '2.5rem' }}>
@@ -62,7 +62,7 @@ export default function TransactionsPage() {
       </div>
 
       {/* ── Stats ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="stats-grid-4">
         {[
           { label: 'Total',   value: executions.length,                                  color: '#e2e8f0' },
           { label: 'Success', value: executions.filter(e=>e.status==='SUCCESS').length,  color: 'var(--color-success)' },
@@ -116,7 +116,8 @@ export default function TransactionsPage() {
       )}
 
       {/* ── Table ── */}
-      <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '1rem', overflow: 'hidden' }}>
+      <div className="table-scroll-wrap">
+      <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '1rem', overflow: 'hidden', minWidth: '680px' }}>
 
         {/* Header */}
         <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr 1.4fr 1.4fr 0.8fr 44px', padding: '0.875rem 1.75rem', borderBottom: '1px solid var(--color-border)', background: 'var(--color-panel)', minWidth: '680px' }}>
@@ -201,6 +202,7 @@ export default function TransactionsPage() {
           })
         )}
       </div>
+      </div>{/* end table-scroll-wrap */}
 
       {!loading && searchActive && filtered.length > 0 && (
         <PaginationControls page={page} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
