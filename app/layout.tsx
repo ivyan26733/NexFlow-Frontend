@@ -1,7 +1,11 @@
 import type { Metadata } from 'next'
 import '@xyflow/react/dist/style.css'
 import './globals.css'
+import dynamic from 'next/dynamic'
 import NavSettingsDropdown from '@/components/nav/NavSettingsDropdown'
+
+const UserMenu    = dynamic(() => import('@/components/nav/UserMenu'),    { ssr: false })
+const AuthRedirect = dynamic(() => import('@/components/AuthRedirect'),   { ssr: false })
 
 export const metadata: Metadata = {
   title:       'Nexflow',
@@ -37,9 +41,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="nav-divider" />
           <NavSettingsDropdown />
           <div className="nav-spacer" />
-          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)' }}>v1.1 Parallel MVP</span>
+          <UserMenu />
+          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)', marginLeft: '0.5rem' }}>v1.2</span>
         </nav>
 
+        <AuthRedirect />
         <main style={{ minHeight: 'calc(100vh - 3.5rem)' }}>{children}</main>
       </body>
     </html>

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useMemo, Fragment } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, CheckCircle, XCircle, Loader2, Clock, ChevronDown, ChevronRight, Copy } from 'lucide-react'
 import { api } from '@/api'
-import type { ExecutionDetail, NodeLog, NodeStatus, NexMap, FlowNode, BranchExecution, NodeExecution } from '@/types'
+import type { ExecutionDetail, NodeLog, NodeStatus, FlowNode, BranchExecution, NodeExecution } from '@/types'
 import { MillennialLoader } from '@/MillennialLoader'
 
 function copyToClipboard(text: string): Promise<void> {
@@ -18,29 +18,25 @@ function copyToClipboard(text: string): Promise<void> {
   ta.style.left = '-9999px'
   document.body.appendChild(ta)
   ta.select()
-  try {
-    document.execCommand('copy')
-    return Promise.resolve()
-  } finally {
-    document.body.removeChild(ta)
-  }
+  try { document.execCommand('copy'); return Promise.resolve() }
+  finally { document.body.removeChild(ta) }
 }
 
 export default function TransactionDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const router = useRouter()
-  const [detail, setDetail] = useState<ExecutionDetail | null>(null)
-  const [nexData, setNexData] = useState<NexMap>({})
+  const router  = useRouter()
+
+  const [detail,    setDetail]    = useState<ExecutionDetail | null>(null)
   const [flowNodes, setFlowNodes] = useState<FlowNode[]>([])
-  const [loading, setLoading] = useState(true)
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [rawOpen, setRawOpen] = useState<Record<string, boolean>>({})
-  const [nexOpen, setNexOpen] = useState<Record<string, boolean>>({})
+  const [loading,   setLoading]   = useState(true)
+  const [selected,  setSelected]  = useState<string | null>(null)
+  const [expanded,  setExpanded]  = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     api.executions.getById(id as string)
       .then(d => {
         setDetail(d)
+        // Auto-expand failure nodes
         const auto: Record<string, boolean> = {}
         if (d.ncoSnapshot?.nodes) {
           Object.entries(d.ncoSnapshot.nodes).forEach(([, n]) => {
@@ -54,11 +50,6 @@ export default function TransactionDetailPage() {
       })
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [id])
-
-  useEffect(() => {
-    if (!id) return
-    api.executions.getNex(id as string).then(r => setNexData(r.nex ?? {})).catch(() => setNexData({}))
   }, [id])
 
   const nodeLogs: NodeLog[] = useMemo(() => {
@@ -78,9 +69,8 @@ export default function TransactionDetailPage() {
   const branchesByForkNode = useMemo(() => {
     const map: Record<string, BranchExecution[]> = {}
     for (const branch of detail?.branches ?? []) {
-      const key = branch.forkNodeId
-      if (!map[key]) map[key] = []
-      map[key].push(branch)
+      if (!map[branch.forkNodeId]) map[branch.forkNodeId] = []
+      map[branch.forkNodeId].push(branch)
     }
     return map
   }, [detail?.branches])
@@ -96,31 +86,28 @@ export default function TransactionDetailPage() {
     return map
   }, [detail?.nodeExecutions])
 
-  function toggle(nodeId: string) {
-    setExpanded(prev => ({ ...prev, [nodeId]: !prev[nodeId] }))
-  }
-
-  if (loading) {
-    return (
-      <div className="dashboard-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
-        <MillennialLoader label="Loading execution…" />
-      </div>
-    )
-  }
-  if (!detail) {
-    return <div className="dashboard-page" style={{ color: 'var(--color-muted)' }}>Execution not found.</div>
-  }
+  if (loading) return (
+    <div className="dashboard-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
+      <MillennialLoader label="Loading execution…" />
+    </div>
+  )
+  if (!detail) return <div className="dashboard-page" style={{ color: 'var(--color-muted)' }}>Execution not found.</div>
 
   const snapshotError = detail.ncoSnapshot?.error ?? (detail.ncoSnapshot?.meta as { errorMessage?: string } | undefined)?.errorMessage
 
   return (
-    <div className="dashboard-page">
-      <button type="button" onClick={() => router.push('/transactions')} className="studio-toolbar-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.5rem' }}>
+    <div className="dashboard-page" style={{ maxWidth: '100%', padding: '1.5rem 2rem' }}>
+
+      {/* Back */}
+      <button type="button" onClick={() => router.push('/transactions')}
+        className="studio-toolbar-btn"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.5rem' }}>
         <ArrowLeft size={14} /> Transactions
       </button>
 
-      <div className="dashboard-card" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
+      {/* Execution summary card */}
+      <div className="dashboard-card" style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
           <div>
             <p className="dashboard-label" style={{ marginBottom: '0.3rem' }}>EXECUTION</p>
             <h1 className="dashboard-title" style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{detail.flowName}</h1>
@@ -129,421 +116,388 @@ export default function TransactionDetailPage() {
           <StatusBadge status={detail.status} />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-          {[['Execution ID', detail.id.slice(0, 8) + '…'], ['Started', detail.startedAt ? formatTime(detail.startedAt) : '—'], ['Duration', detail.durationMs >= 0 ? formatDuration(detail.durationMs) : '…'], ['Triggered By', detail.triggeredBy]].map(([label, val]) => (
+          {[
+            ['Execution ID', detail.id.slice(0, 8) + '…'],
+            ['Started',      detail.startedAt ? formatTime(detail.startedAt) : '—'],
+            ['Duration',     detail.durationMs >= 0 ? formatDuration(detail.durationMs) : '…'],
+            ['Triggered By', detail.triggeredBy],
+          ].map(([label, val]) => (
             <div key={String(label)}>
               <p className="dashboard-label" style={{ marginBottom: '0.2rem' }}>{label}</p>
               <p style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>{val}</p>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* NEX CONTAINER */}
-      <div style={{ marginBottom: '1.5rem', border: '1px solid #06B6D4', borderRadius: '0.5rem', background: 'var(--color-base)', overflow: 'hidden' }}>
-        <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid rgba(6,182,212,0.3)', background: 'rgba(6,182,212,0.08)' }}>
-          <h2 className="dashboard-label" style={{ margin: 0, color: '#06B6D4' }}>NEX CONTAINER</h2>
-          <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginTop: '0.25rem', marginBottom: 0 }}>Everything saved via &quot;Save output as&quot; across this execution</p>
-        </div>
-        <div style={{ padding: '1rem' }}>
-          {Object.keys(nexData).length === 0 ? (
-            <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', margin: 0 }}>No outputs saved. Use &quot;Save output as&quot; in any node config to store results here.</p>
-          ) : (
-            Object.entries(nexData).map(([key, value]) => (
-              <NexEntry key={key} nexKey={key} data={value} isOpen={nexOpen[key] !== false} onToggle={() => setNexOpen(prev => ({ ...prev, [key]: !prev[key] }))} />
-            ))
-          )}
-        </div>
-      </div>
-
-      <h2 className="dashboard-label" style={{ marginBottom: '0.75rem' }}>Node Execution Log ({nodeLogs.length})</h2>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {nodeLogs.length === 0 ? (
-          <div className="dashboard-card" style={{ padding: '2rem', textAlign: 'center' }}>
-            {snapshotError ? (
-              <>
-                <p className="dashboard-label" style={{ color: 'var(--color-failure)', marginBottom: '0.5rem' }}>Execution failed</p>
-                <p className="dashboard-subtitle" style={{ marginBottom: 0, fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>{snapshotError}</p>
-              </>
-            ) : (
-              <p className="dashboard-subtitle" style={{ marginBottom: 0 }}>No node logs in snapshot.</p>
-            )}
+        {snapshotError && (
+          <div style={{ marginTop: '1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '0.5rem', padding: '0.75rem 1rem' }}>
+            <p className="dashboard-label" style={{ color: 'var(--color-failure)', marginBottom: '0.25rem' }}>EXECUTION ERROR</p>
+            <p style={{ fontSize: '0.8rem', color: '#ff8080', fontFamily: 'var(--font-mono)', margin: 0 }}>{snapshotError}</p>
           </div>
-        ) : (
-          nodeLogs.map(log => {
-            const saveAs = flowNodes.find(n => n.id === log.nodeId)?.config?.saveOutputAs as string | undefined
+        )}
+      </div>
+
+
+      {/* ── 3-column execution log ── */}
+      <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h2 className="dashboard-label" style={{ margin: 0 }}>NODE EXECUTION LOG</h2>
+        <span style={{ fontSize: '0.75rem', color: 'var(--color-muted)' }}>{nodeLogs.length} nodes executed</span>
+      </div>
+
+      {nodeLogs.length === 0 ? (
+        <div className="dashboard-card" style={{ padding: '2.5rem', textAlign: 'center' }}>
+          <p style={{ color: 'var(--color-muted)', margin: 0 }}>{snapshotError ?? 'No node logs recorded.'}</p>
+        </div>
+      ) : (
+        <div style={{ border: '1px solid var(--color-border)', borderRadius: '0.75rem', overflow: 'hidden', background: 'var(--color-surface)' }}>
+
+          {/* Column headers */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 220px 1fr',
+            background: 'var(--color-panel)',
+            borderBottom: '2px solid var(--color-border)',
+          }}>
+            {[
+              { label: 'NODE', sub: 'type · ID · request / response', color: 'var(--color-accent)' },
+              { label: 'OUTCOME', sub: 'status · duration', color: '#a78bfa' },
+              { label: 'EXCEPTION', sub: 'error · fix hint', color: '#f87171' },
+            ].map((col, i) => (
+              <div key={col.label} style={{
+                padding: '0.875rem 1.25rem',
+                borderRight: i < 2 ? '1px solid var(--color-border)' : 'none',
+              }}>
+                <p style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', color: col.color, margin: 0 }}>{col.label}</p>
+                <p style={{ fontSize: '0.65rem', color: 'var(--color-muted)', margin: '0.15rem 0 0' }}>{col.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Node rows */}
+          {nodeLogs.map((log, idx) => {
+            const saveAs    = flowNodes.find(n => n.id === log.nodeId)?.config?.saveOutputAs as string | undefined
+            const isSelected = selected === log.nodeId
+            const isLast    = idx === nodeLogs.length - 1
             const forkBranches = log.nodeType === 'FORK' ? (branchesByForkNode[log.nodeId] ?? []) : []
+
             return (
-              <Fragment key={log.nodeId}>
-                <NodeLogCard
+              <div key={log.nodeId}>
+                <NodeRow
                   log={log}
-                  saveOutputAs={saveAs}
-                  isOpen={!!expanded[log.nodeId]}
-                  onToggle={() => toggle(log.nodeId)}
-                  rawOpen={!!rawOpen[log.nodeId]}
-                  onRawToggle={() => setRawOpen(prev => ({ ...prev, [log.nodeId]: !prev[log.nodeId] }))}
+                  saveAs={saveAs}
+                  isSelected={isSelected}
+                  isLast={isLast && forkBranches.length === 0}
+                  expanded={!!expanded[log.nodeId]}
+                  onToggleExpand={() => setExpanded(prev => ({ ...prev, [log.nodeId]: !prev[log.nodeId] }))}
+                  onSelect={() => setSelected(isSelected ? null : log.nodeId)}
                 />
-                {log.nodeType === 'FORK' && forkBranches.map(branch => (
-                  <BranchExecutionRow
+                {/* FORK branch sub-rows */}
+                {forkBranches.map((branch, bi) => (
+                  <BranchRows
                     key={branch.id}
                     branch={branch}
                     nodeExecutions={nodeExecutionsByBranch[branch.branchName] ?? []}
+                    isLast={isLast && bi === forkBranches.length - 1}
                     expanded={expanded}
-                    onToggle={toggle}
+                    onToggleExpand={(key) => setExpanded(prev => ({ ...prev, [key]: !prev[key] }))}
                   />
                 ))}
-              </Fragment>
+              </div>
             )
-          })
-        )}
-      </div>
-    </div>
-  )
-}
-
-function NexEntry({ nexKey, data, isOpen, onToggle }: { nexKey: string; data: unknown; isOpen: boolean; onToggle: () => void }) {
-  const [copied, setCopied] = useState(false)
-  const refPath = `nex.${nexKey}`
-  function copyRef() {
-    copyToClipboard(refPath).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500) })
-  }
-  return (
-    <div style={{ marginBottom: '1rem', border: '1px solid var(--color-border)', borderRadius: '0.5rem', overflow: 'hidden', background: 'var(--color-panel)' }}>
-      <button type="button" onClick={onToggle} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: '0.8rem' }}>
-        {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        <span style={{ fontFamily: 'var(--font-mono)', color: '#06B6D4' }}>{nexKey}</span>
-      </button>
-      {isOpen && (
-        <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--color-border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <code style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)' }}>{refPath}</code>
-            <button type="button" onClick={copyRef} className="studio-toolbar-btn" style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem' }}>{copied ? 'Copied!' : 'COPY REF'}</button>
-          </div>
-          <div style={{ background: 'var(--color-base)', border: '1px solid var(--color-border)', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', overflow: 'auto', maxHeight: '24rem' }}>
-            <NexJsonViewer data={data} basePath={refPath} depth={0} />
-          </div>
+          })}
         </div>
       )}
     </div>
   )
 }
 
-function CopyPathButton({ path }: { path: string }) {
-  const [copied, setCopied] = useState(false)
+/* ── Node Row — one row across all 3 columns ── */
+
+function NodeRow({ log, saveAs, isSelected, isLast, expanded, onToggleExpand, onSelect }: {
+  log:            NodeLog
+  saveAs?:        string
+  isSelected:     boolean
+  isLast:         boolean
+  expanded:       boolean
+  onToggleExpand: () => void
+  onSelect:       () => void
+}) {
+  const isSuccess = log.status === 'SUCCESS'
+  const isFailure = log.status === 'FAILURE'
+  const statusCol = isSuccess ? '#10b981' : isFailure ? '#ef4444' : '#00d4ff'
+  const hasError  = !!log.errorMessage || !!log.failureOutput
+  const rowBorder = isLast ? 'none' : '1px solid var(--color-border)'
+  const rowBg     = isSelected ? 'rgba(255,255,255,0.03)' : 'transparent'
+
+  const errorMsg = log.errorMessage ?? (log.failureOutput as Record<string,unknown> | undefined)?.error as string | undefined
+
+  const fixHint = errorMsg ? getFixHint(String(errorMsg)) : null
+
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-      <button type="button" onClick={() => copyToClipboard(path).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500) })} title={path} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'inline-flex' }}>
-        <Copy size={12} style={{ color: 'var(--color-muted)' }} />
-      </button>
-      {copied && <span style={{ fontSize: 10, color: 'var(--color-success)' }}>Copied!</span>}
-    </span>
-  )
-}
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px 1fr', borderBottom: rowBorder, background: rowBg, transition: 'background 0.1s' }}
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.02)' }}
+      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = rowBg }}>
 
-function NexJsonViewer({ data, basePath, depth = 0 }: { data: unknown; basePath: string; depth?: number }) {
-  const [collapsed, setCollapsed] = useState(depth > 2)
-  const indent = depth * 14
+      {/* ── Col 1: Node ── */}
+      <div style={{ padding: '1.125rem 1.25rem', borderRight: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {/* Node identity */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+          <NodeStatusDot status={log.status} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--color-text)' }}>{log.nodeType}</div>
+            <div style={{ fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)', marginTop: '0.1rem' }}>
+              {log.nodeId.slice(0, 8)}…
+              {saveAs && <span style={{ color: '#06B6D4', marginLeft: '0.5rem' }}>nex.{saveAs}</span>}
+            </div>
+          </div>
+        </div>
 
-  if (data === null) {
-    return <span style={{ color: 'var(--color-muted)' }}>null</span>
-  }
-  if (typeof data === 'boolean') {
-    return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-        <span style={{ color: '#3b82f6' }}>{String(data)}</span>
-        <CopyPathButton path={basePath} />
-      </span>
-    )
-  }
-  if (typeof data === 'number') {
-    return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-        <span style={{ color: '#F59E0B' }}>{data}</span>
-        <CopyPathButton path={basePath} />
-      </span>
-    )
-  }
-  if (typeof data === 'string') {
-    return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-        <span style={{ color: '#10b981' }}>{JSON.stringify(data)}</span>
-        <CopyPathButton path={basePath} />
-      </span>
-    )
-  }
-  if (Array.isArray(data)) {
-    return (
-      <div style={{ marginLeft: indent }}>
-        <button type="button" onClick={() => setCollapsed(c => !c)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-text)' }}>
-          {collapsed ? `[ ${data.length} items ]` : '['}
-        </button>
-        {!collapsed && (
+        {/* Request / Response toggle */}
+        {(log.input || log.output || log.successOutput) && (
+          <button
+            type="button"
+            onClick={onToggleExpand}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.35rem',
+              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+              fontSize: '0.72rem', color: 'var(--color-muted)', fontFamily: 'inherit', textAlign: 'left',
+            }}
+          >
+            {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+            {expanded ? 'Hide' : 'Show'} request / response
+          </button>
+        )}
+
+        {/* Expanded JSON data */}
+        {expanded && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
+            {log.input && Object.keys(log.input).length > 0 && (
+              <JsonBlock label="INPUT" data={log.input} color="var(--color-accent)" compact />
+            )}
+            {log.successOutput && (
+              <JsonBlock label="RESPONSE" data={log.successOutput} color="#10b981" compact />
+            )}
+            {log.output && !log.successOutput && (
+              <JsonBlock label="OUTPUT" data={log.output} color="#10b981" compact />
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Col 2: Outcome ── */}
+      <div style={{ padding: '1.125rem 1rem', borderRight: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '0.625rem', alignItems: 'flex-start' }}>
+        {/* Status pill */}
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+          padding: '0.35rem 0.75rem', borderRadius: '9999px',
+          background: `${statusCol}18`, border: `1px solid ${statusCol}44`,
+        }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: statusCol, flexShrink: 0 }} />
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-mono)', color: statusCol }}>{log.status}</span>
+        </div>
+
+        {/* Extra outcome info */}
+        {log.nodeType === 'LOOP' && isSuccess && log.successOutput && (
+          <div style={{ fontSize: '0.72rem', color: 'var(--color-muted)' }}>
+            ↺ {String((log.successOutput as Record<string,unknown>).iterationCount ?? (log.successOutput as Record<string,unknown>).index ?? '?')} iterations
+          </div>
+        )}
+        {log.nodeType === 'NEXUS' && log.successOutput && (
+          <div style={{
+            fontSize: '0.72rem', fontFamily: 'var(--font-mono)',
+            color: isSuccess ? '#10b981' : '#ef4444',
+          }}>
+            HTTP {String((log.successOutput as Record<string,unknown>).statusCode ?? '—')}
+          </div>
+        )}
+        {log.nodeType === 'DECISION' && log.output && (
+          <div style={{ fontSize: '0.72rem', color: 'var(--color-muted)' }}>
+            result: <span style={{ color: isSuccess ? '#10b981' : '#ef4444', fontFamily: 'var(--font-mono)' }}>
+              {String((log.output as Record<string,unknown>).result ?? '—')}
+            </span>
+          </div>
+        )}
+        {saveAs && (
+          <div style={{ fontSize: '0.68rem', color: 'var(--color-muted)' }}>
+            Saved as <code style={{ color: '#06B6D4', fontFamily: 'var(--font-mono)' }}>nex.{saveAs}</code>
+          </div>
+        )}
+      </div>
+
+      {/* ── Col 3: Exception ── */}
+      <div style={{ padding: '1.125rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+        {!hasError ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#10b981' }}>
+            <CheckCircle size={14} style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: '0.775rem' }}>No exceptions</span>
+          </div>
+        ) : (
           <>
-            {data.map((item, i) => (
-              <div key={i} style={{ marginLeft: 14, fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
-                <NexJsonViewer data={item} basePath={`${basePath}.${i}`} depth={depth + 1} />
+            {/* Error message */}
+            {errorMsg && (
+              <div style={{
+                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                borderRadius: '0.5rem', padding: '0.625rem 0.875rem',
+              }}>
+                <p style={{ fontSize: '0.68rem', fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.35rem' }}>Error</p>
+                <p style={{ fontSize: '0.775rem', fontFamily: 'var(--font-mono)', color: '#fca5a5', margin: 0, lineHeight: 1.6, wordBreak: 'break-word' }}>{errorMsg}</p>
               </div>
-            ))}
-            <span style={{ marginLeft: 14 }}>]</span>
+            )}
+
+            {/* Failure output detail if different from error */}
+            {log.failureOutput && (
+              <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '0.5rem', padding: '0.625rem 0.875rem' }}>
+                <p style={{ fontSize: '0.68rem', fontWeight: 700, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.35rem' }}>Failure Detail</p>
+                <pre style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: '#fca5a5', margin: 0, overflow: 'auto', maxHeight: '8rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {JSON.stringify(log.failureOutput, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            {/* Fix hint */}
+            {fixHint && (
+              <div style={{ borderLeft: '3px solid rgba(239,68,68,0.5)', background: 'rgba(239,68,68,0.04)', borderRadius: '0 0.375rem 0.375rem 0', padding: '0.5rem 0.75rem', fontSize: '0.72rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>
+                {fixHint}
+              </div>
+            )}
           </>
         )}
       </div>
-    )
-  }
-  if (typeof data === 'object' && data !== null) {
-    const entries = Object.entries(data as Record<string, unknown>)
-    return (
-      <div style={{ marginLeft: indent, fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
-        <button type="button" onClick={() => setCollapsed(c => !c)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--color-text)' }}>
-          {collapsed ? `{ ${entries.length} keys }` : '{'}
-        </button>
-        {!collapsed && entries.map(([k, v]) => (
-          <div key={k} style={{ marginLeft: 14, display: 'flex', alignItems: 'flex-start', gap: 4, flexWrap: 'wrap' }}>
-            <span style={{ color: 'var(--color-text)' }}>&quot;{k}&quot;: </span>
-            <NexJsonViewer data={v} basePath={basePath ? `${basePath}.${k}` : k} depth={depth + 1} />
-          </div>
-        ))}
-        {!collapsed && <span style={{ marginLeft: 14 }}>{'}'}</span>}
-      </div>
-    )
-  }
-  return null
+    </div>
+  )
 }
 
-function BranchExecutionRow({
-  branch,
-  nodeExecutions,
-  expanded,
-  onToggle,
-}: {
-  branch: BranchExecution
-  nodeExecutions: NodeExecution[]
-  expanded: Record<string, boolean>
-  onToggle: (key: string) => void
+/* ── Branch rows (below a FORK row) ── */
+
+function BranchRows({ branch, nodeExecutions, isLast, expanded, onToggleExpand }: {
+  branch:          BranchExecution
+  nodeExecutions:  NodeExecution[]
+  isLast:          boolean
+  expanded:        Record<string, boolean>
+  onToggleExpand:  (key: string) => void
 }) {
-  const [branchExpanded, setBranchExpanded] = useState(false)
   const isSuccess = branch.status === 'SUCCESS'
-  const color = isSuccess ? '#10B981' : '#EF4444'
+  const color     = isSuccess ? '#10b981' : '#ef4444'
 
   return (
-    <div style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-panel)' }}>
-      <button
-        type="button"
-        onClick={() => setBranchExpanded(prev => !prev)}
-        style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '8px 16px 8px 48px',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          textAlign: 'left',
-          fontSize: '12px',
-          fontFamily: 'var(--font-mono)',
-        }}
-      >
-        <div style={{ width: '12px', height: '1px', background: '#1E293B', flexShrink: 0 }} />
-        {branchExpanded ? <ChevronDown size={14} style={{ color: 'var(--color-muted)' }} /> : <ChevronRight size={14} style={{ color: 'var(--color-muted)' }} />}
-        <span style={{ color, minWidth: '80px' }}>⑃ {branch.branchName}</span>
-        <span style={{
-          fontSize: '9px', padding: '2px 8px', borderRadius: '3px',
-          background: `${color}15`, color, border: `1px solid ${color}30`,
-          letterSpacing: '0.1em',
-        }}>
-          {branch.status}
-        </span>
-        <span style={{ marginLeft: 'auto', color: 'var(--color-muted)', fontSize: '11px' }}>
-          {branch.durationMs != null ? `${branch.durationMs}ms` : '—'}
-        </span>
-        {nodeExecutions.length > 0 && (
-          <span style={{ fontSize: '10px', color: 'var(--color-muted)' }}>
-            {nodeExecutions.length} node{nodeExecutions.length !== 1 ? 's' : ''}
-          </span>
-        )}
-        {!isSuccess && branch.errorMessage && (
-          <span style={{
-            color: '#EF4444', fontSize: '11px',
-            maxWidth: '280px', overflow: 'hidden',
-            textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+    <>
+      {/* Branch header row */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 220px 1fr',
+        borderBottom: '1px solid var(--color-border)',
+        background: 'rgba(255,255,255,0.015)',
+      }}>
+        <div style={{ padding: '0.625rem 1.25rem 0.625rem 2rem', borderRight: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ width: 12, height: 1, background: 'var(--color-border)' }} />
+          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color }}>⑃ {branch.branchName}</span>
+          <span style={{ fontSize: '0.65rem', color: 'var(--color-muted)' }}>FORK branch</span>
+        </div>
+        <div style={{ padding: '0.625rem 1rem', borderRight: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: color }} />
+          <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color }}>{branch.status}</span>
+          {branch.durationMs != null && (
+            <span style={{ fontSize: '0.68rem', color: 'var(--color-muted)' }}>{branch.durationMs}ms</span>
+          )}
+        </div>
+        <div style={{ padding: '0.625rem 1.25rem', display: 'flex', alignItems: 'center' }}>
+          {branch.errorMessage
+            ? <span style={{ fontSize: '0.72rem', color: '#fca5a5', fontFamily: 'var(--font-mono)' }}>{branch.errorMessage}</span>
+            : <span style={{ fontSize: '0.72rem', color: '#10b981' }}>Branch completed</span>
+          }
+        </div>
+      </div>
+
+      {/* Branch node rows */}
+      {nodeExecutions.map((ne, ni) => {
+        const neKey    = `branch:${branch.id}:${ne.id}`
+        const isNeExp  = !!expanded[neKey]
+        const isNeLast = isLast && ni === nodeExecutions.length - 1
+        const neError  = ne.errorMessage ?? (ne.outputNex as Record<string,unknown> | undefined)?.error as string | undefined
+
+        return (
+          <div key={ne.id} style={{
+            display: 'grid', gridTemplateColumns: '1fr 220px 1fr',
+            borderBottom: isNeLast ? 'none' : '1px solid var(--color-border)',
+            background: 'rgba(255,255,255,0.01)',
           }}>
-            {branch.errorMessage}
-          </span>
-        )}
-      </button>
-      {branchExpanded && nodeExecutions.length > 0 && (
-        <div style={{ paddingLeft: '48px', paddingRight: '16px', paddingBottom: '12px', borderTop: '1px solid var(--color-border)' }}>
-          {nodeExecutions.map(ne => (
-            <BranchNodeCard
-              key={ne.id}
-              nodeExecution={ne}
-              isOpen={!!expanded[`branch:${branch.id}:${ne.id}`]}
-              onToggle={() => onToggle(`branch:${branch.id}:${ne.id}`)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function BranchNodeCard({
-  nodeExecution: ne,
-  isOpen,
-  onToggle,
-}: {
-  nodeExecution: NodeExecution
-  isOpen: boolean
-  onToggle: () => void
-}) {
-  const statusCol = ne.status === 'SUCCESS' ? 'var(--color-success)' : 'var(--color-failure)'
-  const inputNex = (ne.inputNex && Object.keys(ne.inputNex).length > 0) ? ne.inputNex : null
-  const outputNex = (ne.outputNex && Object.keys(ne.outputNex).length > 0) ? ne.outputNex : null
-
-  return (
-    <div className="dashboard-card" style={{ marginTop: '8px', overflow: 'hidden', borderColor: isOpen ? statusCol + '44' : undefined }}>
-      <button type="button" onClick={onToggle} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-        <NodeStatusIcon status={ne.status as NodeStatus} />
-        <div style={{ flex: 1 }}>
-          <span className="dashboard-card-title" style={{ margin: 0, fontSize: '0.9rem' }}>{ne.nodeLabel}</span>
-          <span className="dashboard-card-meta" style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>{ne.nodeType}</span>
-        </div>
-        <span style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: statusCol }}>{ne.status}</span>
-        {ne.durationMs != null && (
-          <span style={{ fontSize: '0.7rem', color: 'var(--color-muted)' }}>{ne.durationMs}ms</span>
-        )}
-        {isOpen ? <ChevronDown size={14} style={{ color: 'var(--color-muted)' }} /> : <ChevronRight size={14} style={{ color: 'var(--color-muted)' }} />}
-      </button>
-      {isOpen && (
-        <div style={{ borderTop: '1px solid var(--color-border)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {ne.errorMessage && (
-            <div style={{ background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.25)', borderRadius: '0.5rem', padding: '0.75rem 1rem' }}>
-              <p className="dashboard-label" style={{ color: 'var(--color-failure)', marginBottom: '0.25rem' }}>ERROR</p>
-              <p style={{ fontSize: '0.8rem', color: '#ff8080', fontFamily: 'var(--font-mono)', margin: 0 }}>{ne.errorMessage}</p>
-            </div>
-          )}
-          {inputNex && <JsonBlock label="INPUT (nex before node)" data={inputNex as Record<string, unknown>} color="var(--color-accent)" />}
-          {outputNex && <JsonBlock label="OUTPUT (nex after node)" data={outputNex as Record<string, unknown>} color="var(--color-success)" />}
-          {!inputNex && !outputNex && !ne.errorMessage && (
-            <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', margin: 0 }}>No input/output recorded.</p>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function NodeLogCard({ log, saveOutputAs, isOpen, onToggle, rawOpen, onRawToggle }: {
-  log: NodeLog
-  saveOutputAs?: string
-  isOpen: boolean
-  onToggle: () => void
-  rawOpen: boolean
-  onRawToggle: () => void
-}) {
-  const statusCol = log.status === 'SUCCESS' ? 'var(--color-success)' : log.status === 'FAILURE' ? 'var(--color-failure)' : 'var(--color-accent)'
-  const rawOutputData = log.successOutput ?? log.output ?? {}
-  const rawOutputKeys = Object.keys(rawOutputData as object)
-
-  return (
-    <div className="dashboard-card" style={{ overflow: 'hidden', borderColor: isOpen ? statusCol + '44' : undefined }}>
-      <button type="button" onClick={onToggle} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.875rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-        <NodeStatusIcon status={log.status} />
-        <div style={{ flex: 1 }}>
-          <span className="dashboard-card-title" style={{ margin: 0 }}>{log.nodeType}</span>
-          <span className="dashboard-card-meta" style={{ marginLeft: '0.75rem', marginTop: 0 }}>{log.nodeId.slice(0, 8)}…</span>
-        </div>
-        <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: statusCol }}>{log.status}</span>
-        {isOpen ? <ChevronDown size={14} style={{ color: 'var(--color-muted)' }} /> : <ChevronRight size={14} style={{ color: 'var(--color-muted)' }} />}
-      </button>
-      {isOpen && (
-        <div style={{ borderTop: '1px solid var(--color-border)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {log.nodeType === 'LOOP' && log.status === 'SUCCESS' && log.successOutput && (
-            <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.35)', borderRadius: '0.5rem', padding: '0.75rem 1rem' }}>
-              <p className="dashboard-label" style={{ color: 'var(--color-success)', marginBottom: '0.25rem' }}>↺ Completed {String((log.successOutput as Record<string, unknown>).iterationCount ?? (log.successOutput as Record<string, unknown>).index ?? '?')} iterations</p>
-              {Array.isArray((log.successOutput as Record<string, unknown>).accumulated) && (
-                <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', margin: 0 }}>
-                  {((log.successOutput as Record<string, unknown>).accumulated as unknown[]).length} items collected
-                </p>
+            {/* Col 1 */}
+            <div style={{ padding: '0.875rem 1.25rem 0.875rem 2.5rem', borderRight: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <NodeStatusDot status={ne.status as NodeStatus} />
+                <div>
+                  <span style={{ fontWeight: 600, fontSize: '0.825rem', color: 'var(--color-text)' }}>{ne.nodeLabel}</span>
+                  <span style={{ marginLeft: '0.5rem', fontSize: '0.68rem', color: 'var(--color-muted)' }}>{ne.nodeType}</span>
+                </div>
+              </div>
+              {(ne.inputNex || ne.outputNex) && (
+                <button type="button" onClick={() => onToggleExpand(neKey)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '0.68rem', color: 'var(--color-muted)', fontFamily: 'inherit', textAlign: 'left' }}>
+                  {isNeExp ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                  {isNeExp ? 'Hide' : 'Show'} data
+                </button>
               )}
-            </div>
-          )}
-          {log.nodeType === 'LOOP' && log.status === 'FAILURE' && log.errorMessage && String(log.errorMessage).includes('Loop exceeded max iterations') && (
-            <div style={{ background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.25)', borderRadius: '0.5rem', padding: '0.75rem 1rem' }}>
-              <p className="dashboard-label" style={{ color: 'var(--color-failure)', marginBottom: '0.25rem' }}>⚠ Max iterations exceeded</p>
-              <p style={{ fontSize: '0.8rem', color: '#ff8080', fontFamily: 'var(--font-mono)', marginBottom: '0.5rem' }}>{log.errorMessage}</p>
-              <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', margin: 0 }}>Increase max iterations in the LOOP node config, or fix the exit condition so it evaluates to false.</p>
-            </div>
-          )}
-          {log.errorMessage && !(log.nodeType === 'LOOP' && String(log.errorMessage).includes('Loop exceeded max iterations')) && (
-            <div style={{ background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.25)', borderRadius: '0.5rem', padding: '0.75rem 1rem' }}>
-              <p className="dashboard-label" style={{ color: 'var(--color-failure)', marginBottom: '0.25rem' }}>ERROR</p>
-              <p style={{ fontSize: '0.8rem', color: '#ff8080', fontFamily: 'var(--font-mono)' }}>{log.errorMessage}</p>
-            </div>
-          )}
-          {log.input && Object.keys(log.input).length > 0 && <JsonBlock label="INPUT / REQUEST" data={log.input} color="var(--color-accent)" />}
-          {log.output && <JsonBlock label="OUTPUT" data={log.output} color="var(--color-success)" />}
-          {log.successOutput && <JsonBlock label={log.nodeType === 'LOOP' ? 'SUCCESS OUTPUT' : 'SUCCESS OUTPUT (HTTP RESPONSE)'} data={log.successOutput} color="var(--color-success)" />}
-          {log.failureOutput && <JsonBlock label="FAILURE OUTPUT (HTTP ERROR)" data={log.failureOutput} color="var(--color-failure)" />}
-
-          {/* RAW OUTPUT — full JSON with copy-path buttons */}
-          {rawOutputKeys.length > 0 && (
-            <>
-              <button type="button" onClick={onRawToggle} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '0.75rem', color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}>
-                {rawOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                RAW OUTPUT
-              </button>
-              {rawOpen && (
-                <div style={{ background: 'var(--color-base)', border: '1px solid var(--color-border)', borderRadius: '0.5rem', padding: '0.75rem 1rem', overflow: 'auto', maxHeight: '24rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
-                  <NexJsonViewer
-                    data={rawOutputData}
-                    basePath={saveOutputAs ? `nex.${saveOutputAs}` : `nodes.${log.nodeId}.${log.successOutput ? 'successOutput' : 'output'}`}
-                    depth={0}
-                  />
+              {isNeExp && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem' }}>
+                  {ne.inputNex  && Object.keys(ne.inputNex).length  > 0 && <JsonBlock label="INPUT"  data={ne.inputNex  as Record<string,unknown>} color="var(--color-accent)" compact />}
+                  {ne.outputNex && Object.keys(ne.outputNex).length > 0 && <JsonBlock label="OUTPUT" data={ne.outputNex as Record<string,unknown>} color="#10b981"            compact />}
                 </div>
               )}
-            </>
-          )}
-
-          {/* How to reference tip */}
-          <div style={{ borderLeft: '3px solid #F59E0B', background: 'rgba(245,158,11,0.06)', borderRadius: '0 0.375rem 0.375rem 0', padding: '0.5rem 0.75rem', fontSize: '0.75rem', color: 'var(--color-muted)' }}>
-            {saveOutputAs ? (
-              <>💡 Reference this in any node: <code style={{ color: '#F59E0B' }}>nex.{saveOutputAs}.FIELD</code> — e.g. <code style={{ color: '#F59E0B' }}>nex.{saveOutputAs}.result.userId</code></>
-            ) : (
-              <>💡 No name assigned. Add &quot;Save output as&quot; in Studio to use <code>nex.NAME</code> syntax. Or use: <code>nodes.&lt;nodeId&gt;.successOutput.FIELD</code></>
-            )}
+            </div>
+            {/* Col 2 */}
+            <div style={{ padding: '0.875rem 1rem', borderRight: '1px solid var(--color-border)', display: 'flex', alignItems: 'flex-start', flexDirection: 'column', gap: '0.4rem' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.625rem', borderRadius: '9999px', background: ne.status === 'SUCCESS' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', border: `1px solid ${ne.status === 'SUCCESS' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: ne.status === 'SUCCESS' ? '#10b981' : '#ef4444' }} />
+                <span style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: ne.status === 'SUCCESS' ? '#10b981' : '#ef4444', fontWeight: 700 }}>{ne.status}</span>
+              </div>
+              {ne.durationMs != null && (
+                <span style={{ fontSize: '0.68rem', color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}>{ne.durationMs}ms</span>
+              )}
+            </div>
+            {/* Col 3 */}
+            <div style={{ padding: '0.875rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              {!neError ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10b981' }}>
+                  <CheckCircle size={13} />
+                  <span style={{ fontSize: '0.72rem' }}>No exceptions</span>
+                </div>
+              ) : (
+                <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.375rem', padding: '0.5rem 0.75rem' }}>
+                  <p style={{ fontSize: '0.68rem', color: '#ef4444', fontWeight: 700, margin: '0 0 0.25rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Error</p>
+                  <p style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: '#fca5a5', margin: 0, lineHeight: 1.5, wordBreak: 'break-word' }}>{neError}</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      })}
+    </>
   )
 }
 
-function JsonBlock({ label, data, color }: { label: string; data: Record<string, unknown>; color: string }) {
-  const [copied, setCopied] = useState(false)
-  const json = JSON.stringify(data, null, 2)
-  function copy() { navigator.clipboard.writeText(json); setCopied(true); setTimeout(() => setCopied(false), 2000) }
+/* ── Fix hint helper ── */
+function getFixHint(msg: string): string | null {
+  if (msg.includes('null'))            return '→ A reference resolved to null. Check your {{nex.x}} paths.'
+  if (msg.includes('401'))             return '→ Unauthorized. Check auth headers or API key.'
+  if (msg.includes('404'))             return '→ Not found. Verify the URL and endpoint exists.'
+  if (msg.includes('url'))             return '→ NEXUS node missing the URL. Add it in node config.'
+  if (msg.includes('code'))            return '→ SCRIPT node has no code. Open node and write your script.'
+  if (msg.includes('ReferenceError'))  return '→ Variable not defined. Check nex.x path in script.'
+  if (msg.includes('TypeError'))       return '→ Type mismatch. Check data types and null access.'
+  if (msg.includes('timeout'))         return '→ Timed out. Check for infinite loops or slow APIs.'
+  if (msg.includes('No API key'))      return '→ Missing API key. Go to Settings → AI Providers.'
+  return '→ Check node configuration and upstream data.'
+}
+
+/* ── Status dot ── */
+function NodeStatusDot({ status }: { status: NodeStatus }) {
+  const color = status === 'SUCCESS' ? '#10b981' : status === 'FAILURE' ? '#ef4444' : '#00d4ff'
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-        <p className="dashboard-label" style={{ color, marginBottom: 0 }}>{label}</p>
-        <button type="button" onClick={copy} className="studio-toolbar-btn" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>{copied ? 'COPIED' : 'COPY'}</button>
-      </div>
-      <pre style={{ background: 'var(--color-base)', border: '1px solid var(--color-border)', borderRadius: '0.5rem', padding: '0.75rem 1rem', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-text)', overflow: 'auto', maxHeight: '20rem', lineHeight: 1.6, margin: 0 }}>{json}</pre>
-    </div>
+    <div style={{ width: 9, height: 9, borderRadius: '50%', background: color, flexShrink: 0, boxShadow: `0 0 5px ${color}88` }} />
   )
 }
 
-function NodeStatusIcon({ status }: { status: NodeStatus }) {
-  if (status === 'SUCCESS') return <CheckCircle size={16} style={{ color: 'var(--color-success)', flexShrink: 0 }} />
-  if (status === 'FAILURE') return <XCircle size={16} style={{ color: 'var(--color-failure)', flexShrink: 0 }} />
-  if (status === 'RUNNING') return <Loader2 size={16} style={{ color: 'var(--color-accent)', flexShrink: 0, animation: 'spin 1s linear infinite' }} />
-  return <Clock size={16} style={{ color: 'var(--color-muted)', flexShrink: 0 }} />
-}
-
+/* ── Status badge ── */
 function StatusBadge({ status }: { status: string }) {
-  const color = status === 'SUCCESS' ? 'var(--color-success)' : status === 'FAILURE' ? 'var(--color-failure)' : 'var(--color-accent)'
+  const color = status === 'SUCCESS' ? '#10b981' : status === 'FAILURE' ? '#ef4444' : '#00d4ff'
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.875rem', borderRadius: '9999px', background: color + '18', border: `1px solid ${color}44` }}>
       <div style={{ width: 7, height: 7, borderRadius: '50%', background: color }} />
@@ -552,10 +506,74 @@ function StatusBadge({ status }: { status: string }) {
   )
 }
 
+
+/* ── Json Block ── */
+function JsonBlock({ label, data, color, compact }: { label: string; data: Record<string, unknown>; color: string; compact?: boolean }) {
+  const [copied, setCopied] = useState(false)
+  const json = JSON.stringify(data, null, 2)
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+        <p className="dashboard-label" style={{ color, marginBottom: 0, fontSize: '0.65rem' }}>{label}</p>
+        <button type="button" onClick={() => { navigator.clipboard.writeText(json); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+          className="studio-toolbar-btn" style={{ fontSize: '0.6rem', padding: '0.1rem 0.35rem' }}>{copied ? 'COPIED' : 'COPY'}</button>
+      </div>
+      <pre style={{ background: 'var(--color-base)', border: '1px solid var(--color-border)', borderRadius: '0.375rem', padding: compact ? '0.5rem 0.75rem' : '0.75rem 1rem', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--color-text)', overflow: 'auto', maxHeight: compact ? '12rem' : '20rem', lineHeight: 1.6, margin: 0 }}>{json}</pre>
+    </div>
+  )
+}
+
+/* ── Nex JSON viewer ── */
+function CopyPathButton({ path }: { path: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      <button type="button" onClick={() => copyToClipboard(path).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500) })} title={path} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'inline-flex' }}>
+        <Copy size={11} style={{ color: 'var(--color-muted)' }} />
+      </button>
+      {copied && <span style={{ fontSize: 10, color: '#10b981' }}>Copied!</span>}
+    </span>
+  )
+}
+
+function NexJsonViewer({ data, basePath, depth = 0 }: { data: unknown; basePath: string; depth?: number }) {
+  const [collapsed, setCollapsed] = useState(depth > 2)
+  const indent = depth * 12
+  if (data === null) return <span style={{ color: 'var(--color-muted)' }}>null</span>
+  if (typeof data === 'boolean') return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ color: '#3b82f6' }}>{String(data)}</span><CopyPathButton path={basePath} /></span>
+  if (typeof data === 'number')  return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ color: '#F59E0B' }}>{data}</span><CopyPathButton path={basePath} /></span>
+  if (typeof data === 'string')  return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ color: '#10b981' }}>{JSON.stringify(data)}</span><CopyPathButton path={basePath} /></span>
+  if (Array.isArray(data)) return (
+    <div style={{ marginLeft: indent }}>
+      <button type="button" onClick={() => setCollapsed(c => !c)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--color-text)' }}>
+        {collapsed ? `[ ${data.length} items ]` : '['}
+      </button>
+      {!collapsed && (<>{data.map((item, i) => (<div key={i} style={{ marginLeft: 12, fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}><NexJsonViewer data={item} basePath={`${basePath}.${i}`} depth={depth + 1} /></div>))}<span style={{ marginLeft: 12 }}>]</span></>)}
+    </div>
+  )
+  if (typeof data === 'object' && data !== null) {
+    const entries = Object.entries(data as Record<string, unknown>)
+    return (
+      <div style={{ marginLeft: indent, fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
+        <button type="button" onClick={() => setCollapsed(c => !c)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--color-text)' }}>
+          {collapsed ? `{ ${entries.length} keys }` : '{'}
+        </button>
+        {!collapsed && entries.map(([k, v]) => (
+          <div key={k} style={{ marginLeft: 12, display: 'flex', alignItems: 'flex-start', gap: 4, flexWrap: 'wrap' }}>
+            <span style={{ color: 'var(--color-text)' }}>&quot;{k}&quot;: </span>
+            <NexJsonViewer data={v} basePath={basePath ? `${basePath}.${k}` : k} depth={depth + 1} />
+          </div>
+        ))}
+        {!collapsed && <span style={{ marginLeft: 12 }}>{'}'}</span>}
+      </div>
+    )
+  }
+  return null
+}
+
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
-
 function formatDuration(ms: number) {
   if (ms < 1000) return `${ms}ms`
   if (ms < 60000) return `${(ms / 1000).toFixed(2)}s`

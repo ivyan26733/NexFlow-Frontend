@@ -74,6 +74,7 @@ export default function StudioPage() {
   >({})
   const [saving,       setSaving]       = useState(false)
   const [aiPanelOpen, setAiPanelOpen] = useState(false)
+  const [saveModal,   setSaveModal]    = useState<{ warnings: string[] } | null>(null)
 
   const [flowName, setFlowName] = useState('')
   const [flowSlug, setFlowSlug] = useState('')
@@ -317,10 +318,44 @@ export default function StudioPage() {
 
   /* ───────────────────────── Actions ───────────────────────── */
 
+  function checkAndSave() {
+    const currentNodes = nodesRef.current
+    const currentEdges = edgesRef.current
+    const warnings: string[] = []
+
+    // Check terminal nodes are connected
+    const terminalTypes = ['SUCCESS', 'FAILURE']
+    const nonTerminalNodes = currentNodes.filter(n => !terminalTypes.includes(n.type ?? ''))
+    const terminalNodes    = currentNodes.filter(n =>  terminalTypes.includes(n.type ?? ''))
+
+    // Any non-terminal, non-START node with no outgoing edges = dead end
+    const deadEnds = nonTerminalNodes.filter(n => {
+      if (n.type === 'START') return false
+      return !currentEdges.some(e => e.source === n.id)
+    })
+    if (deadEnds.length > 0) {
+      warnings.push(`${deadEnds.length} node(s) have no outgoing connections: ${deadEnds.map(n => `"${n.data.label}"`).join(', ')}`)
+    }
+
+    // No terminal node at all
+    if (terminalNodes.length === 0) {
+      warnings.push('No SUCCESS or FAILURE terminal node in the flow — it will never complete')
+    } else {
+      // Terminal nodes that have no incoming edge
+      const orphanTerminals = terminalNodes.filter(n => !currentEdges.some(e => e.target === n.id))
+      if (orphanTerminals.length > 0) {
+        warnings.push(`Terminal node(s) not connected: ${orphanTerminals.map(n => `"${n.data.label}" (${n.type})`).join(', ')}`)
+      }
+    }
+
+    setSaveModal({ warnings })
+  }
+
   async function saveCanvas() {
     if (saveInProgressRef.current) return
     saveInProgressRef.current = true
     setSaving(true)
+    setSaveModal(null)
     try {
       await api.canvas.save(flowId, {
         nodes: nodesRef.current.map(rfNodeToApiNode),
@@ -413,7 +448,7 @@ export default function StudioPage() {
           flowName={flowName}
           flowSlug={flowSlug}
           saving={saving}
-          onSave={saveCanvas}
+          onSave={checkAndSave}
           onFlowNameChange={updateFlowName}
           onTrigger={triggerFlow}
           onBeautify={beautifyLayout}
@@ -481,6 +516,87 @@ export default function StudioPage() {
           flowId={flowId}
         />
       )}
+
+      {saveModal && (
+        <SaveConfirmModal
+          warnings={saveModal.warnings}
+          onConfirm={saveCanvas}
+          onCancel={() => setSaveModal(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+/* ───────────────────────── Save Confirm Modal ───────────────────────── */
+
+function SaveConfirmModal({ warnings, onConfirm, onCancel }: {
+  warnings: string[]
+  onConfirm: () => void
+  onCancel:  () => void
+}) {
+  const hasWarnings = warnings.length > 0
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9998,
+      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        background: 'var(--color-surface)', border: '1px solid var(--color-border)',
+        borderRadius: '0.875rem', padding: '1.75rem', width: '420px', maxWidth: 'calc(100vw - 2rem)',
+        boxShadow: '0 24px 60px rgba(0,0,0,0.5)',
+      }}>
+        <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--color-text)' }}>
+          {hasWarnings ? '⚠️ Save anyway?' : 'Save flow?'}
+        </h2>
+        <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginBottom: hasWarnings ? '1rem' : '1.5rem' }}>
+          {hasWarnings
+            ? 'The following issues were detected in your flow. You can still save, but the flow may not run correctly.'
+            : 'Are you sure you want to save the current canvas?'}
+        </p>
+
+        {hasWarnings && (
+          <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {warnings.map((w, i) => (
+              <div key={i} style={{
+                display: 'flex', gap: '0.5rem', alignItems: 'flex-start',
+                background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)',
+                borderRadius: '0.5rem', padding: '0.625rem 0.75rem',
+              }}>
+                <span style={{ color: '#F59E0B', flexShrink: 0, marginTop: 1 }}>⚠</span>
+                <span style={{ fontSize: '0.775rem', color: '#fbbf24', lineHeight: 1.5 }}>{w}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '0.625rem', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{
+              padding: '0.5rem 1.125rem', borderRadius: '0.5rem', fontSize: '0.825rem',
+              border: '1px solid var(--color-border)', background: 'transparent',
+              color: 'var(--color-muted)', cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            style={{
+              padding: '0.5rem 1.25rem', borderRadius: '0.5rem', fontSize: '0.825rem',
+              border: 'none',
+              background: hasWarnings ? 'linear-gradient(135deg,#F59E0B,#d97706)' : 'linear-gradient(135deg,#00d4ff,#7c3aed)',
+              color: '#fff', cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit',
+            }}
+          >
+            {hasWarnings ? 'Save Anyway' : 'Save'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

@@ -28,6 +28,12 @@ export type {
   LlmProviderInfo,
   AiNodeOutput,
   LlmTestResult,
+  UserRole,
+  AuthUser,
+  AuthResponse,
+  UserGroup,
+  GroupMember,
+  FlowAccess,
 } from '../index'
 
 // Fork / Join parallel execution types

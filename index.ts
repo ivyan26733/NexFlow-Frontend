@@ -378,3 +378,45 @@ export interface LlmTestResult {
   latencyMs?: number
   model?:     string
 }
+
+// ─── AUTH / RBAC ─────────────────────────────────────────────────────────────
+
+export type UserRole = 'ADMIN' | 'SUB_ADMIN' | 'MEMBER'
+
+export interface AuthUser {
+  id:    string
+  email: string
+  name:  string
+  role:  UserRole
+}
+
+export interface AuthResponse {
+  token: string | null
+  id:    string
+  email: string
+  name:  string
+  role:  UserRole
+}
+
+export interface UserGroup {
+  id:             string
+  name:           string
+  ownerId:        string
+  allFlowsAccess: boolean
+  createdAt:      string
+}
+
+export interface GroupMember {
+  id:      string
+  groupId: string
+  userId:  string
+}
+
+export interface FlowAccess {
+  id:         string
+  flowId:     string
+  targetType: 'USER' | 'GROUP'
+  targetId:   string
+  grantedBy:  string | null
+  createdAt:  string
+}

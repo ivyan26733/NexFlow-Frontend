@@ -65,18 +65,42 @@ const milestones = [
   },
   {
     phase: "08",
-    title: "The Near Horizon",
-    date: "Next 3 months",
+    title: "The Nex Standard",
+    date: "Unified data layer",
     description:
-      "CRON scheduling so flows run on time without external callers. Retry logic with configurable backoff on any node. MCP server so AI tools like Claude and Cursor can build and run flows through conversation. Nested fork-join support — a branch can contain its own parallel split. Secrets manager so credentials never touch the canvas. Removing redundancy — merging HTTP Call into NEXUS with inline connector creation.",
-    status: "building",
+      "Replaced the scattered nodes[uuid].successOutput.body pattern with a single flat object: nex. Every trigger field, variable, and node output is auto-spread into nex under the name you chose. nex.fetchUser.body.email instead of nodes['ca250f8e'].successOutput.body.email. Scripts receive both nex and a legacy input object for backward compatibility. All config panels updated with {{nex.x}} syntax. A full reference doc (NEX-STANDARD.md) shipped alongside the engine changes.",
+    status: "built",
   },
   {
     phase: "09",
+    title: "Auth + RBAC",
+    date: "Identity & access control",
+    description:
+      "Full authentication system: email/password with OTP verification, Google OAuth2 login, and JWT-based sessions. Three-tier role model: Admin, Sub-Admin, and Member. Admins manage user roles, create groups, and grant flow-level access. Groups can be all-access (every member sees every flow) or selective (admin picks which flows each group can access). The first registered account is automatically promoted to Admin. Flows are scoped to their owner; existing flows remain accessible to all for backward compatibility.",
+    status: "built",
+  },
+  {
+    phase: "10",
+    title: "Production Deploy",
+    date: "EC2 + Cloudflare",
+    description:
+      "Solved a hard Docker problem: Maven downloading 400+ JARs on an 8GB gp2 EBS volume saturated the 24 baseline IOPS ceiling, locking all processes including SSH in kernel D-state. Solution: pre-built JAR pattern — Maven runs locally, only the JRE runtime image and a single JAR ship to EC2. Build time dropped from 20+ minutes (hanging) to under 2 minutes. nginx reverse proxy routes traffic across backend (8090) and AI agent (3001). Cloudflare quick tunnel provides HTTPS without SSL cert setup.",
+    status: "built",
+  },
+  {
+    phase: "11",
+    title: "The Near Horizon",
+    date: "Next 3 months",
+    description:
+      "CRON scheduling so flows run on time without external callers. Retry logic with configurable backoff on any node. MCP server so AI tools like Claude and Cursor can build and run flows through conversation. Nested fork-join support — a branch can contain its own parallel split. Secrets manager so credentials never touch the canvas. Flow templates marketplace. Audit log for all admin actions.",
+    status: "building",
+  },
+  {
+    phase: "12",
     title: "The Vision",
     date: "Where this is going",
     description:
-      "Nexflow becomes the automation layer that developers actually want to use — not because they have no choice, but because it respects their craft. A marketplace of connectors. Multi-tenant team workspaces. An AI node that reasons about data and routes decisions. Flows described in plain language, built in minutes, fully inspectable. Eventually: the platform where any integration is 20 minutes, not 2 days.",
+      "Nexflow becomes the automation layer that developers actually want to use — not because they have no choice, but because it respects their craft. Multi-tenant organisations with SSO. A marketplace of connectors. An AI node that reasons about data and routes decisions. Flows described in plain language, built in minutes, fully inspectable. Eventually: the platform where any integration is 20 minutes, not 2 days.",
     status: "future",
   },
 ];
@@ -102,16 +126,22 @@ const principles = [
     title: "Named, not nested",
     body: "Your data has a name you chose. nex.userData, not nodes['ca250f8e'].successOutput.result.body. The machine should adapt to you, not the other way around.",
   },
+  {
+    icon: "⌗",
+    title: "Access by design",
+    body: "Every flow belongs to someone. Roles, groups, and per-flow permissions ensure the right people see the right automations — without locking everyone out by default.",
+  },
 ];
 
 const stack = [
   { label: "Engine",   value: "Spring Boot + Java 17" },
   { label: "Canvas",   value: "Next.js + ReactFlow" },
-  { label: "Database", value: "PostgreSQL + Flyway" },
+  { label: "Database", value: "PostgreSQL + Hibernate" },
   { label: "Realtime", value: "RabbitMQ + STOMP (nodes + branches)" },
   { label: "Scripts",  value: "Nashorn / GraalVM JS + Python3" },
   { label: "Threads",  value: "Dedicated pool — core 20, max 50" },
-  { label: "Deploy",   value: "Railway + Vercel" },
+  { label: "Auth",     value: "JWT + BCrypt + Google OAuth2" },
+  { label: "Deploy",   value: "EC2 + Docker + nginx + Cloudflare" },
   { label: "Parallel", value: "Fork-Join — CompletableFuture.allOf()" },
 ];
 
@@ -119,9 +149,11 @@ const shipped = [
   { label: "Node types",            value: "12" },
   { label: "AI providers",          value: "5"  },
   { label: "Merge strategies",      value: "3"  },
+  { label: "User roles",            value: "3"  },
   { label: "Production bugs fixed", value: "6"  },
   { label: "Exec thread pool",      value: "50" },
   { label: "WebSocket queues",      value: "2"  },
+  { label: "Auth methods",          value: "2"  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

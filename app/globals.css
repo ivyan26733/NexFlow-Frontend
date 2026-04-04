@@ -115,9 +115,11 @@ select.input-base { appearance: none; cursor: pointer; }
   letter-spacing: 0.1em;
   margin-bottom: 0.5rem;
 }
-.dashboard-btn-primary {
+.dashboard-btn-primary,
+.btn-primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   background: var(--color-accent);
@@ -125,10 +127,17 @@ select.input-base { appearance: none; cursor: pointer; }
   border: none;
   border-radius: 0.5rem;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
 }
-.dashboard-btn-primary:hover { opacity: 0.9; }
+.dashboard-btn-primary:hover,
+.btn-primary:hover { opacity: 0.88; }
+.dashboard-btn-primary:active,
+.btn-primary:active { transform: scale(0.98); }
+.dashboard-btn-primary:disabled,
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
 /* About page */
 .about-section {

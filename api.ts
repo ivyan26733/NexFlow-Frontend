@@ -8,15 +8,25 @@ import type {
   NexMap,
   LlmProviderInfo,
   LlmTestResult,
+  AuthResponse,
+  AuthUser,
+  UserGroup,
+  FlowAccess,
 } from './index'
+import { getAuthHeaders } from './lib/auth'
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'
 
 // Handles empty response body safely
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const authHeaders = getAuthHeaders()
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+      ...(options?.headers as Record<string, string> ?? {}),
+    },
   })
 
   if (!res.ok) {
@@ -167,5 +177,88 @@ export const api = {
 
     test: (provider: string) =>
       request<LlmTestResult>(`/api/llm-providers/${provider}/test`, { method: 'POST' }),
+  },
+
+  // ─── AUTH ─────────────────────────────────────────────────────────────────
+  auth: {
+    signup: (email: string, password: string, name: string) =>
+      request<{ message: string }>('/api/auth/signup', {
+        method: 'POST', body: JSON.stringify({ email, password, name }),
+      }),
+
+    verifyOtp: (email: string, otp: string) =>
+      request<AuthResponse>('/api/auth/verify-otp', {
+        method: 'POST', body: JSON.stringify({ email, otp }),
+      }),
+
+    resendOtp: (email: string) =>
+      request<{ message: string }>('/api/auth/resend-otp', {
+        method: 'POST', body: JSON.stringify({ email }),
+      }),
+
+    login: (email: string, password: string) =>
+      request<AuthResponse>('/api/auth/login', {
+        method: 'POST', body: JSON.stringify({ email, password }),
+      }),
+
+    me: () => request<AuthResponse>('/api/auth/me'),
+
+    googleLogin: () => {
+      window.location.href = `${BASE}/oauth2/authorization/google`
+    },
+  },
+
+  // ─── ADMIN ────────────────────────────────────────────────────────────────
+  admin: {
+    listUsers: () => request<AuthUser[]>('/api/admin/users'),
+
+    updateRole: (userId: string, role: string) =>
+      request<AuthUser>(`/api/admin/users/${userId}/role`, {
+        method: 'PATCH', body: JSON.stringify({ role }),
+      }),
+
+    grantFlowAccess: (flowId: string, userId: string) =>
+      request<FlowAccess>(`/api/admin/flows/${flowId}/access/user/${userId}`, { method: 'POST' }),
+
+    revokeFlowAccess: (flowId: string, userId: string) =>
+      request<void>(`/api/admin/flows/${flowId}/access/user/${userId}`, { method: 'DELETE' }),
+
+    listFlowAccess: (flowId: string) =>
+      request<FlowAccess[]>(`/api/admin/flows/${flowId}/access`),
+  },
+
+  // ─── GROUPS ───────────────────────────────────────────────────────────────
+  groups: {
+    list: () => request<UserGroup[]>('/api/groups'),
+
+    create: (name: string, allFlowsAccess: boolean) =>
+      request<UserGroup>('/api/groups', {
+        method: 'POST', body: JSON.stringify({ name, allFlowsAccess }),
+      }),
+
+    update: (id: string, name: string, allFlowsAccess: boolean) =>
+      request<UserGroup>(`/api/groups/${id}`, {
+        method: 'PUT', body: JSON.stringify({ name, allFlowsAccess }),
+      }),
+
+    delete: (id: string) =>
+      request<void>(`/api/groups/${id}`, { method: 'DELETE' }),
+
+    addMember: (groupId: string, userId: string) =>
+      request<void>(`/api/groups/${groupId}/members`, {
+        method: 'POST', body: JSON.stringify({ userId }),
+      }),
+
+    removeMember: (groupId: string, userId: string) =>
+      request<void>(`/api/groups/${groupId}/members/${userId}`, { method: 'DELETE' }),
+
+    listMembers: (groupId: string) =>
+      request<AuthUser[]>(`/api/groups/${groupId}/members`),
+
+    grantFlow: (groupId: string, flowId: string) =>
+      request<FlowAccess>(`/api/groups/${groupId}/flows/${flowId}`, { method: 'POST' }),
+
+    revokeFlow: (groupId: string, flowId: string) =>
+      request<void>(`/api/groups/${groupId}/flows/${flowId}`, { method: 'DELETE' }),
   },
 }
