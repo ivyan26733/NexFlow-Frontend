@@ -1,263 +1,290 @@
 # NexFlow Frontend
 
-Frontend for **NexFlow** — a no-code workflow automation platform. Built with Next.js, React, and React Flow for visual flow design and execution.
+Frontend for **NexFlow** — a no-code workflow automation platform. Built with Next.js 14 App Router, React, and React Flow for visual flow design and live execution monitoring.
+
+---
 
 ## Tech Stack
 
-- **Framework:** Next.js 14 (App Router)
-- **UI:** React 18, TypeScript
-- **Canvas:** [@xyflow/react](https://xyflow.dev/) (React Flow)
-- **Styling:** Tailwind CSS, CSS variables (see `app/globals.css`)
-- **Icons:** Lucide React
-- **Realtime:** STOMP over SockJS (WebSocket) for live execution status
+| Layer | Library |
+|-------|---------|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript |
+| Canvas | [@xyflow/react](https://xyflow.dev/) (React Flow) |
+| Styling | CSS variables (`app/globals.css`) |
+| Icons | Lucide React |
+| Code editor | Monaco Editor (`@monaco-editor/react`) |
+| Realtime | STOMP over SockJS — live node status during execution |
+
+---
 
 ## Prerequisites
 
 - Node.js 18+
-- pnpm (or npm / yarn)
+- npm / pnpm / yarn
+
+---
 
 ## Setup
 
 ```bash
-# Install dependencies
-pnpm install
-# or: npm install
+npm install
 ```
 
-## Environment
+### Environment
 
-Create `.env.local` (optional):
-
+Create `.env.local`:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8090
+NEXT_PUBLIC_WS_URL=http://localhost:8090
 ```
 
-If not set, the app uses `http://localhost:8090` as the API base URL.
+If not set, both default to `http://localhost:8090`.
+
+---
 
 ## Scripts
 
-| Command        | Description              |
-|----------------|--------------------------|
-| `pnpm dev`     | Start dev server (default: http://localhost:3000) |
-| `pnpm build`   | Production build         |
-| `pnpm start`   | Start production server  |
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server (http://localhost:3000) |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+
+---
 
 ## Project Structure
 
 ```
 Frontend/
-├── app/
-│   ├── layout.tsx          # Root layout + nav
-│   ├── page.tsx            # Dashboard (list flows, with pagination + delete)
-│   ├── globals.css         # Global + studio styles, pagination bar, loader
-│   └── studio/
-│       └── [id]/
-│           └── page.tsx    # Flow editor (canvas)
-├── api.ts                  # API client (flows, canvas, executions)
-├── index.ts                # Domain types (Flow, FlowNode, FlowEdge, etc.)
-├── types/
-│   └── index.ts            # Re-exports for @/types
-├── useExecutionSocket.ts   # WebSocket hook for execution status
-├── NodeSidebar.tsx         # Left sidebar (draggable nodes)
-├── NodeConfigPanel.tsx     # Right panel (node config + delete)
-├── StudioToolbar.tsx       # Top bar (Save, Trigger)
-├── FlowNodeCard.tsx        # React Flow node component
-├── Pagination.tsx          # Reusable pagination hook + controls
-├── MillennialLoader.tsx    # Reusable millennial-style loading screen
+│
+├── app/                          # Next.js App Router pages
+│   ├── layout.tsx                # Root layout + navbar
+│   ├── page.tsx                  # Dashboard — list flows, create, delete
+│   ├── globals.css               # Global styles, CSS variables, shared components
+│   ├── login/                    # Login page
+│   ├── signup/                   # Signup page
+│   ├── verify-otp/               # OTP verification
+│   ├── forgot-password/          # Forgot password
+│   ├── reset-password/           # Password reset
+│   ├── studio/[id]/              # Flow editor canvas (Studio)
+│   ├── transactions/             # All executions list + detail
+│   │   └── [id]/                 # Execution detail (node logs, timeline)
+│   ├── nexus/                    # Nexus connector management
+│   ├── pulses/                   # Pulse (trigger) endpoints list
+│   ├── groups/                   # User groups + sharing
+│   ├── admin/                    # Admin panel
+│   ├── settings/                 # User settings
+│   ├── architecture/             # Architecture overview page
+│   ├── templates/                # Flow templates
+│   └── about/                    # About page
+│
+├── api.ts                        # Typed API client
+├── types/index.ts                # Domain types (Flow, FlowNode, Execution, etc.)
+├── middleware.ts                 # Auth redirect middleware
+│
+├── NodeSidebar.tsx               # Left sidebar — draggable node palette
+├── NodeConfigPanel.tsx           # Right panel — node config form + delete
+├── StudioToolbar.tsx             # Top bar — Save, Trigger, flow name
+├── FlowNodeCard.tsx              # React Flow node renderer (standard nodes)
+├── ForkJoinNodeCard.tsx          # React Flow node renderer (FORK / JOIN)
+├── CardMenu.tsx                  # Node context menu (3-dot menu)
+├── BranchTimeline.tsx            # Fork/join branch execution timeline
+├── Pagination.tsx                # Shared pagination hook + controls
+├── MillennialLoader.tsx          # Shared loading component
+│
+├── useExecutionSocket.ts         # WebSocket hook — execution status updates
+├── useBranchSocket.ts            # WebSocket hook — branch status updates
+│
+├── config/                       # Per-node config panel components
+│   ├── ScriptConfig.tsx          # Monaco editor + language selector + timeout
+│   ├── NexusConfig.tsx
+│   ├── DecisionConfig.tsx
+│   ├── MapperConfig.tsx
+│   ├── VariableConfig.tsx
+│   ├── AiConfig.tsx
+│   ├── SubFlowConfig.tsx
+│   ├── ForkConfig.tsx
+│   ├── RetryConfig.tsx
+│   └── ...
+│
 ├── lib/
-│   └── nodeConfig.ts      # NODE_META, DRAGGABLE_NODES
-└── config/                 # Node-type config components (e.g. PulseConfig)
+│   └── nodeConfig.ts             # NODE_META, DRAGGABLE_NODES definitions
+│
+└── services/                     # Auth helpers, token storage
 ```
 
 Path alias: `@/` → project root (see `tsconfig.json`).
 
-## Features
+---
 
-- **Dashboard:** List flows, create new flow, open in Studio
-- **Studio:** Visual flow editor with drag-and-drop nodes (START, PULSE, VARIABLE, MAPPER, DECISION, SUCCESS, FAILURE)
-- **Canvas:** Connect nodes, save/load canvas, delete nodes and edges (panel or Backspace)
-- **Execution:** Trigger flow with JSON payload; live node status over WebSocket
+## Pages
+
+| Route | Description |
+|-------|-------------|
+| `/` | Dashboard — all flows, create new, delete, open in Studio |
+| `/studio/[id]` | Visual flow editor canvas |
+| `/transactions` | All executions across all flows (searchable, filterable by status) |
+| `/transactions/[id]` | Execution detail — per-node logs, duration, status |
+| `/nexus` | Nexus connectors CRUD |
+| `/pulses` | All pulse (HTTP trigger) endpoints |
+| `/groups` | User groups + flow sharing |
+| `/login` `/signup` | Auth pages |
+| `/verify-otp` | Email OTP verification |
+| `/forgot-password` `/reset-password` | Password recovery |
+| `/settings` | Account settings |
+| `/admin` | Admin panel |
+| `/templates` | Flow templates |
+
+---
+
+## Node Types
+
+| Node | What it does |
+|------|-------------|
+| `START` | Entry point. Receives the Pulse trigger payload |
+| `NEXUS` | Fires a saved API connector. Outputs SUCCESS or FAILURE |
+| `VARIABLE` | Sets variables available to all downstream nodes |
+| `MAPPER` | Reshapes a payload — pick and rename fields |
+| `DECISION` | Evaluates a condition, routes SUCCESS or FAILURE edge |
+| `SCRIPT` | Runs JavaScript or Python in a sandboxed subprocess |
+| `FORK` | Splits into parallel branches |
+| `JOIN` | Waits for all branches, merges outputs |
+| `AI` | Sends a prompt to a configured LLM |
+| `SUB_FLOW` | Runs another saved flow as a nested step |
+| `SUCCESS` | Terminal — flow succeeds, returns response |
+| `FAILURE` | Terminal — flow fails, returns error |
+
+---
+
+## Reference Syntax
+
+Use `{{...}}` in any node config field to pull data from the execution context:
+
+| Syntax | Meaning |
+|--------|---------|
+| `{{nodes.start.output.body.name}}` | Trigger payload field |
+| `{{nodes.fetchUser.successOutput.body.plan}}` | Output of a previous node |
+| `{{variables.userId}}` | Variable set by a VARIABLE node |
+| `{{meta.executionId}}` | Execution metadata |
+
+### `nex` unified context (SCRIPT nodes)
+
+```js
+nex.userId           // trigger field or variable named userId
+nex.fetchOrders      // full output of node labelled "Fetch Orders"
+nex.fetchOrders.body.items  // nested field
+nex.start            // full trigger payload
+```
+
+---
+
+## Authentication
+
+Auth is handled via JWT stored in:
+- **Production:** HttpOnly cookie (`nexflow-auth`) — sent automatically on every request
+- **Local dev:** `localStorage` via the `nexflow-auth-change` custom event
+
+`middleware.ts` redirects unauthenticated users to `/login` for protected routes.
 
 ---
 
 ## Pagination
 
-The app uses a **shared, client-side pagination helper** so every list view behaves consistently without adding extra complexity to the backend.
+Shared client-side pagination — all list views use the same hook:
 
-- **Why client-side?**
-  - Existing backend endpoints already return full arrays (`/api/flows`, `/api/executions`, `/api/nexus/connectors`).
-  - For typical NexFlow usage these lists are modest in size; fetching once and slicing on the client is simpler and avoids changing API contracts.
-  - The logic is centralized in a small hook + UI component, so pages don’t re‑implement pagination.
+```ts
+import { usePagination, PaginationControls } from '@/Pagination'
 
-- **Core pieces**
-  - `Pagination.tsx`
-    - `usePagination<T>(items, initialPageSize)` – computes `pageItems`, `page`, `pageSize`, `totalItems`, `totalPages`, and helpers to change page/size.
-    - `PaginationControls` – pill‑style control bar with:
-      - “Showing X–Y of N”
-      - Rows-per-page selector (10/20/50)
-      - Prev / Next buttons with disabled states.
-  - Styling lives in `app/globals.css`:
-    - `.pagination-bar`, `.pagination-btn`, `.pagination-summary`, etc. – shared millennial‑style pill UI.
+const { pageItems, page, totalPages, totalItems, pageSize, setPage, setPageSize } =
+  usePagination(items, 15)
+```
 
-- **Where pagination is applied**
-  - `app/page.tsx` (Dashboard / “Your Flows”)  
-    - Paginates flows (`usePagination(flows, 9)`) and renders `PaginationControls` under the grid.
-    - Each flow card also has a **Delete studio** button; deleting a studio removes that flow plus its executions and canvas data on the backend.
-  - `app/transactions/page.tsx` (Transactions list)  
-    - Paginates **after filtering** by status: `usePagination(filtered, 15)`.
-    - `PaginationControls` is shown below the table when there are results.
-  - `app/pulses/page.tsx` (Pulses / HTTP triggers)  
-    - Paginates flows when listing their pulse endpoints: `usePagination(flows, 8)`.
-  - `app/nexus/page.tsx` (Nexus connectors)  
-    - Paginates connectors: `usePagination(connectors, 10)`.
+Render `pageItems` and drop `<PaginationControls ... />` below the list.
 
-If you want to add pagination to a new list:
-
-1. Import from the shared helper:
-
-   ```ts
-   import { usePagination, PaginationControls } from '@/Pagination'
-   ```
-
-2. Wrap your data with the hook:
-
-   ```ts
-   const {
-     pageItems,
-     page,
-     totalPages,
-     totalItems,
-     pageSize,
-     setPage,
-     setPageSize,
-   } = usePagination(items, 10)
-   ```
-
-3. Render `pageItems` instead of the full array, and drop `PaginationControls` under the list:
-
-   ```tsx
-   {pageItems.map(item => /* ... */)}
-
-   <PaginationControls
-     page={page}
-     totalPages={totalPages}
-     totalItems={totalItems}
-     pageSize={pageSize}
-     onPageChange={setPage}
-     onPageSizeChange={setPageSize}
-   />
-   ```
+Applied in: Dashboard (9/page), Transactions (15/page), Nexus (10/page), Pulses (8/page).
 
 ---
 
-## Loading screen (“millennial” style)
+## SCRIPT Node Editor
 
-To avoid boring spinners and only show a loader when data is genuinely taking a moment, there is a shared **Millennial loader** component:
+- Monaco Editor (VS Code engine) with JavaScript and Python syntax highlighting
+- Wrapper UI shows `function(nex, input) {` / `}` around user code to make the context clear
+- `onKeyDown stopPropagation` prevents React Flow canvas from intercepting spacebar
+- Client-side JS syntax check via `new Function()` — no server round-trip
+- Configurable timeout (1–300s) sent to backend with node config
 
-- **Component**
-  - `MillennialLoader` in `MillennialLoader.tsx`.
-  - Props:
-    - `label?: string` – short text like “Loading transactions…”.
-    - `fullScreen?: boolean` – when `true`, covers the full viewport.
-  - Uses Lucide’s `Loader2` plus gradient “orb” styling.
+---
 
-- **Styling**
-  - In `app/globals.css`:
-    - `.millennial-loader-fullscreen`, `.millennial-loader`, `.millennial-loader-orb`, `.millennial-loader-icon`, etc.
-    - Reuses the global `spin` keyframe and gradients, so it feels cohesive with pagination and Studio chrome.
+## WebSocket (Live Execution Updates)
 
-- **Where it is used**
-  - `app/page.tsx` – while loading flows.
-  - `app/studio/[id]/page.tsx` – full-screen while loading flow + canvas (“Loading studio…”).
-  - `app/transactions/page.tsx` – while loading executions.
-  - `app/transactions/[id]/page.tsx` – while loading execution detail (“Loading execution…”).
-  - `app/pulses/page.tsx` – while loading flows for pulse endpoints.
-  - `app/nexus/page.tsx` – while loading connectors.
+`useExecutionSocket` subscribes to `/topic/execution/{executionId}` over STOMP/SockJS.  
+`useBranchSocket` subscribes to `/topic/branch/{branchExecutionId}` for fork/join branches.
 
-You can drop it into any other page:
+Each message updates the node colour on the canvas in real time:
+- `RUNNING` → blue pulse
+- `SUCCESS` → green
+- `FAILURE` → red
+
+---
+
+## Loading Screen
 
 ```tsx
 import { MillennialLoader } from '@/MillennialLoader'
 
-return loading ? <MillennialLoader label="Loading something cool…" /> : <ActualContent />
+{loading ? <MillennialLoader label="Loading flows…" /> : <Content />}
+// Full-screen version:
+<MillennialLoader label="Loading studio…" fullScreen />
 ```
 
 ---
 
-## Studio: How to run a flow (“run a program”)
+## API Client (`api.ts`)
 
-In the Studio, **the flow you draw is the program**. There is no separate code file; you build the program by adding nodes and connecting them.
+All backend calls go through the typed `api` object:
 
-1. **Create or open a flow** from the dashboard.
-2. **Build the flow:** drag nodes from the left (Start is always there; add e.g. Variable → Success).
-3. **Save** (toolbar **Save**).
-4. **Run it:** click **Trigger** in the toolbar. Optionally enter a JSON payload (e.g. `{"name": "World"}`). Click **Run**. The flow executes on the backend; you’ll see node status on the canvas if the execution WebSocket is connected.
-
-**Simple “program” example:** Start → **Variable** (add a variable, e.g. `greeting` = `Hello {{nodes.start.output.body.name}}`) → **Success**. Trigger with payload `{"name": "World"}`. The Variable node resolves the reference and the flow ends at Success.
+```ts
+api.flows.list()
+api.flows.create({ name, description })
+api.flows.canvas.load(flowId)
+api.flows.canvas.save(flowId, { nodes, edges })
+api.executions.listAll()
+api.executions.get(executionId)
+api.nexus.list()
+api.nexus.create(connector)
+api.auth.login({ email, password })
+api.auth.logout()
+```
 
 ---
-
-## Studio: Which “language” and how to “code”
-
-You don’t write code in a traditional language inside the Studio. You configure nodes; the only “language” is:
-
-- **Reference expressions** in node config (Variable, Mapper, Decision, HTTP body, etc.): `{{ ... }}`  
-  These pull data from the execution context.
-
-**Reference syntax:**
-
-| Reference | Meaning |
-|-----------|--------|
-| `{{nodes.start.output.body}}` | Trigger payload (request body). Use `{{nodes.start.output.body.fieldName}}` for a field. |
-| `{{nodes.<nodeId>.successOutput.body}}` | Success output of a node (e.g. HTTP response body). Replace `<nodeId>` with the node’s ID. |
-| `{{nodes.<nodeId>.failureOutput.body}}` | Failure output of a node. |
-| `{{variables.<name>}}` | A variable set by a Variable node earlier in the flow. |
-
-**Where you use it:**
-
-- **Variable node:** value = `{{nodes.start.output.body.name}}` or a literal like `"hello"`.
-- **Mapper node:** each output field can be a literal or `{{...}}` (e.g. `{{variables.userId}}`).
-- **Decision node:** left/right operands can be refs (e.g. `{{variables.amount}}` > `500`).
-- **HTTP Call / Nexus:** URL, headers, body can use `{{...}}` for dynamic values.
-
-So “coding” in the Studio = **building the graph** + **filling node config with values and `{{...}}` references**. No JavaScript/Java/Python inside the canvas; the backend runs the flow and resolves refs.
-
-## API Usage
-
-The app talks to the NexFlow backend:
-
-- `GET /api/flows` — list flows  
-- `GET/POST /api/flows` — get / create flow  
-- `GET/POST /api/flows/{flowId}/canvas` — load / save canvas (nodes + edges)  
-- `POST /api/pulse/{flowId}` — trigger execution  
-- `GET /api/flows/{flowId}/executions` — list executions  
-
-See `api.ts` for the client implementation.
 
 ## CI/CD
 
 Pipeline: GitHub Actions → Vercel
 
-| Branch event | What happens |
-|---|---|
-| Push to `main` | CI runs → if it passes → deploys to production on Vercel |
-| Pull request to `main` | CI runs as a check → Vercel creates a preview URL |
-| Push to any other branch | Nothing (pipeline does not trigger) |
+| Event | Result |
+|-------|--------|
+| Push to `main` | CI runs → deploys to production on Vercel |
+| PR to `main` | CI runs as check → Vercel preview URL created |
+| Other branches | No trigger |
 
-**GitHub Secrets required** (Settings → Secrets and variables → Actions):
+**GitHub Secrets required:**
 
-| Secret | How to get it |
-|---|---|
-| `VERCEL_TOKEN` | vercel.com → Account Settings → Tokens → Create |
-| `VERCEL_ORG_ID` | Run `npx vercel link` → open `.vercel/project.json` → copy `orgId` |
-| `VERCEL_PROJECT_ID` | Same file → copy `projectId` |
+| Secret | How to get |
+|--------|-----------|
+| `VERCEL_TOKEN` | vercel.com → Account Settings → Tokens |
+| `VERCEL_ORG_ID` | `npx vercel link` → `.vercel/project.json` |
+| `VERCEL_PROJECT_ID` | Same file |
 
-**Vercel Environment Variables** (set in Vercel dashboard, not GitHub):
+**Vercel Environment Variables:**
 
 | Variable | Value |
-|---|---|
-| `NEXT_PUBLIC_API_URL` | Your Railway backend URL e.g. `https://nexflow-backend.railway.app` |
-| `NEXT_PUBLIC_WS_URL` | Same URL with `/ws` appended |
+|----------|-------|
+| `NEXT_PUBLIC_API_URL` | Backend URL e.g. `https://nexflow-backend.example.com` |
+| `NEXT_PUBLIC_WS_URL` | Same URL (WebSocket upgrade handled by nginx) |
+
+---
 
 ## License
 

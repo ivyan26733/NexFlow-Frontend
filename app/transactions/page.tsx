@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, XCircle, Clock, Loader2, Zap, ArrowRight, Search, X, Activity } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, Loader2, Zap, ArrowRight, Search, X } from 'lucide-react'
 import { api } from '@/api'
 import type { ExecutionSummary, ExecStatus } from '@/types'
 import { usePagination, PaginationControls } from '@/Pagination'
@@ -36,16 +36,12 @@ export default function TransactionsPage() {
 
   const { pageItems: paged, page, totalPages, totalItems, pageSize, setPage, setPageSize } = usePagination(filtered, 15)
 
-  const counts = useMemo(() => {
-    const t = search.trim().toLowerCase()
-    const base = t ? executions.filter(e => e.flowName?.toLowerCase().includes(t)) : executions
-    return {
-      ALL:     base.length,
-      SUCCESS: base.filter(e => e.status === 'SUCCESS').length,
-      FAILURE: base.filter(e => e.status === 'FAILURE').length,
-      RUNNING: base.filter(e => e.status === 'RUNNING').length,
-    }
-  }, [executions, search])
+  const counts = useMemo(() => ({
+    ALL:     filtered.length,
+    SUCCESS: filtered.filter(e => e.status === 'SUCCESS').length,
+    FAILURE: filtered.filter(e => e.status === 'FAILURE').length,
+    RUNNING: filtered.filter(e => e.status === 'RUNNING').length,
+  }), [filtered])
 
   const searchActive = search.trim().length > 0
 
@@ -57,7 +53,7 @@ export default function TransactionsPage() {
         <p className="dashboard-label" style={{ marginBottom: '0.5rem' }}>MONITORING</p>
         <h1 style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1.15 }}>Transactions</h1>
         <p style={{ color: 'var(--color-muted)', fontSize: '0.9375rem', marginTop: '0.375rem' }}>
-          Search by flow name to inspect execution history and trace errors
+          Latest executions across all flows. Search by flow name to filter.
         </p>
       </div>
 
@@ -93,27 +89,25 @@ export default function TransactionsPage() {
         )}
       </div>
 
-      {/* ── Status filters (only when searching) ── */}
-      {searchActive && (
-        <div style={{ display: 'flex', gap: '0.625rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-          {(['ALL', 'SUCCESS', 'FAILURE', 'RUNNING'] as const).map(s => {
-            const sm = STATUS_META[s]
-            const active = filter === s
-            return (
-              <button key={s} onClick={() => setFilter(s)} style={{
-                padding: '0.4rem 1rem', fontSize: '0.8rem', borderRadius: '999px', cursor: 'pointer',
-                fontFamily: 'var(--font-mono)', fontWeight: active ? 700 : 400,
-                border: `1px solid ${active ? sm.color : 'var(--color-border)'}`,
-                background: active ? sm.bg : 'transparent',
-                color: active ? sm.color : 'var(--color-muted)',
-                transition: 'all 0.15s',
-              }}>
-                {s} <span style={{ opacity: 0.75 }}>({s === 'ALL' ? counts.ALL : counts[s as keyof typeof counts]})</span>
-              </button>
-            )
-          })}
-        </div>
-      )}
+      {/* ── Status filters ── */}
+      <div style={{ display: 'flex', gap: '0.625rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+        {(['ALL', 'SUCCESS', 'FAILURE', 'RUNNING'] as const).map(s => {
+          const sm = STATUS_META[s]
+          const active = filter === s
+          return (
+            <button key={s} onClick={() => { setFilter(s); setPage(1) }} style={{
+              padding: '0.4rem 1rem', fontSize: '0.8rem', borderRadius: '999px', cursor: 'pointer',
+              fontFamily: 'var(--font-mono)', fontWeight: active ? 700 : 400,
+              border: `1px solid ${active ? sm.color : 'var(--color-border)'}`,
+              background: active ? sm.bg : 'transparent',
+              color: active ? sm.color : 'var(--color-muted)',
+              transition: 'all 0.15s',
+            }}>
+              {s} <span style={{ opacity: 0.75 }}>({counts[s as keyof typeof counts]})</span>
+            </button>
+          )
+        })}
+      </div>
 
       {/* ── Table ── */}
       <div className="table-scroll-wrap">
@@ -130,22 +124,13 @@ export default function TransactionsPage() {
           <div style={{ padding: '5rem', display: 'flex', justifyContent: 'center' }}>
             <MillennialLoader label="Loading transactions…" />
           </div>
-        ) : !searchActive ? (
-          <div style={{ padding: '5rem 2rem', textAlign: 'center' }}>
-            <div style={{ width: '4.5rem', height: '4.5rem', borderRadius: '1.125rem', background: 'var(--color-panel)', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
-              <Activity size={24} style={{ color: 'var(--color-muted)' }} />
-            </div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem' }}>Search your transactions</h3>
-            <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem', marginBottom: '0.375rem' }}>
-              Enter a flow name above to view its execution history
-            </p>
-            <p style={{ fontSize: '0.8rem', color: 'var(--color-border)', fontFamily: 'var(--font-mono)' }}>
-              {executions.length} total execution{executions.length !== 1 ? 's' : ''} across all flows
-            </p>
-          </div>
-        ) : filtered.length === 0 ? (
+        ) : paged.length === 0 ? (
           <div style={{ padding: '4rem', textAlign: 'center' }}>
-            <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>No executions found for &ldquo;{search}&rdquo;</p>
+            <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
+              {searchActive
+                ? `No executions found for "${search}"`
+                : 'No executions yet. Trigger a flow to see transactions here.'}
+            </p>
           </div>
         ) : (
           paged.map((ex, i) => {
@@ -204,7 +189,7 @@ export default function TransactionsPage() {
       </div>
       </div>{/* end table-scroll-wrap */}
 
-      {!loading && searchActive && filtered.length > 0 && (
+      {!loading && filtered.length > 0 && (
         <PaginationControls page={page} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
       )}
     </div>

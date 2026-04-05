@@ -134,7 +134,11 @@ export default function ScriptConfig({ config, onChange }: Props) {
             }
           </div>
           {/* Editable code body */}
-          <div style={{ height: '260px', paddingLeft: language === 'javascript' ? '12px' : '0' }}>
+          {/* onKeyDown stopPropagation prevents React Flow canvas from intercepting keys (space = pan) */}
+          <div
+            style={{ height: '260px', paddingLeft: language === 'javascript' ? '12px' : '0' }}
+            onKeyDown={e => e.stopPropagation()}
+          >
             <MonacoEditor
               height="100%"
               language={language}
@@ -229,6 +233,20 @@ export default function ScriptConfig({ config, onChange }: Props) {
       </button>
 
       {helpOpen && <HelpPanel language={language} />}
+
+      {/* Timeout */}
+      <Field label="TIMEOUT (SECONDS)">
+        <input
+          type="number" min={1} max={300}
+          value={(config.timeoutSeconds as number) ?? 10}
+          onChange={e => onChange({ ...config, timeoutSeconds: Math.min(300, Math.max(1, Number(e.target.value))) })}
+          className="input-base"
+          style={{ width: '100%', fontSize: '0.8rem', height: '2.25rem' }}
+        />
+        <p style={{ fontSize: '0.72rem', color: 'var(--color-muted)', margin: '0.25rem 0 0' }}>
+          Max time the script subprocess is allowed to run. Default 10s, max 300s.
+        </p>
+      </Field>
 
       <RetryConfig config={config} onChange={onChange} />
     </div>
