@@ -83,7 +83,33 @@ export default function TransactionDetailPage() {
       if (!map[key]) map[key] = []
       map[key].push(ne)
     }
-    return map
+    // Deduplicate: per branch, keep only one record per nodeId.
+    // Prefer the terminal record (SUCCESS/FAILURE) over RUNNING stubs.
+    // If multiple terminal records exist, prefer the latest (by finishedAt).
+    const deduped: Record<string, NodeExecution[]> = {}
+    for (const [branch, executions] of Object.entries(map)) {
+      const byNode: Record<string, NodeExecution> = {}
+      for (const ne of executions) {
+        const existing = byNode[ne.nodeId]
+        if (!existing) {
+          byNode[ne.nodeId] = ne
+        } else {
+          const neTerminal       = ne.status !== 'RUNNING'
+          const existingTerminal = existing.status !== 'RUNNING'
+          if (neTerminal && !existingTerminal) {
+            byNode[ne.nodeId] = ne
+          } else if (neTerminal && existingTerminal) {
+            // Both terminal — keep the later one
+            const neTime       = ne.finishedAt       ? new Date(ne.finishedAt).getTime()       : 0
+            const existingTime = existing.finishedAt ? new Date(existing.finishedAt).getTime() : 0
+            if (neTime > existingTime) byNode[ne.nodeId] = ne
+          }
+          // else: existing is terminal, new is RUNNING — keep existing
+        }
+      }
+      deduped[branch] = Object.values(byNode)
+    }
+    return deduped
   }, [detail?.nodeExecutions])
 
   if (loading) return (

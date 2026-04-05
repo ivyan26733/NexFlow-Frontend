@@ -37,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <a href="/">Flows</a>
           <a href="/pulses">Pulses</a>
           <a href="/transactions">Transactions</a>
+          <a href="/templates">Templates</a>
           <a href="/nexus">Nexus</a>
           <a href="/about">About</a>
           <div className="nav-divider" />

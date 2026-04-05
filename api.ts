@@ -22,6 +22,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const authHeaders = getAuthHeaders()
   const res = await fetch(`${BASE}${path}`, {
     ...options,
+    credentials: 'include',   // sends HttpOnly cookie on prod; harmless on local dev
     headers: {
       'Content-Type': 'application/json',
       ...authHeaders,
@@ -87,7 +88,7 @@ export const api = {
 
     // Nex map only (convenience for transaction detail page)
     getNex: (id: string) =>
-      fetch(`${BASE}/api/executions/${id}/nex`)
+      fetch(`${BASE}/api/executions/${id}/nex`, { credentials: 'include' })
         .then(r => r.ok ? r.json() : Promise.resolve({ transactionId: id, nex: {} }))
         .then((body: { transactionId: string; nex?: NexMap }) => ({ transactionId: body.transactionId, nex: body.nex ?? {} })),
 
@@ -216,6 +217,10 @@ export const api = {
     googleLogin: () => {
       window.location.href = `${BASE}/oauth2/authorization/google`
     },
+
+    /** Clears the HttpOnly cookie server-side. Frontend should also call clearAuth(). */
+    logout: () =>
+      request<{ message: string }>('/api/auth/logout', { method: 'POST' }),
   },
 
   // ─── ADMIN ────────────────────────────────────────────────────────────────

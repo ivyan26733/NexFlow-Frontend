@@ -39,11 +39,11 @@ function LoginForm() {
     setLoading(true)
     try {
       const res = await api.auth.login(email.trim(), password)
-      if (res.token) {
-        setToken(res.token)
-        saveUser({ id: res.id, email: res.email, name: res.name, role: res.role })
-        router.replace('/')
-      }
+      // Local dev: token is in the response body → store in localStorage
+      // Production: token is null (HttpOnly cookie was set by server) → skip setToken
+      if (res.token) setToken(res.token)
+      saveUser({ id: res.id, email: res.email, name: res.name, role: res.role })
+      router.replace('/')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       setError(msg.includes('400') ? 'Invalid email or password' : msg)

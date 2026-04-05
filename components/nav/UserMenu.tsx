@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { LogOut, User, Settings, Shield } from 'lucide-react'
 import { getStoredUser, clearAuth, isLoggedIn } from '@/lib/auth'
+import { api } from '@/api'
 import type { AuthUser } from '@/types'
 
 export default function UserMenu() {
@@ -27,7 +28,8 @@ export default function UserMenu() {
     return () => document.removeEventListener('mousedown', onClickOut)
   }, [])
 
-  function logout() {
+  async function logout() {
+    try { await api.auth.logout() } catch { /* ignore — cookie cleared server-side best-effort */ }
     clearAuth()
     router.replace('/login')
   }

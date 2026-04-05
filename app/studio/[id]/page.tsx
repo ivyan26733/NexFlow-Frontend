@@ -75,6 +75,8 @@ export default function StudioPage() {
   const [saving,       setSaving]       = useState(false)
   const [aiPanelOpen, setAiPanelOpen] = useState(false)
   const [saveModal,   setSaveModal]    = useState<{ warnings: string[] } | null>(null)
+  const [saveToast,   setSaveToast]    = useState<{ type: 'success' | 'error'; message?: string } | null>(null)
+  const saveToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [flowName, setFlowName] = useState('')
   const [flowSlug, setFlowSlug] = useState('')
@@ -361,10 +363,21 @@ export default function StudioPage() {
         nodes: nodesRef.current.map(rfNodeToApiNode),
         edges: edgesRef.current.map(rfEdgeToApiEdge),
       })
+      showSaveToast('success')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      showSaveToast('error', msg)
+      throw err
     } finally {
       saveInProgressRef.current = false
       setSaving(false)
     }
+  }
+
+  function showSaveToast(type: 'success' | 'error', message?: string) {
+    if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
+    setSaveToast({ type, message })
+    saveToastTimerRef.current = setTimeout(() => setSaveToast(null), type === 'success' ? 2500 : 4000)
   }
 
   async function triggerFlow(payload: Record<string, unknown>) {
@@ -524,6 +537,8 @@ export default function StudioPage() {
           onCancel={() => setSaveModal(null)}
         />
       )}
+
+      {saveToast && <SaveToast type={saveToast.type} message={saveToast.message} onDismiss={() => setSaveToast(null)} />}
     </div>
   )
 }
@@ -598,6 +613,88 @@ function SaveConfirmModal({ warnings, onConfirm, onCancel }: {
         </div>
       </div>
     </div>
+  )
+}
+
+/* ───────────────────────── Save Toast ───────────────────────── */
+
+function SaveToast({ type, message, onDismiss }: { type: 'success' | 'error'; message?: string; onDismiss: () => void }) {
+  const isSuccess = type === 'success'
+  const color     = isSuccess ? '#10b981' : '#ef4444'
+  const bg        = isSuccess ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)'
+  const border    = isSuccess ? 'rgba(16,185,129,0.35)' : 'rgba(239,68,68,0.35)'
+
+  return (
+    <>
+      <style>{`
+        @keyframes saveToastIn {
+          from { opacity: 0; transform: translateY(12px) scale(0.96); }
+          to   { opacity: 1; transform: translateY(0)    scale(1);    }
+        }
+        @keyframes saveToastOut {
+          from { opacity: 1; }
+          to   { opacity: 0; }
+        }
+        @keyframes drawCheck {
+          from { stroke-dashoffset: 40; }
+          to   { stroke-dashoffset: 0;  }
+        }
+        @keyframes drawCross {
+          from { stroke-dashoffset: 30; }
+          to   { stroke-dashoffset: 0;  }
+        }
+        .save-toast-wrap {
+          animation: saveToastIn 0.25s cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+      `}</style>
+      <div
+        className="save-toast-wrap"
+        onClick={onDismiss}
+        style={{
+          position: 'fixed', bottom: '2rem', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: '0.75rem',
+          background: bg, border: `1px solid ${border}`,
+          borderRadius: '0.75rem', padding: '0.75rem 1.25rem',
+          boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px ${border}`,
+          backdropFilter: 'blur(8px)',
+          minWidth: '220px', maxWidth: '420px',
+        }}
+      >
+        {isSuccess ? (
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" style={{ flexShrink: 0 }}>
+            <circle cx="11" cy="11" r="10" stroke={color} strokeWidth="1.5" fill={bg} />
+            <polyline
+              points="6,11 9.5,14.5 16,8"
+              stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+              fill="none"
+              strokeDasharray="40" strokeDashoffset="40"
+              style={{ animation: 'drawCheck 0.35s ease-out 0.05s forwards' }}
+            />
+          </svg>
+        ) : (
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" style={{ flexShrink: 0 }}>
+            <circle cx="11" cy="11" r="10" stroke={color} strokeWidth="1.5" fill={bg} />
+            <line x1="7" y1="7" x2="15" y2="15" stroke={color} strokeWidth="2.2" strokeLinecap="round"
+              strokeDasharray="30" strokeDashoffset="30"
+              style={{ animation: 'drawCross 0.25s ease-out 0.05s forwards' }} />
+            <line x1="15" y1="7" x2="7" y2="15" stroke={color} strokeWidth="2.2" strokeLinecap="round"
+              strokeDasharray="30" strokeDashoffset="30"
+              style={{ animation: 'drawCross 0.25s ease-out 0.15s forwards' }} />
+          </svg>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: '0.825rem', fontWeight: 600, color }}>
+            {isSuccess ? 'Flow saved' : 'Save failed'}
+          </p>
+          {message && (
+            <p style={{ margin: '0.15rem 0 0', fontSize: '0.725rem', color: 'var(--color-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {message}
+            </p>
+          )}
+        </div>
+      </div>
+    </>
   )
 }
 
