@@ -46,6 +46,19 @@ function LoginForm() {
       router.replace('/')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
+      // 403 EMAIL_NOT_VERIFIED — redirect to OTP screen (OTP was auto-resent by backend)
+      if (msg.includes('403')) {
+        try {
+          const jsonStart = msg.indexOf('{')
+          if (jsonStart !== -1) {
+            const body = JSON.parse(msg.slice(jsonStart))
+            if (body.error === 'EMAIL_NOT_VERIFIED') {
+              router.push(`/verify-otp?email=${encodeURIComponent(body.email || email.trim())}`)
+              return
+            }
+          }
+        } catch { /* not JSON — fall through to generic error */ }
+      }
       setError(msg.includes('400') ? 'Invalid email or password' : msg)
     } finally {
       setLoading(false)

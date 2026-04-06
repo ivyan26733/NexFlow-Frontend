@@ -4,6 +4,7 @@ import { Key, Zap, Shield, ChevronDown, ChevronUp, Eye, EyeOff, ExternalLink, Ch
 import { api } from '@/api'
 import type { LlmProviderInfo, LlmTestResult } from '@/index'
 import { MillennialLoader } from '@/MillennialLoader'
+import { getStoredUser } from '@/lib/auth'
 
 const PROVIDER_META: Record<string, { icon: string; color: string; keyPlaceholder: string; docsUrl: string }> = {
   ANTHROPIC: {
@@ -76,12 +77,14 @@ function Toast({ message, type, onClose }: { message: string; type: 'success' | 
 
 function ProviderCard({
   info,
+  isAdmin,
   onSave,
   onToggle,
   onDelete,
   onTest,
 }: {
   info:     LlmProviderInfo
+  isAdmin:  boolean
   onSave:   (provider: string, key: string, endpoint: string) => Promise<void>
   onToggle: (provider: string) => Promise<void>
   onDelete: (provider: string) => Promise<void>
@@ -126,11 +129,11 @@ function ProviderCard({
     }}>
       {/* ── Summary row ── */}
       <div
-        onClick={() => setExpanded(e => !e)}
+        onClick={() => isAdmin && setExpanded(e => !e)}
         style={{
           padding: '1.375rem 1.75rem',
           display: 'flex', alignItems: 'center', gap: '1.25rem',
-          cursor: 'pointer', userSelect: 'none',
+          cursor: isAdmin ? 'pointer' : 'default', userSelect: 'none',
         }}
       >
         {/* Icon */}
@@ -164,7 +167,9 @@ function ProviderCard({
           </div>
           <span style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)' }}>
             {info.configured
-              ? <>Key: <span style={{ color: 'var(--color-accent)' }}>{info.apiKeyMasked}</span></>
+              ? isAdmin
+                ? <>Key: <span style={{ color: 'var(--color-accent)' }}>{info.apiKeyMasked}</span></>
+                : <span style={{ color: 'var(--color-muted)' }}>Configured by admin</span>
               : <span style={{ color: 'var(--color-border)' }}>Not configured</span>
             }
           </span>
@@ -177,15 +182,15 @@ function ProviderCard({
               {info.knownModels.length} model{info.knownModels.length !== 1 ? 's' : ''}
             </span>
           )}
-          {expanded
+          {isAdmin && (expanded
             ? <ChevronUp size={16} style={{ color: 'var(--color-muted)' }} />
             : <ChevronDown size={16} style={{ color: 'var(--color-muted)' }} />
-          }
+          )}
         </div>
       </div>
 
       {/* ── Expanded panel ── */}
-      {expanded && (
+      {expanded && isAdmin && (
         <div style={{ borderTop: '1px solid var(--color-border)', padding: '1.75rem', background: 'var(--color-panel)' }}>
           <div className="two-col-panel" style={{ gap: '2rem' }}>
 
@@ -394,6 +399,8 @@ export default function AiProvidersPage() {
   const [loading,   setLoading]   = useState(true)
   const [toast,     setToast]     = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
+  const isAdmin = getStoredUser()?.role === 'ADMIN'
+
   useEffect(() => { loadProviders() }, [])
 
   async function loadProviders() {
@@ -513,6 +520,7 @@ export default function AiProvidersPage() {
             <ProviderCard
               key={p.provider}
               info={p}
+              isAdmin={isAdmin}
               onSave={handleSave}
               onToggle={handleToggle}
               onDelete={handleDelete}
