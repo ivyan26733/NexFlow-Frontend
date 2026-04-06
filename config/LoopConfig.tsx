@@ -13,6 +13,11 @@ function toLabelKey(label: string): string {
   if (!label?.trim()) return 'node'
   const words = label.trim().replace(/[^a-zA-Z0-9 ]/g, '').split(/\s+/).filter(Boolean)
   if (!words.length) return 'node'
+  if (words.length === 1) {
+    // Single word — lowercase only the first char to preserve camelCase intent
+    // e.g. "generateData" → "generateData", "Orders" → "orders"
+    return words[0][0].toLowerCase() + words[0].slice(1)
+  }
   return words[0].toLowerCase() + words.slice(1).map(w => w[0].toUpperCase() + w.slice(1).toLowerCase()).join('')
 }
 
