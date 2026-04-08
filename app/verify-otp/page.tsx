@@ -29,7 +29,7 @@ function VerifyOtpForm() {
       const res = await api.auth.verifyOtp(email, otp)
       if (res.token) setToken(res.token)   // local dev only
       saveUser({ id: res.id, email: res.email, name: res.name, role: res.role })
-      router.replace('/')
+      router.replace('/dashboard')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       setError(msg.includes('400') ? 'Incorrect or expired code' : msg)

@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle, Clock, Loader2, Zap, ArrowRight, Search, X } from 'lucide-react'
 import { api } from '@/api'
-import type { ExecutionSummary, ExecStatus } from '@/types'
+import type { ExecutionSummary, ExecutionStats, ExecStatus } from '@/types'
 import { usePagination, PaginationControls } from '@/Pagination'
 import { MillennialLoader } from '@/MillennialLoader'
 
@@ -18,30 +18,63 @@ const STATUS_META: Record<string, { color: string; bg: string; border: string }>
 export default function TransactionsPage() {
   const router = useRouter()
   const [executions, setExecutions] = useState<ExecutionSummary[]>([])
+  const [stats,      setStats]      = useState<ExecutionStats | null>(null)
   const [loading,    setLoading]    = useState(true)
+  const [listMode,   setListMode]   = useState<'recent' | 'full'>('recent')
   const [filter,     setFilter]     = useState<ExecStatus | 'ALL'>('ALL')
   const [search,     setSearch]     = useState('')
+  const [isMobile,   setIsMobile]   = useState(false)
+  const [discarding, setDiscarding] = useState(false)
+
+  async function loadExecutions(mode: 'recent' | 'full' = listMode) {
+    setLoading(true)
+    try {
+      const [s, data] = await Promise.all([
+        api.executions.stats(),
+        mode === 'full' ? api.executions.listFullHistory() : api.executions.listRecent(),
+      ])
+      setStats(s)
+      setExecutions(data)
+      setListMode(mode)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { loadExecutions('recent') }, [])
 
   useEffect(() => {
-    api.executions.listAll().then(setExecutions).catch(console.error).finally(() => setLoading(false))
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(max-width: 768px)')
+    const apply = () => setIsMobile(mq.matches)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
   }, [])
 
-  const filtered = useMemo(() => {
+  const searchFiltered = useMemo(() => {
     let r = executions
     const t = search.trim().toLowerCase()
     if (t) r = r.filter(e => e.flowName?.toLowerCase().includes(t) || e.flowSlug?.toLowerCase().includes(t))
-    if (filter !== 'ALL') r = r.filter(e => e.status === filter)
     return r
-  }, [executions, search, filter])
+  }, [executions, search])
+
+  const filtered = useMemo(() => {
+    if (filter === 'ALL') return searchFiltered
+    return searchFiltered.filter(e => e.status === filter)
+  }, [searchFiltered, filter])
 
   const { pageItems: paged, page, totalPages, totalItems, pageSize, setPage, setPageSize } = usePagination(filtered, 15)
 
   const counts = useMemo(() => ({
-    ALL:     filtered.length,
-    SUCCESS: filtered.filter(e => e.status === 'SUCCESS').length,
-    FAILURE: filtered.filter(e => e.status === 'FAILURE').length,
-    RUNNING: filtered.filter(e => e.status === 'RUNNING').length,
-  }), [filtered])
+    ALL:     searchFiltered.length,
+    SUCCESS: searchFiltered.filter(e => e.status === 'SUCCESS').length,
+    FAILURE: searchFiltered.filter(e => e.status === 'FAILURE').length,
+    RUNNING: searchFiltered.filter(e => e.status === 'RUNNING').length,
+  }), [searchFiltered])
+  const runningCount = stats?.running ?? executions.filter(e => e.status === 'RUNNING').length
 
   const searchActive = search.trim().length > 0
 
@@ -53,17 +86,20 @@ export default function TransactionsPage() {
         <p className="dashboard-label" style={{ marginBottom: '0.5rem' }}>MONITORING</p>
         <h1 style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1.15 }}>Transactions</h1>
         <p style={{ color: 'var(--color-muted)', fontSize: '0.9375rem', marginTop: '0.375rem' }}>
-          Latest executions across all flows. Search by flow name to filter.
+          {listMode === 'recent'
+            ? 'Showing the rolling 2-day window (served from Redis when available). Load full history for older runs.'
+            : 'Full history from the database. Switch back to the recent window anytime.'}{' '}
+          Search by flow name to filter the table.
         </p>
       </div>
 
-      {/* ── Stats ── */}
+      {/* ── Stats (always all-time / accessible totals from DB) ── */}
       <div className="stats-grid-4">
         {[
-          { label: 'Total',   value: executions.length,                                  color: '#e2e8f0' },
-          { label: 'Success', value: executions.filter(e=>e.status==='SUCCESS').length,  color: 'var(--color-success)' },
-          { label: 'Failure', value: executions.filter(e=>e.status==='FAILURE').length,  color: 'var(--color-failure)' },
-          { label: 'Running', value: executions.filter(e=>e.status==='RUNNING').length,  color: 'var(--color-accent)'  },
+          { label: 'Total',   value: stats?.total ?? 0,    color: '#e2e8f0' },
+          { label: 'Success', value: stats?.success ?? 0, color: 'var(--color-success)' },
+          { label: 'Failure', value: stats?.failure ?? 0, color: 'var(--color-failure)' },
+          { label: 'Running', value: stats?.running ?? 0, color: 'var(--color-accent)'  },
         ].map(s => (
           <div key={s.label} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.875rem', padding: '1.25rem 1.5rem' }}>
             <p style={{ fontSize: '1.875rem', fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</p>
@@ -89,8 +125,50 @@ export default function TransactionsPage() {
         )}
       </div>
 
+      {/* ── History mode + filters ── */}
+      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        {listMode === 'recent' ? (
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => loadExecutions('full')}
+            style={{
+              padding: '0.45rem 1rem',
+              fontSize: '0.8rem',
+              borderRadius: '0.625rem',
+              cursor: loading ? 'wait' : 'pointer',
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-panel)',
+              color: 'var(--color-text)',
+              fontFamily: 'var(--font-mono)',
+            }}
+          >
+            Load full history
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => loadExecutions('recent')}
+            style={{
+              padding: '0.45rem 1rem',
+              fontSize: '0.8rem',
+              borderRadius: '0.625rem',
+              cursor: loading ? 'wait' : 'pointer',
+              border: '1px solid var(--color-accent)',
+              background: 'rgba(0,212,255,0.08)',
+              color: 'var(--color-accent)',
+              fontFamily: 'var(--font-mono)',
+            }}
+          >
+            Show last 2 days (default)
+          </button>
+        )}
+      </div>
+
       {/* ── Status filters ── */}
-      <div style={{ display: 'flex', gap: '0.625rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.625rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', gap: '0.625rem', flexWrap: 'wrap' }}>
         {(['ALL', 'SUCCESS', 'FAILURE', 'RUNNING'] as const).map(s => {
           const sm = STATUS_META[s]
           const active = filter === s
@@ -107,11 +185,44 @@ export default function TransactionsPage() {
             </button>
           )
         })}
+        </div>
+        <button
+          type="button"
+          disabled={discarding || runningCount === 0}
+          onClick={async () => {
+            if (!confirm(`Discard all running executions? (${runningCount})`)) return
+            setDiscarding(true)
+            try {
+              const res = await api.executions.discardRunning()
+              await loadExecutions(listMode)
+              alert(res.discarded > 0 ? `Discarded ${res.discarded} running execution(s).` : 'No running executions found.')
+            } catch (err) {
+              console.error(err)
+              alert('Failed to discard running executions.')
+            } finally {
+              setDiscarding(false)
+            }
+          }}
+          style={{
+            padding: '0.45rem 0.9rem',
+            fontSize: '0.78rem',
+            borderRadius: '0.625rem',
+            cursor: discarding || runningCount === 0 ? 'not-allowed' : 'pointer',
+            border: '1px solid rgba(239,68,68,0.4)',
+            background: discarding || runningCount === 0 ? 'rgba(239,68,68,0.08)' : 'rgba(239,68,68,0.12)',
+            color: discarding || runningCount === 0 ? 'var(--color-muted)' : '#fca5a5',
+            fontFamily: 'var(--font-mono)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {discarding ? 'Discarding…' : `Discard Running (${runningCount})`}
+        </button>
       </div>
 
-      {/* ── Table ── */}
-      <div className="table-scroll-wrap">
-      <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '1rem', overflow: 'hidden', minWidth: '680px' }}>
+      {/* ── Desktop table ── */}
+      {!isMobile && (
+        <div className="table-scroll-wrap">
+        <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '1rem', overflow: 'hidden', minWidth: '680px' }}>
 
         {/* Header */}
         <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr 1.4fr 1.4fr 0.8fr 44px', padding: '0.875rem 1.75rem', borderBottom: '1px solid var(--color-border)', background: 'var(--color-panel)', minWidth: '680px' }}>
@@ -186,13 +297,78 @@ export default function TransactionsPage() {
             )
           })
         )}
-      </div>
-      </div>{/* end table-scroll-wrap */}
+        </div>
+        </div>
+      )}
+
+      {/* ── Mobile cards ── */}
+      {isMobile && (
+        <div style={{ display: 'grid', gap: '0.75rem' }}>
+          {loading ? (
+            <div style={{ padding: '2.5rem 1rem', display: 'flex', justifyContent: 'center', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.875rem' }}>
+              <MillennialLoader label="Loading transactions…" />
+            </div>
+          ) : paged.length === 0 ? (
+            <div style={{ padding: '2rem 1rem', textAlign: 'center', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.875rem' }}>
+              <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem', margin: 0 }}>
+                {searchActive
+                  ? `No executions found for "${search}"`
+                  : 'No executions yet. Trigger a flow to see transactions here.'}
+              </p>
+            </div>
+          ) : (
+            paged.map(ex => (
+              <MobileExecutionCard key={ex.id} ex={ex} onOpen={() => router.push(`/transactions/${ex.id}`)} />
+            ))
+          )}
+        </div>
+      )}
 
       {!loading && filtered.length > 0 && (
         <PaginationControls page={page} totalPages={totalPages} totalItems={totalItems} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
       )}
     </div>
+  )
+}
+
+function MobileExecutionCard({ ex, onOpen }: { ex: ExecutionSummary; onOpen: () => void }) {
+  const sm = STATUS_META[ex.status] ?? STATUS_META.ALL
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      style={{
+        width: '100%',
+        textAlign: 'left',
+        color: 'var(--color-text)',
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: '0.875rem',
+        padding: '0.9rem',
+        display: 'grid',
+        gap: '0.55rem',
+        cursor: 'pointer',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ex.flowName}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--color-muted)', fontFamily: 'var(--font-mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>/api/pulse/{ex.flowSlug}</div>
+        </div>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.22rem 0.55rem', borderRadius: '999px', background: sm.bg, border: `1px solid ${sm.border}`, fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: sm.color, fontWeight: 700, flexShrink: 0 }}>
+          <StatusIcon status={ex.status} size={10} />
+          {ex.status}
+        </span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.45rem 0.75rem', fontSize: '0.74rem' }}>
+        <span style={{ color: 'var(--color-muted)' }}>Triggered</span>
+        <span style={{ color: 'var(--color-text)', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ex.triggeredBy}</span>
+        <span style={{ color: 'var(--color-muted)' }}>Started</span>
+        <span style={{ color: 'var(--color-text)', textAlign: 'right', fontFamily: 'var(--font-mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ex.startedAt ? formatTime(ex.startedAt) : '—'}</span>
+        <span style={{ color: 'var(--color-muted)' }}>Duration</span>
+        <span style={{ color: ex.durationMs >= 0 ? 'var(--color-text)' : 'var(--color-muted)', textAlign: 'right', fontFamily: 'var(--font-mono)' }}>{ex.durationMs >= 0 ? formatDuration(ex.durationMs) : '…'}</span>
+      </div>
+    </button>
   )
 }
 

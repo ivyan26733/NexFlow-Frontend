@@ -10,6 +10,7 @@ export type {
   FlowEdge,
   Execution,
   ExecutionSummary,
+  ExecutionStats,
   ExecutionDetail,
   BranchExecution,
   NodeExecution,

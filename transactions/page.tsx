@@ -13,7 +13,7 @@ export default function TransactionsPage() {
   const [filter,     setFilter]     = useState<ExecStatus | 'ALL'>('ALL')
 
   useEffect(() => {
-    api.executions.listAll()
+    api.executions.listRecent()
       .then(setExecutions)
       .catch(console.error)
       .finally(() => setLoading(false))

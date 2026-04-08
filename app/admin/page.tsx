@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Shield, Users, Crown, UserCheck, Loader2, ChevronDown, Check } from 'lucide-react'
 import { api } from '@/api'
 import { getStoredUser } from '@/lib/auth'
 import type { AuthUser, UserRole } from '@/types'
+import { usePortalPosition } from '@/hooks/usePortalDropdown'
 
 const ROLES: UserRole[] = ['ADMIN', 'SUB_ADMIN', 'MEMBER']
 
@@ -189,60 +191,14 @@ export default function AdminPage() {
               {/* Role dropdown */}
               <div>
                 {!isMe && (
-                  <div style={{ position: 'relative', display: 'inline-block' }} data-role-menu>
-                    <button
-                      onClick={() => setRoleOpen(roleOpen === u.id ? null : u.id)}
-                      disabled={saving === u.id}
-                      data-role-menu
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        padding: '0.4rem 0.75rem 0.4rem 0.875rem',
-                        background: 'var(--color-panel)', border: '1px solid var(--color-border)',
-                        borderRadius: '0.5rem', cursor: 'pointer', color: 'var(--color-text)',
-                        fontSize: '0.825rem', transition: 'border-color 0.15s',
-                        borderColor: roleOpen === u.id ? 'var(--color-accent)' : 'var(--color-border)',
-                      }}
-                    >
-                      {saving === u.id
-                        ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
-                        : 'Change'}
-                      <ChevronDown size={13} style={{ color: 'var(--color-muted)', transition: 'transform 0.15s', transform: roleOpen === u.id ? 'rotate(180deg)' : 'none' }} />
-                    </button>
-
-                    {roleOpen === u.id && (
-                      <div data-role-menu style={{
-                        position: 'absolute', top: 'calc(100% + 0.375rem)', left: 0,
-                        background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-                        borderRadius: '0.625rem', minWidth: '11rem', zIndex: 50,
-                        boxShadow: '0 12px 32px rgba(0,0,0,0.4)', overflow: 'hidden', padding: '0.25rem',
-                      }}>
-                        {ROLES.map(r => {
-                          const rm = ROLE_META[r]
-                          return (
-                            <button
-                              key={r}
-                              data-role-menu
-                              onClick={() => changeRole(u.id, r)}
-                              style={{
-                                width: '100%', display: 'flex', alignItems: 'center', gap: '0.625rem',
-                                padding: '0.625rem 0.75rem', background: 'none', border: 'none',
-                                borderRadius: '0.375rem', cursor: 'pointer', textAlign: 'left',
-                                color: r === u.role ? rm.color : 'var(--color-text)',
-                                fontSize: '0.85rem', transition: 'background 0.1s',
-                                fontWeight: r === u.role ? 600 : 400,
-                              }}
-                              onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-panel)' }}
-                              onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
-                            >
-                              <span style={{ color: rm.color }}>{rm.icon}</span>
-                              {rm.label}
-                              {r === u.role && <Check size={13} style={{ marginLeft: 'auto', color: rm.color }} />}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  <RoleDropdown
+                    open={roleOpen === u.id}
+                    saving={saving === u.id}
+                    currentRole={u.role}
+                    onToggle={() => setRoleOpen(roleOpen === u.id ? null : u.id)}
+                    onClose={() => setRoleOpen(null)}
+                    onSelect={(r) => changeRole(u.id, r)}
+                  />
                 )}
               </div>
             </div>
@@ -250,6 +206,91 @@ export default function AdminPage() {
         })}
       </div>
       </div>{/* end table-scroll-wrap */}
+    </div>
+  )
+}
+
+function RoleDropdown({ open, saving, currentRole, onToggle, onClose, onSelect }: {
+  open: boolean
+  saving: boolean
+  currentRole: UserRole
+  onToggle: () => void
+  onClose: () => void
+  onSelect: (r: UserRole) => void
+}) {
+  const [mounted, setMounted] = useState(false)
+  const triggerRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const portalStyle = usePortalPosition(open, triggerRef, 176)
+
+  useEffect(() => { setMounted(true) }, [])
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      const t = e.target as Node
+      if (!triggerRef.current?.contains(t) && !dropdownRef.current?.contains(t)) {
+        onClose()
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open, onClose])
+
+  return (
+    <div ref={triggerRef} style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        onClick={onToggle}
+        disabled={saving}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '0.5rem',
+          padding: '0.4rem 0.75rem 0.4rem 0.875rem',
+          background: 'var(--color-panel)', border: '1px solid var(--color-border)',
+          borderRadius: '0.5rem', cursor: 'pointer', color: 'var(--color-text)',
+          fontSize: '0.825rem', transition: 'border-color 0.15s',
+          borderColor: open ? 'var(--color-accent)' : 'var(--color-border)',
+        }}
+      >
+        {saving
+          ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
+          : 'Change'}
+        <ChevronDown size={13} style={{ color: 'var(--color-muted)', transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'none' }} />
+      </button>
+
+      {open && mounted && portalStyle && createPortal(
+        <div ref={dropdownRef} style={{
+          ...portalStyle,
+          minWidth: '11rem',
+          background: 'var(--color-surface)', border: '1px solid var(--color-border)',
+          borderRadius: '0.625rem',
+          boxShadow: '0 12px 32px rgba(0,0,0,0.4)', overflow: 'hidden', padding: '0.25rem',
+        }}>
+          {ROLES.map(r => {
+            const rm = ROLE_META[r]
+            return (
+              <button
+                key={r}
+                onClick={() => { onSelect(r); onClose() }}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: '0.625rem',
+                  padding: '0.625rem 0.75rem', background: 'none', border: 'none',
+                  borderRadius: '0.375rem', cursor: 'pointer', textAlign: 'left',
+                  color: r === currentRole ? rm.color : 'var(--color-text)',
+                  fontSize: '0.85rem', transition: 'background 0.1s',
+                  fontWeight: r === currentRole ? 600 : 400,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-panel)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+              >
+                <span style={{ color: rm.color }}>{rm.icon}</span>
+                {rm.label}
+                {r === currentRole && <Check size={13} style={{ marginLeft: 'auto', color: rm.color }} />}
+              </button>
+            )
+          })}
+        </div>,
+        document.body
+      )}
     </div>
   )
 }

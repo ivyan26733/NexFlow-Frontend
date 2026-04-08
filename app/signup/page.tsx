@@ -17,7 +17,7 @@ export default function SignupPage() {
   const [error,    setError]    = useState('')
 
   useEffect(() => {
-    if (isLoggedIn()) router.replace('/')
+    if (isLoggedIn()) router.replace('/dashboard')
   }, [router])
 
   async function handleSubmit(e: React.FormEvent) {

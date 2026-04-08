@@ -23,14 +23,14 @@ function LoginForm() {
       setToken(token)
       api.auth.me().then(user => {
         saveUser({ id: user.id, email: user.email, name: user.name, role: user.role })
-        router.replace('/')
-      }).catch(() => router.replace('/'))
+        router.replace('/dashboard')
+      }).catch(() => router.replace('/dashboard'))
     }
   }, [searchParams, router])
 
   // Redirect if already logged in
   useEffect(() => {
-    if (isLoggedIn()) router.replace('/')
+    if (isLoggedIn()) router.replace('/dashboard')
   }, [router])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -43,7 +43,7 @@ function LoginForm() {
       // Production: token is null (HttpOnly cookie was set by server) → skip setToken
       if (res.token) setToken(res.token)
       saveUser({ id: res.id, email: res.email, name: res.name, role: res.role })
-      router.replace('/')
+      router.replace('/dashboard')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       // 403 EMAIL_NOT_VERIFIED — redirect to OTP screen (OTP was auto-resent by backend)

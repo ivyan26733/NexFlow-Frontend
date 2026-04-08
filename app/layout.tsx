@@ -34,7 +34,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span className="logo-text">NEXFLOW</span>
           </a>
           <div className="nav-divider" />
-          <a href="/">Flows</a>
+          <a href="/">Dashboard</a>
+          <a href="/flow">Flows</a>
           <a href="/pulses">Pulses</a>
           <a href="/transactions">Transactions</a>
           <a href="/templates">Templates</a>

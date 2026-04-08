@@ -94,9 +94,11 @@ export interface Flow {
   name:        string
   slug:        string            // public trigger key (e.g. authService)
   description: string
+  userId?:     string            // UUID of flow owner
   status:      FlowStatus
   createdAt:   string
   updatedAt:   string
+  createdByName?: string
 }
 
 // ─── Flow Node ────────────────────────────────────────────────────────────────
@@ -149,6 +151,63 @@ export interface ExecutionSummary {
   startedAt:   string
   completedAt: string
   durationMs:  number
+}
+
+/** Aggregate execution counts (all accessible flows) — from GET /api/executions/stats */
+export interface ExecutionStats {
+  total:    number
+  success:  number
+  failure:  number
+  running:  number
+}
+
+export interface DashboardDailyPerfItem {
+  day: string
+  label: string
+  success: number
+  failure: number
+  running: number
+}
+
+export interface DashboardTopFlowItem {
+  id: string
+  name: string
+  count: number
+  success: number
+  failure: number
+  avgMs: number
+}
+
+export interface DashboardRecentExecutionItem {
+  id: string
+  flowId: string
+  flowName: string
+  status: ExecStatus | string
+  triggeredBy: string
+  startedAt: string | null
+  durationMs: number
+}
+
+export interface DashboardSummary {
+  totalFlows: number
+  totalExecutions: number
+  successCount: number
+  failureCount: number
+  runningCount: number
+  successRate: number
+  latestFlowId: string | null
+  latestFlowName: string | null
+  latestFlowUpdatedAt: string | null
+  slowestFlowName: string | null
+  slowestFlowAvgMs: number | null
+  peakExternalAt: string | null
+  peakExternalCount: number | null
+  dailyPerf: DashboardDailyPerfItem[]
+  hourlyHeat: number[]
+  topFlows: DashboardTopFlowItem[]
+  recentExecutions: DashboardRecentExecutionItem[]
+  /** Per-day activity counts for the last 365 days. Key: "YYYY-MM-DD". */
+  activityGrid: Record<string, number>
 }
 
 // ─── Branch Execution (per-branch record for FORK in transaction UI) ──────────

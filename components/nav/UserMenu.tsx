@@ -1,19 +1,25 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { LogOut, User, Settings, Shield } from 'lucide-react'
+import { LogOut, User, Shield } from 'lucide-react'
 import { getStoredUser, clearAuth, isLoggedIn } from '@/lib/auth'
 import { api } from '@/api'
 import type { AuthUser } from '@/types'
+import { usePortalPosition } from '@/hooks/usePortalDropdown'
 
 export default function UserMenu() {
-  const router  = useRouter()
-  const [user,  setUser]  = useState<AuthUser | null>(null)
-  const [open,  setOpen]  = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+  const [user, setUser] = useState<AuthUser | null>(null)
+  const [open, setOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const triggerRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const portalStyle = usePortalPosition(open, triggerRef, 224)
 
   useEffect(() => {
+    setMounted(true)
     setUser(getStoredUser())
     function onAuthChange() { setUser(getStoredUser()) }
     window.addEventListener('nexflow-auth-change', onAuthChange)
@@ -21,15 +27,19 @@ export default function UserMenu() {
   }, [])
 
   useEffect(() => {
+    if (!open) return
     function onClickOut(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      if (!triggerRef.current?.contains(t) && !dropdownRef.current?.contains(t)) {
+        setOpen(false)
+      }
     }
     document.addEventListener('mousedown', onClickOut)
     return () => document.removeEventListener('mousedown', onClickOut)
-  }, [])
+  }, [open])
 
   async function logout() {
-    try { await api.auth.logout() } catch { /* ignore — cookie cleared server-side best-effort */ }
+    try { await api.auth.logout() } catch { /* ignore */ }
     clearAuth()
     router.replace('/login')
   }
@@ -62,9 +72,9 @@ export default function UserMenu() {
   }
 
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
+    <div ref={triggerRef} style={{ position: 'relative' }}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen(v => !v)}
         style={{
           display: 'flex', alignItems: 'center', gap: '0.5rem',
           background: 'var(--color-panel)', border: '1px solid var(--color-border)',
@@ -93,18 +103,23 @@ export default function UserMenu() {
         </span>
       </button>
 
-      {open && (
-        <div style={{
-          position: 'absolute', right: 0, top: 'calc(100% + 0.375rem)',
-          background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-          borderRadius: '0.625rem', minWidth: '14rem', zIndex: 100,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.35)', overflow: 'hidden',
-        }}>
+      {open && mounted && portalStyle && createPortal(
+        <div
+          ref={dropdownRef}
+          style={{
+            ...portalStyle,
+            minWidth: '14rem',
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: '0.625rem',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+            overflow: 'hidden',
+          }}
+        >
           <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--color-border)' }}>
             <p style={{ fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>{user.name}</p>
             <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', margin: '0.125rem 0 0' }}>{user.email}</p>
           </div>
-
           <div style={{ padding: '0.375rem' }}>
             {(user.role === 'ADMIN' || user.role === 'SUB_ADMIN') && (
               <>
@@ -115,15 +130,16 @@ export default function UserMenu() {
             <div style={{ height: '1px', background: 'var(--color-border)', margin: '0.25rem 0' }} />
             <MenuItem icon={<LogOut size={14} />} label="Sign out" onClick={logout} danger />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
 }
 
-function MenuItem({
-  icon, label, onClick, danger,
-}: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }) {
+function MenuItem({ icon, label, onClick, danger }: {
+  icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean
+}) {
   return (
     <button
       onClick={onClick}

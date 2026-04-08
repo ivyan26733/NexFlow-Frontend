@@ -133,15 +133,15 @@ export default function TransactionDetailPage() {
 
       {/* Execution summary card */}
       <div className="dashboard-card" style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
           <div>
             <p className="dashboard-label" style={{ marginBottom: '0.3rem' }}>EXECUTION</p>
-            <h1 className="dashboard-title" style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{detail.flowName}</h1>
-            <p className="dashboard-card-meta" style={{ marginTop: 0, fontFamily: 'var(--font-mono)' }}>POST /api/pulse/{detail.flowSlug}</p>
+            <h1 className="dashboard-title" style={{ fontSize: '1.25rem', marginBottom: '0.25rem', wordBreak: 'break-word' }}>{detail.flowName}</h1>
+            <p className="dashboard-card-meta" style={{ marginTop: 0, fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>POST /api/pulse/{detail.flowSlug}</p>
           </div>
           <StatusBadge status={detail.status} />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))', gap: '1rem' }}>
           {[
             ['Execution ID', detail.id.slice(0, 8) + '…'],
             ['Started',      detail.startedAt ? formatTime(detail.startedAt) : '—'],
@@ -174,7 +174,8 @@ export default function TransactionDetailPage() {
           <p style={{ color: 'var(--color-muted)', margin: 0 }}>{snapshotError ?? 'No node logs recorded.'}</p>
         </div>
       ) : (
-        <div style={{ border: '1px solid var(--color-border)', borderRadius: '0.75rem', overflow: 'hidden', background: 'var(--color-surface)' }}>
+        <div className="table-scroll-wrap">
+        <div style={{ border: '1px solid var(--color-border)', borderRadius: '0.75rem', overflow: 'hidden', background: 'var(--color-surface)', minWidth: '900px' }}>
 
           {/* Column headers */}
           <div style={{
@@ -230,6 +231,7 @@ export default function TransactionDetailPage() {
               </div>
             )
           })}
+        </div>
         </div>
       )}
     </div>

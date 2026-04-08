@@ -3,7 +3,9 @@ import type {
   CanvasData,
   Execution,
   ExecutionSummary,
+  ExecutionStats,
   ExecutionDetail,
+  DashboardSummary,
   NexusConnector,
   NexMap,
   LlmProviderInfo,
@@ -42,6 +44,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const api = {
 
+  dashboard: {
+    summary: (refresh = false) =>
+      request<DashboardSummary>(`/api/dashboard/summary?refresh=${refresh ? 'true' : 'false'}`),
+  },
+
   // ─── FLOWS ────────────────────────────────────────────────
   flows: {
     list:   ()                    => request<Flow[]>('/api/flows'),
@@ -51,7 +58,7 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
-    update: (id: string, body: { name: string }) =>
+    update: (id: string, body: { name?: string; status?: Flow['status'] }) =>
       request<Flow>(`/api/flows/${id}`, {
         method: 'PUT',
         body: JSON.stringify(body),
@@ -74,7 +81,18 @@ export const api = {
 
   // ─── EXECUTIONS ───────────────────────────────────────────
   executions: {
-    // All executions across all flows
+    /** Last ~2 days (Redis-backed when warm); use for default transactions view */
+    listRecent: () =>
+      request<ExecutionSummary[]>('/api/executions'),
+
+    /** Full history from DB (older than rolling window) */
+    listFullHistory: () =>
+      request<ExecutionSummary[]>('/api/executions?fullHistory=true'),
+
+    stats: () =>
+      request<ExecutionStats>('/api/executions/stats'),
+
+    /** @deprecated use listRecent or listFullHistory */
     listAll: () =>
       request<ExecutionSummary[]>('/api/executions'),
 
@@ -86,6 +104,12 @@ export const api = {
     getById: (id: string) =>
       request<ExecutionDetail>(`/api/executions/${id}`),
 
+    // Mark all currently RUNNING executions as discarded
+    discardRunning: () =>
+      request<{ discarded: number }>('/api/executions/discard-running', {
+        method: 'POST',
+      }),
+
     // Nex map only (convenience for transaction detail page)
     getNex: (id: string) =>
       fetch(`${BASE}/api/executions/${id}/nex`, { credentials: 'include' })
@@ -96,7 +120,7 @@ export const api = {
     prepare: (slug: string, payload: Record<string, unknown>) =>
       request<Execution>(`/api/pulse/${slug}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Studio-Trigger': '1' },
         body: JSON.stringify(payload),
       }),
 
