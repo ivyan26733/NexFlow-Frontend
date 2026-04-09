@@ -64,11 +64,13 @@ export function useExecutionSocket({ executionId, onEvent, onReady }: Options) {
           }
         })
 
-        // Subscription frame has been sent; at this point the queue exists on the broker.
-        // Safe to notify callers so they can start the execution.
+        // With StompBrokerRelay + RabbitMQ the SUBSCRIBE frame travels async:
+        // Spring → RabbitMQ → ACK → back. Fire onReady after a short delay so
+        // RabbitMQ has time to create the queue binding before execution starts
+        // publishing events. 300ms is enough even on a loaded EC2 instance.
         // eslint-disable-next-line no-console
-        console.info('[useExecutionSocket] Subscription sent, firing onReady')
-        onReadyRef.current?.()
+        console.info('[useExecutionSocket] Subscription sent, firing onReady in 300ms')
+        setTimeout(() => onReadyRef.current?.(), 300)
       },
       onStompError: (frame) => {
         // eslint-disable-next-line no-console
