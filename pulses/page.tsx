@@ -85,14 +85,14 @@ function PulseCard({ flow, onOpenStudio }: { flow: Flow; onOpenStudio: () => voi
     }
   }
 
-  const statusColor = (s: string) => s === 'SUCCESS' ? '#00e676' : s === 'FAILURE' ? '#ff4444' : '#00d4ff'
+  const statusColor = (s: string) => s === 'SUCCESS' ? '#15803d' : s === 'FAILURE' ? '#b91c1c' : '#1E3A5F'
 
   return (
     <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.75rem', overflow: 'hidden' }}>
 
       {/* Card header */}
       <div style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem', background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem', background: 'rgba(154,52,18,0.1)', border: '1px solid rgba(154,52,18,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <Zap size={16} style={{ color: 'var(--color-accent)' }} />
         </div>
 
@@ -101,8 +101,8 @@ function PulseCard({ flow, onOpenStudio }: { flow: Flow; onOpenStudio: () => voi
             <h3 style={{ fontSize: '0.9375rem', fontWeight: 600 }}>{flow.name}</h3>
             <span style={{
               fontSize: '0.65rem', fontFamily: 'var(--font-mono)', padding: '0.1rem 0.4rem',
-              borderRadius: '9999px', background: flow.status === 'ACTIVE' ? 'rgba(0,230,118,0.12)' : 'rgba(100,116,139,0.15)',
-              color: flow.status === 'ACTIVE' ? '#00e676' : 'var(--color-muted)',
+              borderRadius: '9999px', background: flow.status === 'ACTIVE' ? 'rgba(21,128,61,0.12)' : 'rgba(107,90,69,0.12)',
+              color: flow.status === 'ACTIVE' ? '#15803d' : 'var(--color-muted)',
             }}>{flow.status}</span>
           </div>
           {/* Endpoint URL */}
@@ -111,7 +111,7 @@ function PulseCard({ flow, onOpenStudio }: { flow: Flow; onOpenStudio: () => voi
             <span style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {BASE_URL}/api/pulse/{flow.slug}
             </span>
-            <button onClick={copy} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: copied ? '#00e676' : 'var(--color-muted)', flexShrink: 0 }} title="Copy URL">
+            <button onClick={copy} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: copied ? '#15803d' : 'var(--color-muted)', flexShrink: 0 }} title="Copy URL">
               {copied ? <Check size={13} /> : <Copy size={13} />}
             </button>
           </div>
@@ -124,7 +124,7 @@ function PulseCard({ flow, onOpenStudio }: { flow: Flow; onOpenStudio: () => voi
             <ExternalLink size={12} /> Studio
           </button>
           <button onClick={() => setTestOpen(o => !o)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.875rem', fontSize: '0.8rem', borderRadius: '0.5rem', background: 'var(--color-accent)', color: '#0a0d14', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.875rem', fontSize: '0.8rem', borderRadius: '0.5rem', background: 'var(--color-accent)', color: 'var(--color-on-accent)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
             <Play size={12} /> Test
             {testOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           </button>
@@ -144,11 +144,11 @@ function PulseCard({ flow, onOpenStudio }: { flow: Flow; onOpenStudio: () => voi
               <textarea
                 rows={8} value={payload} spellCheck={false}
                 onChange={e => { setPayload(e.target.value); setPayloadError('') }}
-                style={{ width: '100%', background: 'var(--color-base)', border: `1px solid ${payloadError ? '#ff4444' : 'var(--color-border)'}`, borderRadius: '0.5rem', padding: '0.625rem 0.75rem', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--color-text)', resize: 'vertical', outline: 'none' }}
+                style={{ width: '100%', background: 'var(--color-base)', border: `1px solid ${payloadError ? '#b91c1c' : 'var(--color-border)'}`, borderRadius: '0.5rem', padding: '0.625rem 0.75rem', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--color-text)', resize: 'vertical', outline: 'none' }}
               />
-              {payloadError && <p style={{ fontSize: '0.75rem', color: '#ff4444', marginTop: '0.25rem' }}>{payloadError}</p>}
+              {payloadError && <p style={{ fontSize: '0.75rem', color: '#b91c1c', marginTop: '0.25rem' }}>{payloadError}</p>}
               <button onClick={trigger} disabled={triggering}
-                style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1.25rem', background: 'var(--color-accent)', color: '#0a0d14', border: 'none', borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 600, cursor: triggering ? 'not-allowed' : 'pointer', opacity: triggering ? 0.7 : 1 }}>
+                style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1.25rem', background: 'var(--color-accent)', color: 'var(--color-on-accent)', border: 'none', borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 600, cursor: triggering ? 'not-allowed' : 'pointer', opacity: triggering ? 0.7 : 1 }}>
                 {triggering ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Play size={14} />}
                 {triggering ? 'Running…' : 'Send Request'}
               </button>
@@ -201,7 +201,7 @@ function EmptyState({ onNew }: { onNew: () => void }) {
       <Zap size={32} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
       <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>No flows yet</h2>
       <p style={{ fontSize: '0.875rem', marginBottom: '1.5rem' }}>Create a flow in Studio first, then trigger it here.</p>
-      <button onClick={onNew} style={{ padding: '0.5rem 1.25rem', background: 'var(--color-accent)', color: '#0a0d14', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}>
+      <button onClick={onNew} style={{ padding: '0.5rem 1.25rem', background: 'var(--color-accent)', color: 'var(--color-on-accent)', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}>
         Go to Studio
       </button>
     </div>
@@ -209,7 +209,7 @@ function EmptyState({ onNew }: { onNew: () => void }) {
 }
 
 function statusColor(s: string) {
-  if (s === 'SUCCESS') return '#00e676'
-  if (s === 'FAILURE') return '#ff4444'
-  return '#00d4ff'
+  if (s === 'SUCCESS') return '#15803d'
+  if (s === 'FAILURE') return '#b91c1c'
+  return '#1E3A5F'
 }

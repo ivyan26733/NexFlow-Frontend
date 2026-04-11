@@ -12,9 +12,9 @@ import { usePortalPosition } from '@/hooks/usePortalDropdown'
 const ROLES: UserRole[] = ['ADMIN', 'SUB_ADMIN', 'MEMBER']
 
 const ROLE_META: Record<UserRole, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  ADMIN:     { label: 'Admin',     color: '#00d4ff', bg: 'rgba(0,212,255,0.12)',    icon: <Crown size={13} />    },
+  ADMIN:     { label: 'Admin',     color: '#9A3412', bg: 'rgba(154,52,18,0.12)',    icon: <Crown size={13} />    },
   SUB_ADMIN: { label: 'Sub-Admin', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',   icon: <Shield size={13} />   },
-  MEMBER:    { label: 'Member',    color: '#64748b', bg: 'rgba(100,116,139,0.12)',  icon: <UserCheck size={13} /> },
+  MEMBER:    { label: 'Member',    color: '#6B5A45', bg: 'rgba(107,90,69,0.12)',  icon: <UserCheck size={13} /> },
 }
 
 export default function AdminPage() {
@@ -59,11 +59,11 @@ export default function AdminPage() {
   }
 
   const avatarColors = [
-    'linear-gradient(135deg,#00D4FF,#6366F1)',
-    'linear-gradient(135deg,#f59e0b,#ef4444)',
-    'linear-gradient(135deg,#10b981,#3b82f6)',
-    'linear-gradient(135deg,#8b5cf6,#ec4899)',
-    'linear-gradient(135deg,#06b6d4,#22c55e)',
+    'linear-gradient(135deg,#9A3412,#1E3A5F)',
+    'linear-gradient(135deg,#c2410c,#92400e)',
+    'linear-gradient(135deg,#15803d,#14532d)',
+    'linear-gradient(135deg,#b45309,#78350f)',
+    'linear-gradient(135deg,#57534e,#44403c)',
   ]
 
   return (
@@ -83,10 +83,10 @@ export default function AdminPage() {
       {/* ── Stats row ──────────────────────────────────────────── */}
       <div className="stats-grid-4">
         {[
-          { label: 'Total Users',  value: stats.total,     icon: <Users size={18} />,    color: '#e2e8f0' },
-          { label: 'Admins',       value: stats.admins,    icon: <Crown size={18} />,    color: '#00d4ff' },
+          { label: 'Total Users',  value: stats.total,     icon: <Users size={18} />,    color: '#A8927A' },
+          { label: 'Admins',       value: stats.admins,    icon: <Crown size={18} />,    color: '#9A3412' },
           { label: 'Sub-Admins',   value: stats.subAdmins, icon: <Shield size={18} />,   color: '#f59e0b' },
-          { label: 'Members',      value: stats.members,   icon: <UserCheck size={18} />, color: '#64748b' },
+          { label: 'Members',      value: stats.members,   icon: <UserCheck size={18} />, color: '#6B5A45' },
         ].map(s => (
           <div key={s.label} style={{
             background: 'var(--color-surface)', border: '1px solid var(--color-border)',
@@ -143,10 +143,10 @@ export default function AdminPage() {
               padding: '1.125rem 1.75rem', alignItems: 'center',
               borderBottom: i < users.length - 1 ? '1px solid var(--color-border)' : 'none',
               transition: 'background 0.1s',
-              background: isMe ? 'rgba(0,212,255,0.03)' : 'transparent',
+              background: isMe ? 'rgba(154,52,18,0.06)' : 'transparent',
             }}
             onMouseEnter={e => { if (!isMe) e.currentTarget.style.background = 'var(--color-panel)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = isMe ? 'rgba(0,212,255,0.03)' : 'transparent' }}
+            onMouseLeave={e => { e.currentTarget.style.background = isMe ? 'rgba(154,52,18,0.06)' : 'transparent' }}
             >
               {/* User */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
@@ -154,7 +154,7 @@ export default function AdminPage() {
                   width: '2.5rem', height: '2.5rem', borderRadius: '50%', flexShrink: 0,
                   background: avatarColors[i % avatarColors.length],
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.9rem', fontWeight: 700, color: '#0a0d14',
+                  fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-on-accent)',
                 }}>
                   {u.name.charAt(0).toUpperCase()}
                 </div>
@@ -165,7 +165,7 @@ export default function AdminPage() {
                   {isMe && (
                     <span style={{
                       fontSize: '0.7rem', color: 'var(--color-accent)', fontFamily: 'var(--font-mono)',
-                      background: 'rgba(0,212,255,0.1)', padding: '0.1rem 0.4rem', borderRadius: '999px',
+                      background: 'rgba(154,52,18,0.12)', padding: '0.1rem 0.4rem', borderRadius: '999px',
                     }}>you</span>
                   )}
                 </div>
@@ -263,7 +263,7 @@ function RoleDropdown({ open, saving, currentRole, onToggle, onClose, onSelect }
           minWidth: '11rem',
           background: 'var(--color-surface)', border: '1px solid var(--color-border)',
           borderRadius: '0.625rem',
-          boxShadow: '0 12px 32px rgba(0,0,0,0.4)', overflow: 'hidden', padding: '0.25rem',
+          boxShadow: 'var(--shadow-warm)', overflow: 'hidden', padding: '0.25rem',
         }}>
           {ROLES.map(r => {
             const rm = ROLE_META[r]

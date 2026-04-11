@@ -65,6 +65,7 @@ function isScanRequest(text: string): boolean {
 }
 
 function isTransactionRequest(text: string): boolean {
+  // These are the phrases that usually mean "look at recent execution history".
   return TRANSACTION_PATTERNS.some(p => p.test(text))
 }
 
@@ -135,6 +136,8 @@ export function AIPanel({ onClose, nodes = [], edges = [], flowId }: AIPanelProp
       let txnPayload: TransactionDigest[] | undefined
       const attachTxn = forceTxn || isTransactionRequest(msg)
       if (attachTxn && flowId) {
+        // This is the debugging path: we pull recent executions first,
+        // then send those rows to the assistant together with the chat message.
         const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'
         const recent = await fetchRecentTransactions(apiBase, flowId, 1)
         if (recent.length > 0) txnPayload = recent
@@ -149,6 +152,7 @@ export function AIPanel({ onClose, nodes = [], edges = [], flowId }: AIPanelProp
     }
   }
 
+  // Used to switch between the quick-actions welcome state and real chat history.
   const hasMessages = messages.length > 0
 
   return (
@@ -355,7 +359,7 @@ const s: Record<string, React.CSSProperties> = {
     height:         38,
     borderRadius:   8,
     border:         'none',
-    background:     'linear-gradient(135deg,#00d4ff,#7c3aed)',
+    background:     'linear-gradient(135deg,#9A3412,#1E3A5F)',
     color:          '#fff',
     fontSize:       18,
     fontWeight:     700,
@@ -374,8 +378,8 @@ const s: Record<string, React.CSSProperties> = {
     wordBreak:    'break-word' as const,
   },
   userBubble: {
-    background: 'rgba(0,212,255,0.08)',
-    border:     '1px solid rgba(0,212,255,0.15)',
+    background: 'rgba(154,52,18,0.08)',
+    border:     '1px solid rgba(154,52,18,0.18)',
     alignSelf:  'flex-end',
   },
   aiBubble: {
@@ -401,14 +405,14 @@ const s: Record<string, React.CSSProperties> = {
     textAlign:    'left' as const,
   },
   quickBtnScan: {
-    border:     '1px solid rgba(0,212,255,0.25)',
-    color:      '#00d4ff',
-    background: 'rgba(0,212,255,0.06)',
+    border:     '1px solid rgba(30,58,95,0.28)',
+    color:      '#1E3A5F',
+    background: 'rgba(30,58,95,0.06)',
   },
   quickBtnTxn: {
-    border:     '1px solid rgba(139,92,246,0.3)',
-    color:      '#a78bfa',
-    background: 'rgba(139,92,246,0.07)',
+    border:     '1px solid rgba(154,52,18,0.28)',
+    color:      '#9A3412',
+    background: 'rgba(154,52,18,0.07)',
   },
   error: {
     fontSize:   12,

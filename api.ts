@@ -19,12 +19,13 @@ import { getAuthHeaders } from './lib/auth'
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'
 
-// Handles empty response body safely
+// One fetch wrapper for the whole app.
+// It keeps auth headers, credentials, and empty-body responses consistent.
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const authHeaders = getAuthHeaders()
   const res = await fetch(`${BASE}${path}`, {
     ...options,
-    credentials: 'include',   // sends HttpOnly cookie on prod; harmless on local dev
+    credentials: 'include',   // sends the login cookie on prod; harmless on local dev
     headers: {
       'Content-Type': 'application/json',
       ...authHeaders,
@@ -65,6 +66,15 @@ export const api = {
       }),
     delete: (id: string) =>
       request<void>(`/api/flows/${id}`, { method: 'DELETE' }),
+
+    export: (id: string) =>
+      request<unknown>(`/api/flows/${id}/export`),
+
+    import: (bundle: unknown) =>
+      request<Flow>('/api/flows/import', {
+        method: 'POST',
+        body: JSON.stringify(bundle),
+      }),
   },
 
   // ─── CANVAS ───────────────────────────────────────────────
@@ -81,11 +91,11 @@ export const api = {
 
   // ─── EXECUTIONS ───────────────────────────────────────────
   executions: {
-    /** Last ~2 days (Redis-backed when warm); use for default transactions view */
+    /** Default transactions view: recent executions only. */
     listRecent: () =>
       request<ExecutionSummary[]>('/api/executions'),
 
-    /** Full history from DB (older than rolling window) */
+    /** Full history: bypasses the rolling cache and reads the older records too. */
     listFullHistory: () =>
       request<ExecutionSummary[]>('/api/executions?fullHistory=true'),
 
@@ -116,7 +126,7 @@ export const api = {
         .then(r => r.ok ? r.json() : Promise.resolve({ transactionId: id, nex: {} }))
         .then((body: { transactionId: string; nex?: NexMap }) => ({ transactionId: body.transactionId, nex: body.nex ?? {} })),
 
-    // Phase 1: Create execution record, get ID back. Does NOT start execution.
+    // Phase 1: create the execution row first, then wait for the Studio socket.
     prepare: (slug: string, payload: Record<string, unknown>) =>
       request<Execution>(`/api/pulse/${slug}`, {
         method: 'POST',
@@ -124,7 +134,7 @@ export const api = {
         body: JSON.stringify(payload),
       }),
 
-    // Phase 2: Start the execution. Called AFTER the WS subscription is established.
+    // Phase 2: start only after the websocket subscription is ready.
     start: (executionId: string, payload: Record<string, unknown>) =>
       request<void>(`/api/executions/${executionId}/start`, {
         method: 'POST',
@@ -245,6 +255,19 @@ export const api = {
     /** Clears the HttpOnly cookie server-side. Frontend should also call clearAuth(). */
     logout: () =>
       request<{ message: string }>('/api/auth/logout', { method: 'POST' }),
+  },
+
+  // ─── ASSISTANT ────────────────────────────────────────────────────────────
+  assistant: {
+    chat: (
+      message: string,
+      history: Array<{ role: string; content: string }>,
+      pageContext?: { path: string; name: string },
+    ) =>
+      request<{ reply: string; error?: string }>('/api/assistant/chat', {
+        method: 'POST',
+        body: JSON.stringify({ message, history, pageContext }),
+      }),
   },
 
   // ─── ADMIN ────────────────────────────────────────────────────────────────

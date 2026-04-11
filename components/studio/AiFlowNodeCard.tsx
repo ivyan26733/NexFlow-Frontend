@@ -3,14 +3,15 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { useEffect, useState } from 'react'
 
+// Provider accent colors — warm/light-friendly tones
 const PROVIDER_COLORS: Record<string, string> = {
-  ANTHROPIC: '#e879f9',
-  OPENAI:    '#10B981',
-  GEMINI:    '#4285F4',
-  GROQ:      '#F59E0B',
-  MISTRAL:   '#6366F1',
-  MLVOCA:    '#14B8A6',
-  CUSTOM:    '#94A3B8',
+  ANTHROPIC: '#C2410C',  // terracotta-orange (on-brand warm)
+  OPENAI:    '#0F766E',  // teal green
+  GEMINI:    '#1D4ED8',  // cobalt blue
+  GROQ:      '#B45309',  // amber
+  MISTRAL:   '#1E3A5F',  // navy
+  MLVOCA:    '#0F766E',  // teal
+  CUSTOM:    '#6B5A45',  // warm brown
 }
 
 const PROVIDER_ICONS: Record<string, string> = {
@@ -24,11 +25,11 @@ const PROVIDER_ICONS: Record<string, string> = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  RUNNING:  '#00D4FF',
-  SUCCESS:  '#10B981',
-  FAILURE:  '#EF4444',
-  PENDING:  '#334155',
-  RETRYING: '#F59E0B',
+  RUNNING:  '#1D4ED8',
+  SUCCESS:  '#15803d',
+  FAILURE:  '#991B1B',
+  PENDING:  '#6B5A45',
+  RETRYING: '#B45309',
 }
 
 interface AiNodeData {
@@ -46,202 +47,197 @@ interface AiNodeData {
 export default function AiFlowNodeCard({ data, selected }: NodeProps) {
   const d = data as unknown as AiNodeData
 
-  const provider    = d.config?.provider ?? 'ANTHROPIC'
-  const model       = d.config?.model ?? ''
-  const prompt      = d.config?.prompt ?? ''
-  const bindings    = d.config?.inputBindings ?? []
-  const liveStatus  = d.liveStatus ?? undefined
+  const provider     = d.config?.provider ?? 'ANTHROPIC'
+  const model        = d.config?.model ?? ''
+  const prompt       = d.config?.prompt ?? ''
+  const bindings     = d.config?.inputBindings ?? []
+  const liveStatus   = d.liveStatus ?? undefined
   const saveOutputAs = d.config?.saveOutputAs
 
-  const accentColor = PROVIDER_COLORS[provider] ?? '#8B5CF6'
-  const icon        = PROVIDER_ICONS[provider]  ?? '✦'
-  const statusColor = liveStatus ? (STATUS_COLORS[liveStatus] ?? '#334155') : '#334155'
-  const isRunning   = liveStatus === 'RUNNING'
+  const accentColor  = PROVIDER_COLORS[provider] ?? '#7C3AED'
+  const icon         = PROVIDER_ICONS[provider]   ?? '✦'
+  const statusColor  = liveStatus ? (STATUS_COLORS[liveStatus] ?? '#6B5A45') : '#6B5A45'
+  const isRunning    = liveStatus === 'RUNNING'
 
-  // Scanning line animation tick
-  const [scanPos, setScanPos] = useState(0)
+  // Shimmer sweep animation tick when running
+  const [shimmerPos, setShimmerPos] = useState(-20)
   useEffect(() => {
-    if (!isRunning) { setScanPos(0); return }
+    if (!isRunning) { setShimmerPos(-20); return }
     const interval = setInterval(() => {
-      setScanPos(p => (p + 2) % 110)
+      setShimmerPos(p => p >= 120 ? -20 : p + 1.8)
     }, 16)
     return () => clearInterval(interval)
   }, [isRunning])
 
-  const shortModel   = model ? model.split('/').pop()?.slice(0, 22) ?? model : 'default'
-  const shortPrompt  = prompt.length > 48 ? prompt.slice(0, 48) + '…' : (prompt || 'No prompt set')
+  const shortModel  = model ? model.split('/').pop()?.slice(0, 22) ?? model : 'default'
+  const shortPrompt = prompt.length > 46 ? prompt.slice(0, 46) + '…' : (prompt || 'No prompt set')
 
   return (
     <>
       <style>{`
         @keyframes ai-pulse {
-          0%, 100% { opacity: 0.4; transform: scale(1); }
-          50%       { opacity: 1;   transform: scale(1.15); }
-        }
-        @keyframes ai-corner-blink {
-          0%, 90%, 100% { opacity: 1; }
-          95%           { opacity: 0.2; }
-        }
-        @keyframes ai-grid-drift {
-          from { background-position: 0 0; }
-          to   { background-position: 20px 20px; }
+          0%, 100% { opacity: 0.6; transform: scale(1); }
+          50%       { opacity: 1;   transform: scale(1.12); }
         }
         @keyframes ai-status-glow {
-          0%, 100% { box-shadow: 0 0 4px currentColor; }
-          50%      { box-shadow: 0 0 12px currentColor, 0 0 20px currentColor; }
+          0%, 100% { box-shadow: 0 0 3px currentColor; }
+          50%      { box-shadow: 0 0 8px currentColor, 0 0 14px currentColor; }
+        }
+        @keyframes ai-border-pulse {
+          0%, 100% { opacity: 0.55; }
+          50%       { opacity: 1; }
         }
       `}</style>
 
-      {/* ── Input handle ── */}
+      {/* ── Input handle — diamond ── */}
       <Handle
         type="target"
         position={Position.Left}
         style={{
-          background: '#0A0F1A',
+          background: '#F5F0FF',
           border: `2px solid ${accentColor}`,
-          width: '10px', height: '10px',
-          borderRadius: '2px',
-          boxShadow: `0 0 8px ${accentColor}60`,
+          width: 10,
+          height: 10,
+          borderRadius: 2,
+          transform: 'rotate(45deg)',
+          left: -5,
         }}
       />
 
+      {/* ── Node label above card ── */}
+      <div style={{
+        fontSize: 10,
+        fontWeight: 600,
+        color: '#1A1008',
+        marginBottom: 4,
+        paddingLeft: 2,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}>
+        {d.label || 'AI Node'}
+      </div>
+
       {/* ── Main card ── */}
       <div style={{
-        width: '230px',
-        background: 'linear-gradient(135deg, #060B16 0%, #0A0F1A 50%, #060B16 100%)',
-        border: `1px solid ${selected ? accentColor + '80' : accentColor + '35'}`,
-        borderRadius: '8px',
+        width: 220,
+        background: `linear-gradient(145deg, #F5F0FF 0%, #EDE9FE 55%, #F0EBF8 100%)`,
+        border: `${selected ? 2 : 1.5}px solid ${selected ? accentColor : accentColor + '60'}`,
+        borderRadius: 10,
         overflow: 'hidden',
         position: 'relative',
         boxShadow: selected
-          ? `0 0 0 1px ${accentColor}40, 0 0 24px ${accentColor}20, inset 0 0 20px ${accentColor}05`
-          : `0 0 12px ${accentColor}10, inset 0 0 10px ${accentColor}03`,
-        transition: 'box-shadow 0.2s',
-        fontFamily: 'DM Mono, Courier New, monospace',
+          ? `0 0 0 2px ${accentColor}22, 0 2px 12px ${accentColor}28`
+          : `0 1px 4px rgba(26,16,8,0.09)`,
+        transition: 'box-shadow 0.2s, border-color 0.2s',
+        fontFamily: 'var(--font-geist)',
+        animation: isRunning ? 'ai-border-pulse 2s ease-in-out infinite' : 'none',
       }}>
 
-        {/* ── Circuit grid background ── */}
+        {/* Top accent strip */}
         <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
-          backgroundImage: `
-            linear-gradient(${accentColor}08 1px, transparent 1px),
-            linear-gradient(90deg, ${accentColor}08 1px, transparent 1px)
-          `,
-          backgroundSize: '20px 20px',
-          animation: isRunning ? 'ai-grid-drift 2s linear infinite' : 'none',
+          height: 3,
+          background: `linear-gradient(90deg, ${accentColor} 0%, ${accentColor}80 100%)`,
+          borderRadius: '10px 10px 0 0',
         }} />
 
-        {/* ── Scanning line (only when running) ── */}
+        {/* Running shimmer overlay */}
         {isRunning && (
           <div style={{
-            position: 'absolute', left: 0, right: 0,
-            top: `${scanPos}%`,
-            height: '2px',
-            background: `linear-gradient(90deg, transparent 0%, ${accentColor}80 40%, ${accentColor} 50%, ${accentColor}80 60%, transparent 100%)`,
-            boxShadow: `0 0 8px ${accentColor}`,
-            zIndex: 2, pointerEvents: 'none',
-            transition: 'top 0.016s linear',
+            position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+            background: `linear-gradient(105deg, transparent ${shimmerPos - 15}%, ${accentColor}15 ${shimmerPos}%, transparent ${shimmerPos + 15}%)`,
+            transition: 'background 0.016s linear',
           }} />
         )}
 
-        {/* ── Corner accent brackets ── */}
-        {['topLeft','topRight','bottomLeft','bottomRight'].map(corner => (
-          <div key={corner} style={{
-            position: 'absolute', width: '10px', height: '10px',
-            zIndex: 1, pointerEvents: 'none',
-            borderColor: accentColor + (selected ? 'CC' : '60'),
-            borderStyle: 'solid',
-            borderWidth: 0,
-            ...(corner === 'topLeft'     && { top: 3, left: 3, borderTopWidth: '1.5px', borderLeftWidth: '1.5px' }),
-            ...(corner === 'topRight'    && { top: 3, right: 3, borderTopWidth: '1.5px', borderRightWidth: '1.5px' }),
-            ...(corner === 'bottomLeft'  && { bottom: 3, left: 3, borderBottomWidth: '1.5px', borderLeftWidth: '1.5px' }),
-            ...(corner === 'bottomRight' && { bottom: 3, right: 3, borderBottomWidth: '1.5px', borderRightWidth: '1.5px' }),
-            animation: selected ? 'ai-corner-blink 2s ease-in-out infinite' : 'none',
-          }} />
-        ))}
-
         {/* ── Header ── */}
         <div style={{
-          padding: '10px 12px 8px',
-          borderBottom: `1px solid ${accentColor}20`,
+          padding: '8px 11px 7px',
+          borderBottom: `1px solid ${accentColor}18`,
           position: 'relative', zIndex: 1,
-          display: 'flex', alignItems: 'center', gap: '8px',
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: `${accentColor}08`,
         }}>
-          {/* Animated AI icon */}
+          {/* Provider icon box */}
           <div style={{
-            width: '28px', height: '28px', flexShrink: 0,
-            borderRadius: '6px',
-            background: `${accentColor}15`,
-            border: `1px solid ${accentColor}40`,
+            width: 26, height: 26, flexShrink: 0,
+            borderRadius: 6,
+            background: `${accentColor}14`,
+            border: `1px solid ${accentColor}35`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '14px', color: accentColor,
-            animation: isRunning ? 'ai-pulse 1s ease-in-out infinite' : 'none',
-            boxShadow: isRunning ? `0 0 10px ${accentColor}60` : 'none',
+            fontSize: 13, color: accentColor,
+            animation: isRunning ? 'ai-pulse 1.2s ease-in-out infinite' : 'none',
           }}>
             {icon}
           </div>
 
           <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Node label */}
+            {/* Type badge */}
             <div style={{
-              fontSize: '12px', fontWeight: '600', color: '#F1F5F9',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              letterSpacing: '0.02em',
+              fontSize: 9,
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              color: accentColor,
             }}>
-              {d.label || 'AI Node'}
+              ✦ AI · {provider}
             </div>
-            {/* Provider + model */}
+            {/* Model */}
             <div style={{
-              fontSize: '9px', color: accentColor,
-              letterSpacing: '0.06em', marginTop: '2px',
+              fontSize: 9,
+              color: '#6B5A45',
+              marginTop: 1,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               opacity: 0.85,
             }}>
-              {provider} · {shortModel}
+              {shortModel}
             </div>
           </div>
 
           {/* Live status dot */}
-          <div style={{
-            width: '7px', height: '7px', borderRadius: '50%',
-            background: statusColor, flexShrink: 0,
-            color: statusColor,
-            animation: isRunning ? 'ai-status-glow 1s ease-in-out infinite' : 'none',
-            boxShadow: liveStatus ? `0 0 6px ${statusColor}` : 'none',
-          }} />
+          {liveStatus && (
+            <div style={{
+              width: 7, height: 7, borderRadius: '50%',
+              background: statusColor, flexShrink: 0,
+              animation: isRunning ? 'ai-status-glow 1.2s ease-in-out infinite' : 'none',
+              color: statusColor,
+            }} />
+          )}
         </div>
 
         {/* ── Body ── */}
-        <div style={{ padding: '9px 12px', position: 'relative', zIndex: 1 }}>
-
+        <div style={{ padding: '8px 11px', position: 'relative', zIndex: 1 }}>
           {/* Prompt preview */}
           <div style={{
-            fontSize: '10px', color: '#475569',
-            lineHeight: 1.6,
-            marginBottom: bindings.length > 0 ? '8px' : 0,
+            fontSize: 10,
+            color: '#4A3F32',
+            lineHeight: 1.55,
+            marginBottom: bindings.length > 0 ? 7 : 0,
             fontStyle: prompt ? 'normal' : 'italic',
           }}>
-            <span style={{ color: accentColor + '80', marginRight: '4px' }}>"</span>
+            <span style={{ color: accentColor + '70', marginRight: 3 }}>"</span>
             {shortPrompt}
-            <span style={{ color: accentColor + '80', marginLeft: '2px' }}>"</span>
+            <span style={{ color: accentColor + '70', marginLeft: 2 }}>"</span>
           </div>
 
-          {/* Input bindings pills */}
+          {/* Input binding pills */}
           {bindings.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
               {bindings.filter(b => b.name).slice(0, 3).map(b => (
                 <span key={b.name} style={{
-                  fontSize: '9px', padding: '2px 6px',
-                  background: `${accentColor}10`,
-                  border: `1px solid ${accentColor}25`,
-                  borderRadius: '3px',
-                  color: accentColor, letterSpacing: '0.04em',
+                  fontSize: 9, padding: '2px 6px',
+                  background: `${accentColor}12`,
+                  border: `1px solid ${accentColor}28`,
+                  borderRadius: 4,
+                  color: accentColor,
+                  fontFamily: 'var(--font-mono)',
+                  letterSpacing: '0.03em',
                 }}>
                   {'{{'}{b.name}{'}}'}
                 </span>
               ))}
               {bindings.filter(b => b.name).length > 3 && (
-                <span style={{ fontSize: '9px', color: '#334155', padding: '2px 4px' }}>
+                <span style={{ fontSize: 9, color: '#6B5A45', padding: '2px 4px' }}>
                   +{bindings.filter(b => b.name).length - 3}
                 </span>
               )}
@@ -249,64 +245,78 @@ export default function AiFlowNodeCard({ data, selected }: NodeProps) {
           )}
         </div>
 
-        {/* ── Footer bar ── */}
+        {/* ── Footer ── */}
         <div style={{
-          padding: '5px 12px',
+          padding: '5px 11px 7px',
           borderTop: `1px solid ${accentColor}15`,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           position: 'relative', zIndex: 1,
-          background: `${accentColor}05`,
         }}>
-          <span style={{
-            fontSize: '8px', letterSpacing: '0.12em', color: accentColor + '70',
-          }}>
-            AI · LLM NODE
-          </span>
-
-          {/* nex badge */}
-          {saveOutputAs && (
-            <span style={{
-              fontSize: '8px', color: '#F59E0B',
-              letterSpacing: '0.06em',
-            }}>
+          {saveOutputAs ? (
+            <span style={{ fontSize: 8, color: '#B45309', fontFamily: 'var(--font-mono)' }}>
               nex.{saveOutputAs}
+            </span>
+          ) : (
+            <span style={{ fontSize: 8, color: accentColor + '60', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}>
+              AI · LLM
             </span>
           )}
 
-          {/* Status label */}
           {liveStatus && liveStatus !== 'PENDING' && (
-            <span style={{
-              fontSize: '8px', letterSpacing: '0.08em',
-              color: statusColor,
-            }}>
+            <span style={{ fontSize: 8, fontFamily: 'var(--font-mono)', color: statusColor, letterSpacing: '0.06em' }}>
               {liveStatus === 'RUNNING' ? '↻ running' : liveStatus === 'SUCCESS' ? '✓ done' : '✗ failed'}
             </span>
           )}
         </div>
-
       </div>
 
-      {/* ── Output handles ── */}
+      {/* ── Success output handle ── */}
       <Handle
         type="source"
         position={Position.Right}
         id="success"
         style={{
-          background: '#0A0F1A', border: '2px solid #10B981',
-          width: '10px', height: '10px', borderRadius: '2px',
-          top: '35%', boxShadow: '0 0 6px rgba(16,185,129,0.5)',
+          background: '#15803d',
+          border: '2px solid #14532D',
+          width: 10, height: 10,
+          borderRadius: '50%',
+          top: '40%',
+          right: -5,
         }}
       />
+      {/* ── Failure output handle ── */}
       <Handle
         type="source"
         position={Position.Right}
         id="failure"
         style={{
-          background: '#0A0F1A', border: '2px solid #EF4444',
-          width: '10px', height: '10px', borderRadius: '2px',
-          top: '65%', boxShadow: '0 0 6px rgba(239,68,68,0.4)',
+          background: '#b91c1c',
+          border: '2px solid #7F1D1D',
+          width: 10, height: 10,
+          borderRadius: '50%',
+          top: '65%',
+          right: -5,
         }}
       />
+      {/* Handle labels */}
+      <div style={{
+        position: 'absolute',
+        right: -38,
+        top: '34%',
+        fontSize: 7,
+        fontFamily: 'var(--font-mono)',
+        color: '#15803d',
+        pointerEvents: 'none',
+      }}>✓ OK</div>
+      <div style={{
+        position: 'absolute',
+        right: -44,
+        top: '59%',
+        fontSize: 7,
+        fontFamily: 'var(--font-mono)',
+        color: '#b91c1c',
+        pointerEvents: 'none',
+      }}>✗ FAIL</div>
     </>
   )
 }

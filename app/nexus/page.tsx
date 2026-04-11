@@ -179,13 +179,13 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
               onClick={() => onChange(pairs.filter((_, j) => j !== i) as KVPair[])}
               style={{
                 background: 'none', border: 'none',
-                color: '#CBD5E1', cursor: 'pointer',
+                color: 'var(--color-muted)', cursor: 'pointer',
                 fontSize: '18px', lineHeight: 1,
                 padding: '0 2px', flexShrink: 0,
                 transition: 'color 0.15s',
               }}
-              onMouseEnter={e => e.currentTarget.style.color = '#EF4444'}
-              onMouseLeave={e => e.currentTarget.style.color = '#CBD5E1'}
+              onMouseEnter={e => e.currentTarget.style.color = '#b91c1c'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--color-muted)'}
             >×</button>
           </div>
         ))}
@@ -195,7 +195,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
           style={{
             alignSelf: 'flex-start',
             fontSize: '12px',
-            color: '#3B82F6',
+            color: '#4C1D95',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
@@ -243,7 +243,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
             position: 'absolute', right: '10px', top: '50%',
             transform: 'translateY(-50%)',
             background: 'none', border: 'none',
-            color: '#CBD5E1', cursor: 'pointer',
+            color: 'var(--color-muted)', cursor: 'pointer',
             fontSize: '11px', letterSpacing: '0.05em',
             padding: '2px 4px',
           }}
@@ -262,13 +262,13 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
         margin: '32px 0 20px',
       }}>
         <span style={{
-          fontSize: '10px', color: '#E2E8F0',
+          fontSize: '10px', color: '#4C1D95',
           letterSpacing: '0.15em', fontWeight: '600',
           whiteSpace: 'nowrap',
         }}>
           {children}
         </span>
-        <div style={{ flex: 1, height: '1px', background: '#0F172A' }} />
+        <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }} />
       </div>
     )
   }
@@ -287,7 +287,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
       <div style={{ marginBottom: '20px' }}>
         <label style={{
           display: 'block',
-          fontSize: '11px', color: '#CBD5E1',
+          fontSize: '11px', color: 'var(--color-muted)',
           letterSpacing: '0.08em', marginBottom: '7px',
           fontWeight: '500',
         }}>
@@ -295,7 +295,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
         </label>
         {children}
         {hint && (
-          <p style={{ fontSize: '11px', color: '#E2E8F0', marginTop: '5px', lineHeight: 1.5 }}>
+          <p style={{ fontSize: '11px', color: 'var(--color-text)', marginTop: '5px', lineHeight: 1.5 }}>
             {hint}
           </p>
         )}
@@ -324,7 +324,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
         background: type === 'success' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
         border: `1px solid ${type === 'success' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
         borderRadius: '8px',
-        color: type === 'success' ? '#10B981' : '#EF4444',
+        color: type === 'success' ? '#15803d' : '#b91c1c',
         fontSize: '13px',
         zIndex: 9999,
         display: 'flex', alignItems: 'center', gap: '10px',
@@ -356,25 +356,25 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
         zIndex: 9998, backdropFilter: 'blur(4px)',
       }}>
         <div style={{
-          background: '#080D18',
-          border: '1px solid #1E293B',
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
           borderRadius: '12px',
           padding: '32px',
           width: '400px',
           boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
         }}>
-          <div style={{ fontSize: '18px', fontWeight: '600', color: '#F1F5F9', marginBottom: '12px' }}>
+          <div style={{ fontSize: '18px', fontWeight: '600', color: 'var(--color-text)', marginBottom: '12px' }}>
             Delete connector?
           </div>
-          <p style={{ fontSize: '14px', color: '#CBD5E1', lineHeight: 1.6, marginBottom: '28px' }}>
-            <strong style={{ color: '#CBD5E1' }}>{name}</strong> will be permanently deleted.
+          <p style={{ fontSize: '14px', color: 'var(--color-muted)', lineHeight: 1.6, marginBottom: '28px' }}>
+            <strong style={{ color: 'var(--color-muted)' }}>{name}</strong> will be permanently deleted.
             Any flow using this connector will fail.
           </p>
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button onClick={onCancel} style={{ ...btnStyle, background: '#0F172A', color: '#E2E8F0', border: '1px solid #1E293B' }}>
+            <button onClick={onCancel} style={{ ...btnStyle, background: 'var(--color-panel)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}>
               Cancel
             </button>
-            <button onClick={onConfirm} style={{ ...btnStyle, background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)' }}>
+            <button onClick={onConfirm} style={{ ...btnStyle, background: 'rgba(239,68,68,0.15)', color: '#b91c1c', border: '1px solid rgba(239,68,68,0.3)' }}>
               Delete
             </button>
           </div>
@@ -539,8 +539,8 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
           display: 'flex',
           flexDirection: 'column',
           minHeight: 'calc(100vh - 3.5rem)',
-          background: '#050810',
-          color: '#E2E8F0',
+          background: 'var(--color-base)',
+          color: 'var(--color-text)',
           fontFamily: "'DM Mono', 'Fira Code', monospace",
           position: 'relative',
           overflow: 'hidden',
@@ -561,9 +561,9 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                 zIndex: 40,
                 padding: '6px 10px',
                 borderRadius: '999px',
-                border: '1px solid #1E293B',
-                background: 'rgba(15,23,42,0.9)',
-                color: '#E2E8F0',
+                border: '1px solid var(--color-border)',
+                background: 'var(--color-surface)',
+                color: 'var(--color-text)',
                 fontSize: '11px',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
@@ -578,11 +578,11 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
           <div style={{
             width: isMobile ? '78vw' : '300px',
             flexShrink: 0,
-            borderRight: '1px solid #0F172A',
+            borderRight: '1px solid var(--color-border)',
             display: sidebarOpen || !isMobile ? 'flex' : 'none',
             flexDirection: 'column',
             overflow: 'hidden',
-            background: '#030609',
+            background: 'var(--color-panel)',
             position: isMobile ? 'absolute' : 'relative',
             zIndex: isMobile ? 35 : 'auto',
             top: 0,
@@ -592,8 +592,8 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
             {/* Search / count */}
             <div style={{
               padding: '16px 20px',
-              borderBottom: '1px solid #0F172A',
-              fontSize: '10px', color: '#E2E8F0',
+              borderBottom: '1px solid var(--color-border)',
+              fontSize: '10px', color: 'var(--color-text)',
               letterSpacing: '0.1em',
             }}>
               {loading ? 'LOADING...' : `${connectors.length} CONNECTOR${connectors.length !== 1 ? 'S' : ''}`}
@@ -602,14 +602,14 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
             {/* List */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
               {loading ? (
-                <div style={{ padding: '40px 20px', textAlign: 'center', color: '#E2E8F0', fontSize: '12px' }}>
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text)', fontSize: '12px' }}>
                   Loading...
                 </div>
               ) : connectors.length === 0 ? (
                 <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '24px', marginBottom: '12px', opacity: 0.5, color: '#E2E8F0' }}>⬡</div>
-                  <div style={{ fontSize: '12px', color: '#E2E8F0' }}>No connectors yet</div>
-                  <div style={{ fontSize: '11px', color: '#CBD5E1', marginTop: '6px' }}>
+                  <div style={{ fontSize: '24px', marginBottom: '12px', opacity: 0.5, color: 'var(--color-text)' }}>⬡</div>
+                  <div style={{ fontSize: '12px', color: 'var(--color-text)' }}>No connectors yet</div>
+                  <div style={{ fontSize: '11px', color: 'var(--color-muted)', marginTop: '6px' }}>
                     Click + New Connector
                   </div>
                 </div>
@@ -624,24 +624,24 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                       style={{
                         padding: '14px 20px',
                         cursor: 'pointer',
-                        borderLeft: `3px solid ${isSelected ? '#3B82F6' : 'transparent'}`,
-                        background: isSelected ? 'rgba(59,130,246,0.05)' : 'transparent',
+                        borderLeft: `3px solid ${isSelected ? '#4C1D95' : 'transparent'}`,
+                        background: isSelected ? 'rgba(76,29,149,0.05)' : 'transparent',
                         transition: 'all 0.15s',
-                        borderBottom: '1px solid #0A0F1A',
+                        borderBottom: '1px solid var(--color-border)',
                       }}
-                      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.02)' }}
+                      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(76,29,149,0.04)' }}
                       onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
                         {/* Status dot */}
                         <div style={{
                           width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0,
-                          background: isThisDirty ? '#F59E0B' : '#10B981',
-                          boxShadow: isThisDirty ? '0 0 6px #F59E0B' : '0 0 6px rgba(16,185,129,0.5)',
+                          background: isThisDirty ? '#F59E0B' : '#15803d',
+                          boxShadow: isThisDirty ? '0 0 6px #F59E0B' : '0 0 6px rgba(21,128,61,0.45)',
                         }} />
                         <span style={{
                           fontSize: '13px', fontWeight: '500',
-                          color: isSelected ? '#F1F5F9' : '#94A3B8',
+                          color: isSelected ? 'var(--color-text)' : 'var(--color-muted)',
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                           flex: 1,
                         }}>
@@ -650,9 +650,9 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                         {/* Type badge */}
                         <span style={{
                           fontSize: '9px', padding: '2px 6px', borderRadius: '3px',
-                          background: c.connectorType === 'REST' ? 'rgba(59,130,246,0.08)' : 'rgba(59,130,246,0.08)',
-                          color:      c.connectorType === 'REST' ? '#3B82F6'              : '#3B82F6',
-                          border:     `1px solid ${c.connectorType === 'REST' ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.15)'}`,
+                          background: c.connectorType === 'REST' ? 'rgba(76,29,149,0.08)' : 'rgba(76,29,149,0.08)',
+                          color:      c.connectorType === 'REST' ? '#4C1D95'              : '#4C1D95',
+                          border:     `1px solid ${c.connectorType === 'REST' ? 'rgba(76,29,149,0.15)' : 'rgba(76,29,149,0.15)'}`,
                           letterSpacing: '0.05em',
                           flexShrink: 0,
                         }}>
@@ -660,7 +660,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                         </span>
                       </div>
                       <div style={{
-                        fontSize: '11px', color: '#E2E8F0',
+                        fontSize: '11px', color: 'var(--color-text)',
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         paddingLeft: '15px',
                       }}>
@@ -674,18 +674,18 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
             </div>
 
             {/* Bottom new link */}
-            <div style={{ padding: '14px 20px', borderTop: '1px solid #0F172A' }}>
+            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--color-border)' }}>
               <button
                 onClick={newConnector}
                 style={{
                   background: 'none', border: 'none',
-                  color: '#E2E8F0', cursor: 'pointer',
+                  color: 'var(--color-text)', cursor: 'pointer',
                   fontSize: '12px', letterSpacing: '0.05em',
                   display: 'flex', alignItems: 'center', gap: '6px',
                   transition: 'color 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.color = '#3B82F6'}
-                onMouseLeave={e => e.currentTarget.style.color = '#E2E8F0'}
+                onMouseEnter={e => e.currentTarget.style.color = '#4C1D95'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text)'}
               >
                 <span style={{ fontSize: '16px' }}>+</span> New connector
               </button>
@@ -693,7 +693,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
           </div>
 
           {/* ── RIGHT PANEL ──────────────────────────────────────────── */}
-          <div style={{ flex: 1, overflowY: 'auto', background: '#050810' }}>
+          <div style={{ flex: 1, overflowY: 'auto', background: 'var(--color-base)' }}>
             {!editing ? (
               /* Empty state */
               <div style={{
@@ -704,22 +704,22 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
               }}>
                 <div style={{
                   width: '64px', height: '64px',
-                  border: '1px solid #0F172A',
+                  border: '1px solid var(--color-border)',
                   borderRadius: '16px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '28px', opacity: 0.3,
                 }}>⬡</div>
-                <div style={{ fontSize: '14px', color: '#E2E8F0' }}>
+                <div style={{ fontSize: '14px', color: 'var(--color-text)' }}>
                   Select a connector or create a new one
                 </div>
                 <button
                   onClick={newConnector}
                   style={{
                     padding: '8px 20px',
-                    background: 'rgba(59,130,246,0.08)',
-                    border: '1px solid rgba(59,130,246,0.2)',
+                    background: 'rgba(76,29,149,0.08)',
+                    border: '1px solid rgba(76,29,149,0.2)',
                     borderRadius: '6px',
-                    color: '#3B82F6', fontSize: '12px', cursor: 'pointer',
+                    color: '#4C1D95', fontSize: '12px', cursor: 'pointer',
                   }}
                 >
                   + New Connector
@@ -734,11 +734,11 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                   marginBottom: '36px',
                 }}>
                   <div>
-                    <div style={{ fontSize: '10px', color: '#E2E8F0', letterSpacing: '0.15em', marginBottom: '6px' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--color-text)', letterSpacing: '0.15em', marginBottom: '6px' }}>
                       {isNew ? 'NEW CONNECTOR' : 'CONNECTOR DETAIL'}
                     </div>
-                    <div style={{ fontSize: '20px', fontWeight: '600', color: '#F1F5F9' }}>
-                      {editing.name || <span style={{ color: '#E2E8F0' }}>Untitled</span>}
+                    <div style={{ fontSize: '20px', fontWeight: '600', color: 'var(--color-text)' }}>
+                      {editing.name || <span style={{ color: 'var(--color-text)' }}>Untitled</span>}
                     </div>
                   </div>
                   {isDirty && (
@@ -785,14 +785,14 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                       icon: '🌐',
                       title: 'REST API',
                       desc: 'Call HTTP APIs, webhooks, and web services',
-                      color: '#3B82F6',
+                      color: '#4C1D95',
                     },
                     {
                       type: 'JDBC' as const,
                       icon: '🗄️',
                       title: 'Database',
                       desc: 'Query PostgreSQL, MySQL, and JDBC databases',
-                      color: '#3B82F6',
+                      color: '#4C1D95',
                     },
                   ] as const).map(opt => {
                     const active = editing.connectorType === opt.type
@@ -802,16 +802,16 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                         onClick={() => update('connectorType', opt.type)}
                         style={{
                           padding: '20px',
-                          border: `1px solid ${active ? opt.color + '40' : '#0F172A'}`,
+                          border: `1px solid ${active ? opt.color + '40' : 'var(--color-border)'}`,
                           borderRadius: '10px',
                           cursor: 'pointer',
-                          background: active ? `${opt.color}08` : '#030609',
+                          background: active ? `${opt.color}08` : 'var(--color-panel)',
                           transition: 'all 0.15s',
                           position: 'relative',
                           overflow: 'hidden',
                         }}
-                        onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = '#1E293B' }}
-                        onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = '#0F172A' }}
+                        onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = 'var(--color-border)' }}
+                        onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = 'var(--color-border)' }}
                       >
                         {active && (
                           <div style={{
@@ -824,12 +824,12 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                         <div style={{ fontSize: '22px', marginBottom: '10px' }}>{opt.icon}</div>
                         <div style={{
                           fontSize: '14px', fontWeight: '600',
-                          color: active ? opt.color : '#64748B',
+                          color: active ? opt.color : 'var(--color-muted)',
                           marginBottom: '6px',
                         }}>
                           {opt.title}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#E2E8F0', lineHeight: 1.6 }}>
+                        <div style={{ fontSize: '12px', color: 'var(--color-text)', lineHeight: 1.6 }}>
                           {opt.desc}
                         </div>
                       </div>
@@ -877,10 +877,10 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                               padding: '6px 14px',
                               fontSize: '11px',
                               letterSpacing: '0.05em',
-                              border: `1px solid ${editing.authType === t ? 'rgba(59,130,246,0.4)' : '#0F172A'}`,
+                              border: `1px solid ${editing.authType === t ? 'rgba(76,29,149,0.4)' : 'var(--color-border)'}`,
                               borderRadius: '5px',
-                              background: editing.authType === t ? 'rgba(59,130,246,0.08)' : '#030609',
-                              color: editing.authType === t ? '#3B82F6' : '#334155',
+                              background: editing.authType === t ? 'rgba(76,29,149,0.08)' : 'var(--color-panel)',
+                              color: editing.authType === t ? '#4C1D95' : 'var(--color-muted)',
                               cursor: 'pointer',
                               transition: 'all 0.15s',
                             }}
@@ -962,14 +962,14 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                     <div style={{
                       marginBottom: '20px',
                       padding: '12px 14px',
-                      background: 'rgba(59,130,246,0.06)',
-                      border: '1px solid rgba(59,130,246,0.2)',
+                      background: 'rgba(76,29,149,0.06)',
+                      border: '1px solid rgba(76,29,149,0.2)',
                       borderRadius: '8px',
                       fontSize: '12px',
-                      color: '#94A3B8',
+                      color: 'var(--color-muted)',
                       lineHeight: 1.55,
                     }}>
-                      <strong style={{ color: '#E2E8F0' }}>How to use DB connectors</strong>
+                      <strong style={{ color: 'var(--color-text)' }}>How to use DB connectors</strong>
                       <br />
                       This section only defines the <em>connection</em> (URL and credentials). To run SQL, add a <strong>Nexus</strong> node in a flow (Studio), choose this connector, then enter your <strong>SQL query</strong> and query type (SELECT / INSERT / UPDATE / DELETE) in the node config.
                     </div>
@@ -1023,9 +1023,9 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                           type="checkbox"
                           checked={editing.ssl ?? false}
                           onChange={e => update('ssl', e.target.checked)}
-                          style={{ accentColor: '#3B82F6', width: '14px', height: '14px' }}
+                          style={{ accentColor: '#4C1D95', width: '14px', height: '14px' }}
                         />
-                        <span style={{ fontSize: '12px', color: '#CBD5E1' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--color-muted)' }}>
                           Require SSL connection
                         </span>
                       </label>
@@ -1050,10 +1050,10 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                           padding: '6px 14px',
                           fontSize: '12px',
                           letterSpacing: '0.05em',
-                          border: `1px solid ${testMethod === m ? 'rgba(59,130,246,0.5)' : '#0F172A'}`,
+                          border: `1px solid ${testMethod === m ? 'rgba(76,29,149,0.5)' : 'var(--color-border)'}`,
                           borderRadius: '6px',
-                          background: testMethod === m ? 'rgba(59,130,246,0.12)' : '#030609',
-                          color: testMethod === m ? '#3B82F6' : '#E2E8F0',
+                          background: testMethod === m ? 'rgba(76,29,149,0.12)' : 'var(--color-panel)',
+                          color: testMethod === m ? '#4C1D95' : 'var(--color-text)',
                           cursor: 'pointer',
                         }}
                       >
@@ -1086,10 +1086,10 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                     disabled={testing || isNew}
                     style={{
                       padding: '9px 20px',
-                      background: 'rgba(59,130,246,0.06)',
-                      border: '1px solid rgba(59,130,246,0.2)',
+                      background: 'rgba(76,29,149,0.06)',
+                      border: '1px solid rgba(76,29,149,0.2)',
                       borderRadius: '6px',
-                      color: (testing || isNew) ? '#334155' : '#3B82F6',
+                      color: (testing || isNew) ? 'var(--color-muted)' : '#4C1D95',
                       fontSize: '12px',
                       cursor: (testing || isNew) ? 'not-allowed' : 'pointer',
                       display: 'flex', alignItems: 'center', gap: '8px',
@@ -1106,7 +1106,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                   </button>
 
                   {isNew && (
-                    <span style={{ fontSize: '11px', color: '#E2E8F0' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--color-text)' }}>
                       Save connector first to test
                     </span>
                   )}
@@ -1122,12 +1122,12 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                       }}>
                         <span style={{
                           width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
-                          background: testResult.success ? '#10B981' : '#EF4444',
-                          boxShadow: testResult.success ? '0 0 6px #10B981' : '0 0 6px #EF4444',
+                          background: testResult.success ? '#15803d' : '#b91c1c',
+                          boxShadow: testResult.success ? '0 0 6px #15803d' : '0 0 6px #b91c1c',
                         }} />
                         <span style={{
                           fontSize: '12px',
-                          color: testResult.success ? '#10B981' : '#EF4444',
+                          color: testResult.success ? '#15803d' : '#b91c1c',
                         }}>
                           {testResult.success
                             ? `Connected · ${testResult.latencyMs ?? 0}ms`
@@ -1136,22 +1136,22 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                       </div>
                       {(testResult.statusCode != null || (testResult.responseBody != null && testResult.responseBody !== '')) && (
                         <div style={{
-                          background: '#030609',
-                          border: '1px solid #0F172A',
+                          background: 'var(--color-panel)',
+                          border: '1px solid var(--color-border)',
                           borderRadius: '8px',
                           overflow: 'hidden',
                         }}>
                           <div style={{
                             padding: '8px 12px',
-                            borderBottom: '1px solid #0F172A',
+                            borderBottom: '1px solid var(--color-border)',
                             fontSize: '10px',
-                            color: '#94A3B8',
+                            color: 'var(--color-muted)',
                             letterSpacing: '0.08em',
                           }}>
                             RESPONSE PREVIEW — use in nodes e.g. {'{{'}nodes.nexusId.successOutput.body{'}}'}
                           </div>
                           {testResult.statusCode != null && (
-                            <div style={{ padding: '6px 12px', fontSize: '11px', color: '#CBD5E1', borderBottom: '1px solid #0F172A' }}>
+                            <div style={{ padding: '6px 12px', fontSize: '11px', color: 'var(--color-muted)', borderBottom: '1px solid var(--color-border)' }}>
                               Status: <strong>{testResult.statusCode}</strong>
                             </div>
                           )}
@@ -1161,7 +1161,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                               padding: '12px',
                               fontSize: '11px',
                               fontFamily: 'DM Mono, monospace',
-                              color: '#E2E8F0',
+                              color: 'var(--color-text)',
                               whiteSpace: 'pre-wrap',
                               wordBreak: 'break-word',
                               maxHeight: '280px',
@@ -1187,7 +1187,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                 <div style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   paddingTop: '24px',
-                  borderTop: '1px solid #0F172A',
+                  borderTop: '1px solid var(--color-border)',
                   gap: '12px',
                 }}>
                   {/* Delete — only show for existing */}
@@ -1201,7 +1201,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                           background: 'rgba(239,68,68,0.06)',
                           border: '1px solid rgba(239,68,68,0.15)',
                           borderRadius: '6px',
-                          color: '#EF4444',
+                          color: '#b91c1c',
                           fontSize: '12px', cursor: 'pointer',
                           letterSpacing: '0.05em',
                           transition: 'all 0.15s',
@@ -1222,11 +1222,11 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                     style={{
                       padding: '9px 28px',
                       background: saving
-                        ? 'rgba(59,130,246,0.05)'
-                        : 'rgba(59,130,246,0.12)',
-                      border: `1px solid ${saving ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.35)'}`,
+                        ? 'rgba(76,29,149,0.05)'
+                        : 'rgba(76,29,149,0.12)',
+                      border: `1px solid ${saving ? 'rgba(76,29,149,0.1)' : 'rgba(76,29,149,0.35)'}`,
                       borderRadius: '6px',
-                      color: saving ? '#64748B' : '#3B82F6',
+                      color: saving ? 'var(--color-muted)' : '#4C1D95',
                       fontSize: '12px',
                       cursor: saving ? 'not-allowed' : 'pointer',
                       letterSpacing: '0.05em',
@@ -1234,8 +1234,8 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                       transition: 'all 0.15s',
                       fontWeight: '500',
                     }}
-                    onMouseEnter={e => { if (!saving) { e.currentTarget.style.background = 'rgba(59,130,246,0.18)'; e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)' } }}
-                    onMouseLeave={e => { if (!saving) { e.currentTarget.style.background = 'rgba(59,130,246,0.12)'; e.currentTarget.style.borderColor = 'rgba(59,130,246,0.35)' } }}
+                    onMouseEnter={e => { if (!saving) { e.currentTarget.style.background = 'rgba(76,29,149,0.18)'; e.currentTarget.style.borderColor = 'rgba(76,29,149,0.5)' } }}
+                    onMouseLeave={e => { if (!saving) { e.currentTarget.style.background = 'rgba(76,29,149,0.12)'; e.currentTarget.style.borderColor = 'rgba(76,29,149,0.35)' } }}
                   >
                     {saving ? (
                       <>
@@ -1277,10 +1277,10 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
   const inputStyle = {
     width: '100%',
     padding: '9px 12px',
-    background: '#030609',
-    border: '1px solid #0F172A',
+    background: 'var(--color-panel)',
+    border: '1px solid var(--color-border)',
     borderRadius: '6px',
-    color: '#CBD5E1',
+    color: 'var(--color-text)',
     fontSize: '13px',
     transition: 'border-color 0.15s',
     outline: 'none',

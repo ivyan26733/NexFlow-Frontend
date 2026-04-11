@@ -258,7 +258,7 @@ export default function ForkConfig({ config, onChange }: ForkConfigProps) {
         </div>
         {safeConfig.branches.map(name => (
           <div key={name}>
-            <span style={{ color: '#6366f1' }}>nex.{name}.</span>
+            <span style={{ color: '#1E3A5F' }}>nex.{name}.</span>
             <span style={{ color: MUTED }}>{'{nodeLabel}'}</span>
           </div>
         ))}

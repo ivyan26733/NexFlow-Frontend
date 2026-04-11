@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Play, Clock, Zap, Search, X, Edit3, Eye, LogIn, User, Archive, CheckCircle2, FilePenLine, Trash2 } from 'lucide-react'
+import { Plus, Play, Clock, Zap, Search, X, Edit3, Eye, LogIn, User, Archive, CheckCircle2, FilePenLine, Trash2, Download, Upload } from 'lucide-react'
 import CardMenu from '@/CardMenu'
 import { api } from '@/api'
 import type { Flow, FlowStatus } from '@/types'
@@ -12,10 +12,10 @@ import { isLoggedIn } from '@/lib/auth'
 import { useAuthGuard } from '@/components/AuthGuardProvider'
 
 const STATUS_META: Record<string, { color: string; bg: string; dot: string }> = {
-  DRAFT:    { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)',  dot: '#64748b' },
-  ACTIVE:   { color: '#00e676', bg: 'rgba(0,230,118,0.1)',    dot: '#00e676' },
+  DRAFT:    { color: '#A8927A', bg: 'rgba(168,146,122,0.12)',  dot: '#6B5A45' },
+  ACTIVE:   { color: '#15803d', bg: 'rgba(21,128,61,0.1)',    dot: '#15803d' },
   PAUSED:   { color: '#ffab00', bg: 'rgba(255,171,0,0.1)',    dot: '#ffab00' },
-  ARCHIVED: { color: '#ff4444', bg: 'rgba(255,68,68,0.1)',    dot: '#ff4444' },
+  ARCHIVED: { color: '#b91c1c', bg: 'rgba(185,28,28,0.1)',    dot: '#b91c1c' },
 }
 
 export default function FlowsPage() {
@@ -26,10 +26,12 @@ export default function FlowsPage() {
   const [guest,     setGuest]     = useState(false)
   const [creating,  setCreating]  = useState(false)
   const [submitting,setSubmitting]= useState(false)
+  const [importing, setImporting] = useState(false)
   const [newName,   setNewName]   = useState('')
   const [search,    setSearch]    = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'DRAFT' | 'ARCHIVED'>('ALL')
   const createRef = useRef(false)
+  const importInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -76,6 +78,43 @@ export default function FlowsPage() {
     setFlows(fs => fs.map(f => (f.id === id ? { ...f, status: updated.status, updatedAt: updated.updatedAt } : f)))
   }
 
+  async function exportFlow(flow: Flow) {
+    try {
+      const bundle = await api.flows.export(flow.id)
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${flow.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.nexflow.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('Export failed', e)
+      alert('Failed to export flow.')
+    }
+  }
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImporting(true)
+    try {
+      const text = await file.text()
+      const bundle = JSON.parse(text)
+      const imported = await api.flows.import(bundle)
+      setFlows(fs => [imported, ...fs])
+      router.push(`/studio/${imported.id}`)
+    } catch (err) {
+      console.error('Import failed', err)
+      alert('Failed to import flow. Make sure the file is a valid .nexflow.json export.')
+    } finally {
+      setImporting(false)
+      if (importInputRef.current) importInputRef.current.value = ''
+    }
+  }
+
   function handleNewFlow() {
     requireAuth(() => setCreating(true))
   }
@@ -101,23 +140,39 @@ export default function FlowsPage() {
             Build, connect and run your automation workflows
           </p>
         </div>
-        <button className="btn-primary" onClick={handleNewFlow} style={{ padding: '0.625rem 1.375rem', fontSize: '0.9375rem' }}>
-          <Plus size={16} /> New Flow
-        </button>
+        <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'center' }}>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".json,.nexflow.json"
+            style={{ display: 'none' }}
+            onChange={handleImportFile}
+          />
+          <button
+            onClick={() => requireAuth(() => importInputRef.current?.click())}
+            disabled={importing}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.625rem 1.125rem', fontSize: '0.9375rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.625rem', cursor: importing ? 'not-allowed' : 'pointer', color: 'var(--color-text)', fontWeight: 500, opacity: importing ? 0.6 : 1 }}
+          >
+            <Upload size={15} /> {importing ? 'Importing…' : 'Import'}
+          </button>
+          <button className="btn-primary" onClick={handleNewFlow} style={{ padding: '0.625rem 1.375rem', fontSize: '0.9375rem' }}>
+            <Plus size={16} /> New Flow
+          </button>
+        </div>
       </div>
 
       <div className="stats-grid-4">
         {[
-          { key: 'ALL' as const,      label: 'Total Flows', value: stats.total,    color: '#e2e8f0' },
-          { key: 'ACTIVE' as const,   label: 'Active',      value: stats.active,   color: '#00e676' },
-          { key: 'DRAFT' as const,    label: 'Draft',       value: stats.draft,    color: '#64748b' },
-          { key: 'ARCHIVED' as const, label: 'Archived',    value: stats.archived, color: '#ff4444' },
+          { key: 'ALL' as const,      label: 'Total Flows', value: stats.total,    color: '#A8927A' },
+          { key: 'ACTIVE' as const,   label: 'Active',      value: stats.active,   color: '#15803d' },
+          { key: 'DRAFT' as const,    label: 'Draft',       value: stats.draft,    color: '#6B5A45' },
+          { key: 'ARCHIVED' as const, label: 'Archived',    value: stats.archived, color: '#b91c1c' },
         ].map(s => (
           <button key={s.label} type="button" onClick={() => { setStatusFilter(s.key); setPage(1) }} style={{
             background: 'var(--color-surface)', border: '1px solid var(--color-border)',
             borderRadius: '0.875rem', padding: '1.25rem 1.5rem',
             textAlign: 'left', cursor: 'pointer',
-            boxShadow: statusFilter === s.key ? '0 0 0 1px rgba(0,212,255,0.35) inset' : 'none',
+            boxShadow: statusFilter === s.key ? '0 0 0 1px rgba(154,52,18,0.35) inset' : 'none',
           }}>
             <p style={{ fontSize: '1.875rem', fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</p>
             <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginTop: '0.375rem' }}>{s.label}</p>
@@ -160,6 +215,7 @@ export default function FlowsPage() {
                 onOpenEdit={() => router.push(`/studio/${flow.id}`)}
                 onDelete={() => handleDeleteFlow(flow.id)}
                 onSetStatus={(status) => requireAuth(() => updateFlowStatus(flow.id, status))}
+                onExport={() => exportFlow(flow)}
               />
             ))}
           </div>
@@ -203,13 +259,14 @@ export default function FlowsPage() {
 }
 
 function FlowCard({
-  flow, onOpenView, onOpenEdit, onDelete, onSetStatus,
+  flow, onOpenView, onOpenEdit, onDelete, onSetStatus, onExport,
 }: {
   flow: Flow
   onOpenView: () => void
   onOpenEdit: () => void
   onDelete: () => void
   onSetStatus: (status: FlowStatus) => void
+  onExport: () => void
 }) {
   const sc = STATUS_META[flow.status] ?? STATUS_META.DRAFT
   const isActive = flow.status === 'ACTIVE'
@@ -256,6 +313,7 @@ function FlowCard({
           <CardMenu items={[
             { label: 'View mode',  onClick: onOpenView, icon: <Eye size={14} /> },
             { label: 'Edit mode',  onClick: onOpenEdit, icon: <Edit3 size={14} /> },
+            { label: 'Export',     onClick: onExport,   icon: <Download size={14} /> },
             ...(flow.status !== 'ACTIVE' ? [{ label: 'Mark Active', onClick: () => onSetStatus('ACTIVE'), icon: <CheckCircle2 size={14} /> }] : []),
             ...(flow.status !== 'DRAFT' ? [{ label: 'Move to Draft', onClick: () => onSetStatus('DRAFT'), icon: <FilePenLine size={14} /> }] : []),
             ...(flow.status !== 'ARCHIVED'
@@ -311,7 +369,7 @@ function GuestState() {
         Build powerful no-code automation workflows with AI, scripts, parallel branches and more. Sign in to create and manage your flows.
       </p>
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-        <a href="/signup" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.75rem', fontSize: '0.9375rem', color: '#0a0d14', textDecoration: 'none', background: 'linear-gradient(135deg, #00D4FF 0%, #6366F1 100%)', borderRadius: '0.625rem', fontWeight: 600 }}>
+        <a href="/signup" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.75rem', fontSize: '0.9375rem', color: 'var(--color-on-accent)', textDecoration: 'none', background: 'var(--grad-accent)', borderRadius: '0.625rem', fontWeight: 600 }}>
           <Plus size={16} /> Create free account
         </a>
         <a href="/login" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.75rem', fontSize: '0.9375rem', color: 'var(--color-text)', textDecoration: 'none', border: '1px solid var(--color-border)', borderRadius: '0.625rem', fontWeight: 500 }}>

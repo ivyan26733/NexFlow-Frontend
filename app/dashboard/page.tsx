@@ -177,10 +177,10 @@ export default function DashboardLandingPage() {
           </>
         ) : (
           <>
-            <KpiCard icon={<Layers size={16} />} label="Total Flows" value={summary?.totalFlows ?? 0} tone="#a78bfa" gradient="linear-gradient(135deg, rgba(167,139,250,0.12), rgba(139,92,246,0.04))" />
-            <KpiCard icon={<CheckCircle2 size={16} />} label="Successful" value={successCount} tone="#00e676" gradient="linear-gradient(135deg, rgba(0,230,118,0.12), rgba(0,200,83,0.04))" />
-            <KpiCard icon={<AlertTriangle size={16} />} label="Failed" value={failureCount} tone="#ff6666" gradient="linear-gradient(135deg, rgba(255,102,102,0.12), rgba(239,68,68,0.04))" />
-            <KpiCard icon={<Activity size={16} />} label="Running" value={runningCount} tone="#00d4ff" gradient="linear-gradient(135deg, rgba(0,212,255,0.12), rgba(6,182,212,0.04))" />
+            <KpiCard icon={<Layers size={16} />} label="Total Flows" value={summary?.totalFlows ?? 0} tone="#9A3412" gradient="linear-gradient(135deg, rgba(154,52,18,0.14), rgba(154,52,18,0.04))" />
+            <KpiCard icon={<CheckCircle2 size={16} />} label="Successful" value={successCount} tone="#15803d" gradient="linear-gradient(135deg, rgba(21,128,61,0.14), rgba(20,83,45,0.05))" />
+            <KpiCard icon={<AlertTriangle size={16} />} label="Failed" value={failureCount} tone="#b91c1c" gradient="linear-gradient(135deg, rgba(185,28,28,0.12), rgba(127,29,29,0.05))" />
+            <KpiCard icon={<Activity size={16} />} label="Running" value={runningCount} tone="#1E3A5F" gradient="linear-gradient(135deg, rgba(30,58,95,0.14), rgba(30,58,95,0.04))" />
           </>
         )}
       </div>
@@ -206,7 +206,7 @@ export default function DashboardLandingPage() {
               title="Peak External Traffic"
               value={peakExternal ? peakExternal.at : 'No external hits'}
               sub={peakExternal ? `${peakExternal.count} PULSE hits in that hour` : 'External /api/pulse hits'}
-              accent="#6366f1"
+              accent="#1E3A5F"
             />
           </>
         )}
@@ -224,7 +224,7 @@ export default function DashboardLandingPage() {
             title="Last Active Flow"
             value={latestFlow?.name ?? 'No flows yet'}
             sub={latestFlow?.updatedAt ? `Updated ${relativeTime(latestFlow.updatedAt)}` : 'Create a flow to start'}
-            accent="#00d4ff"
+            accent="#9A3412"
             onClick={latestFlow ? () => router.push(`/studio/${latestFlow.id}`) : undefined}
           />
         )}
@@ -250,9 +250,9 @@ export default function DashboardLandingPage() {
               <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>7-DAY PERFORMANCE</span>
             </div>
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <ChartLegend color="#00e676" label="Success" />
-              <ChartLegend color="#ff6666" label="Failure" />
-              <ChartLegend color="#00d4ff" label="Running" />
+              <ChartLegend color="#15803d" label="Success" />
+              <ChartLegend color="#b91c1c" label="Failure" />
+              <ChartLegend color="#1E3A5F" label="Running" />
             </div>
           </div>
           {analyticsLoading ? <LoadingBlock height={160} /> : <BarChart data={dailyPerf} />}
@@ -323,7 +323,7 @@ export default function DashboardLandingPage() {
         <div className="dash-card" style={{ overflow: 'hidden', marginBottom: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Sparkles size={14} style={{ color: '#6366f1' }} />
+              <Sparkles size={14} style={{ color: '#9A3412' }} />
               <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>RECENT TRANSACTIONS</span>
             </div>
             <button onClick={() => router.push('/transactions')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
@@ -341,11 +341,11 @@ export default function DashboardLandingPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
               {recentExecs.map(ex => {
                 const colors: Record<string, { dot: string; bg: string }> = {
-                  SUCCESS: { dot: '#00e676', bg: 'rgba(0,230,118,0.08)' },
-                  FAILURE: { dot: '#ff6666', bg: 'rgba(255,102,102,0.08)' },
-                  RUNNING: { dot: '#00d4ff', bg: 'rgba(0,212,255,0.08)' },
+                  SUCCESS: { dot: '#15803d', bg: 'rgba(21,128,61,0.1)' },
+                  FAILURE: { dot: '#b91c1c', bg: 'rgba(185,28,28,0.1)' },
+                  RUNNING: { dot: '#1E3A5F', bg: 'rgba(30,58,95,0.1)' },
                 }
-                const c = colors[ex.status] ?? { dot: '#64748b', bg: 'rgba(100,116,139,0.08)' }
+                const c = colors[ex.status] ?? { dot: '#6B5A45', bg: 'rgba(107,90,69,0.1)' }
                 return (
                   <div key={ex.id}
                     style={{
@@ -385,7 +385,7 @@ export default function DashboardLandingPage() {
       {/* ── Traffic Heatmap ── */}
       <div className="dash-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <TrendingUp size={14} style={{ color: '#6366f1' }} />
+          <TrendingUp size={14} style={{ color: '#1E3A5F' }} />
           <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>HOURLY TRAFFIC DISTRIBUTION (LAST 7 DAYS)</span>
         </div>
         {analyticsLoading ? <LoadingBlock height={90} /> : (
@@ -525,7 +525,7 @@ function SuccessGauge({ rate }: { rate: number }) {
   const radius = 52
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (rate / 100) * circumference
-  const color = rate >= 80 ? '#00e676' : rate >= 50 ? '#ffab00' : '#ff6666'
+  const color = rate >= 80 ? '#15803d' : rate >= 50 ? '#ffab00' : '#b91c1c'
 
   return (
     <div style={{ position: 'relative', width: '130px', height: '130px' }}>
@@ -567,9 +567,9 @@ function BarChart({ data }: { data: Array<{ day: string; label: string; success:
         return (
           <div key={d.day} style={{ textAlign: 'center' }}>
             <div style={{ height: `${barH + 2}px`, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '2px', marginBottom: '0.5rem' }}>
-              {hS > 0 && <div style={{ height: `${hS}px`, background: 'linear-gradient(180deg, rgba(0,230,118,0.9), rgba(0,200,83,0.6))', borderRadius: '4px 4px 1px 1px', transition: 'height 0.6s ease-out' }} />}
-              {hF > 0 && <div style={{ height: `${hF}px`, background: 'linear-gradient(180deg, rgba(255,102,102,0.9), rgba(239,68,68,0.6))', borderRadius: '2px', transition: 'height 0.6s ease-out' }} />}
-              {hR > 0 && <div style={{ height: `${hR}px`, background: 'linear-gradient(180deg, rgba(0,212,255,0.9), rgba(6,182,212,0.6))', borderRadius: '1px 1px 4px 4px', transition: 'height 0.6s ease-out' }} />}
+              {hS > 0 && <div style={{ height: `${hS}px`, background: 'linear-gradient(180deg, rgba(21,128,61,0.92), rgba(20,83,45,0.65))', borderRadius: '4px 4px 1px 1px', transition: 'height 0.6s ease-out' }} />}
+              {hF > 0 && <div style={{ height: `${hF}px`, background: 'linear-gradient(180deg, rgba(185,28,28,0.9), rgba(127,29,29,0.65))', borderRadius: '2px', transition: 'height 0.6s ease-out' }} />}
+              {hR > 0 && <div style={{ height: `${hR}px`, background: 'linear-gradient(180deg, rgba(30,58,95,0.9), rgba(30,58,95,0.55))', borderRadius: '1px 1px 4px 4px', transition: 'height 0.6s ease-out' }} />}
               {total === 0 && <div style={{ height: '2px', background: 'var(--color-border)', borderRadius: '1px', marginTop: 'auto' }} />}
             </div>
             <div style={{ fontSize: '0.72rem', color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}>{d.label}</div>
@@ -599,8 +599,8 @@ function MiniBar({ success, failure }: { success: number; failure: number }) {
   if (total === 0) return <div style={{ width: 48, height: 6, borderRadius: 3, background: 'var(--color-border)' }} />
   const pct = (success / total) * 100
   return (
-    <div style={{ width: 48, height: 6, borderRadius: 3, background: 'rgba(255,102,102,0.4)', overflow: 'hidden' }}>
-      <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: '#00e676', transition: 'width 0.4s ease-out' }} />
+    <div style={{ width: 48, height: 6, borderRadius: 3, background: 'rgba(185,28,28,0.35)', overflow: 'hidden' }}>
+      <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: '#15803d', transition: 'width 0.4s ease-out' }} />
     </div>
   )
 }
@@ -617,7 +617,7 @@ function HourlyHeatmap({ data }: { data: number[] }) {
         const intensity = count / max
         const bg = count === 0
           ? 'var(--color-panel)'
-          : `rgba(99,102,241, ${0.15 + intensity * 0.75})`
+          : `rgba(154, 52, 18, ${0.12 + intensity * 0.55})`
         return (
           <div key={hr} style={{ textAlign: 'center' }} title={`${String(hr).padStart(2, '0')}:00 — ${count} hits`}>
             <div style={{
@@ -806,8 +806,8 @@ function GuestDashboard() {
       }}>
         <div style={{
           width: '5rem', height: '5rem', borderRadius: '1.25rem',
-          background: 'linear-gradient(135deg,rgba(0,212,255,0.15),rgba(99,102,241,0.15))',
-          border: '1px solid rgba(0,212,255,0.2)',
+          background: 'linear-gradient(135deg,rgba(154,52,18,0.12),rgba(30,58,95,0.12))',
+          border: '1px solid rgba(154,52,18,0.22)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem',
         }}>
           <BarChart3 size={28} style={{ color: 'var(--color-accent)' }} />
@@ -819,8 +819,8 @@ function GuestDashboard() {
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href="/signup" style={{
             display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.75rem',
-            fontSize: '0.9375rem', color: '#0a0d14', textDecoration: 'none',
-            background: 'linear-gradient(135deg, #00D4FF 0%, #6366F1 100%)',
+            fontSize: '0.9375rem', color: 'var(--color-on-accent)', textDecoration: 'none',
+            background: 'var(--grad-accent)',
             borderRadius: '0.625rem', fontWeight: 600,
           }}>Create free account</a>
           <a href="/login" style={{

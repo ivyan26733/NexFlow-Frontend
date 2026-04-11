@@ -79,7 +79,7 @@ export default function JoinConfig({ config, onChange }: JoinConfigProps) {
         </div>
         <div>1. Waits for all branches defined on the paired FORK.</div>
         <div>2. Merges each branch result into the main nex.</div>
-        <div>3. Writes timing metadata to <span style={{ color: '#6366f1' }}>nex.join.*</span></div>
+        <div>3. Writes timing metadata to <span style={{ color: '#1E3A5F' }}>nex.join.*</span></div>
         <div>4. Flow continues to the next node with full merged context.</div>
       </div>
 
@@ -91,8 +91,8 @@ export default function JoinConfig({ config, onChange }: JoinConfigProps) {
         <div style={{ color: TEXT, fontWeight: 700, marginBottom: 6, fontSize: 10 }}>
           ACCESS MERGED DATA AFTER JOIN
         </div>
-        <div><span style={{ color: '#6366f1' }}>{'{{nex.branchA.nodeLabel.field}}'}</span></div>
-        <div><span style={{ color: '#6366f1' }}>{'{{nex.branchB.nodeLabel.field}}'}</span></div>
+        <div><span style={{ color: '#1E3A5F' }}>{'{{nex.branchA.nodeLabel.field}}'}</span></div>
+        <div><span style={{ color: '#1E3A5F' }}>{'{{nex.branchB.nodeLabel.field}}'}</span></div>
         <div style={{ marginTop: 6 }}>
           <span style={{ color: EMERALD }}>nex.join.totalParallelMs</span>
           <span style={{ color: MUTED }}> — elapsed time for parallel window</span>

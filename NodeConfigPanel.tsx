@@ -29,7 +29,7 @@ interface Props {
 }
 
 
-// Mirrors the backend FlowExecutionEngine.toLabelKey() conversion.
+// Mirrors the backend label-to-key rule so the UI and engine use the same name.
 // "Calculate Discount" → "calculateDiscount"
 // "My HTTP Call"       → "myHttpCall"
 function toLabelKey(label: string): string {
@@ -151,6 +151,7 @@ export default function NodeConfigPanel({ node, currentFlowId, onUpdate, onClose
 
 // ── Route to the right config component ──────────────────────────────────────
 
+// Keep this switch in sync with the supported node types.
 function NodeForm({ nodeType, config, currentFlowId, onChange, nodeLabel }: {
   nodeType:      NodeType
   config:        Record<string, unknown>
@@ -179,7 +180,7 @@ function NodeForm({ nodeType, config, currentFlowId, onChange, nodeLabel }: {
 function StartHint() {
   return (
     <p className="config-panel-description">
-      The Start node receives the incoming trigger payload.{' '}
+      The Start node is where the incoming request body first enters the flow.{' '}
       <span className="config-panel-code-inline">{'{{nodes.start.output.*}}'}</span>
     </p>
   )

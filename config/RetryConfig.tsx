@@ -17,6 +17,7 @@ export default function RetryConfig({ config, onChange }: Props) {
   const retry = (config.retry as RetryConfigShape | undefined) ?? {}
   const enabled = (retry.maxRetries ?? 0) > 0
 
+  // Clamp values so a bad edit cannot push the retry settings out of range.
   const maxRetries = clampNumber(retry.maxRetries ?? 3, 1, 10)
   const backoffMs = clampNumber(retry.backoffMs ?? 1000, 100, 30000)
   const backoffMultiplier = normalizeMultiplier(retry.backoffMultiplier ?? 2.0)

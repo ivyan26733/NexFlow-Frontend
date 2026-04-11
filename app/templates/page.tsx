@@ -52,14 +52,14 @@ async function createFlowFromTemplate(template: Template, flowName: string): Pro
 // ─── Node type pill ──────────────────────────────────────────────────────────
 
 const NODE_COLORS: Record<string, string> = {
-  START: '#64748b', SUCCESS: '#10B981', FAILURE: '#ef4444',
-  AI: '#6366F1', SCRIPT: '#F59E0B', NEXUS: '#00D4FF',
-  FORK: '#F59E0B', JOIN: '#10B981', DECISION: '#EC4899',
-  VARIABLE: '#94a3b8', MAPPER: '#94a3b8', LOOP: '#F59E0B', SUB_FLOW: '#6366F1',
+  START: '#D97706', SUCCESS: '#15803D', FAILURE: '#B91C1C',
+  AI: '#6D28D9', SCRIPT: '#92400E', NEXUS: '#4C1D95',
+  FORK: '#B45309', JOIN: '#065F46', DECISION: '#C2410C',
+  VARIABLE: '#57534E', MAPPER: '#0F766E', LOOP: '#9F1239', SUB_FLOW: '#3F6212',
 }
 
 function NodePill({ type }: { type: string }) {
-  const color = NODE_COLORS[type] ?? '#64748b'
+  const color = NODE_COLORS[type] ?? '#57534E'
   return (
     <span style={{
       fontSize: '0.65rem', fontFamily: 'var(--font-mono)', padding: '0.175rem 0.5rem',
@@ -101,9 +101,9 @@ function TemplateCard({ template, onUse }: { template: Template; onUse: (t: Temp
         <span style={{
           fontSize: '0.65rem', fontFamily: 'var(--font-mono)', padding: '0.2rem 0.6rem',
           borderRadius: '999px', flexShrink: 0,
-          background: template.category === 'basic' ? 'rgba(16,185,129,0.1)' : 'rgba(99,102,241,0.1)',
-          color: template.category === 'basic' ? '#10B981' : '#6366F1',
-          border: `1px solid ${template.category === 'basic' ? '#10B98140' : '#6366F140'}`,
+          background: template.category === 'basic' ? 'rgba(21,128,61,0.1)' : 'rgba(154,52,18,0.1)',
+          color: template.category === 'basic' ? '#15803d' : '#9A3412',
+          border: `1px solid ${template.category === 'basic' ? 'rgba(21,128,61,0.25)' : 'rgba(154,52,18,0.25)'}`,
         }}>
           {template.category === 'basic' ? 'BASIC' : 'COMPLEX'}
         </span>
@@ -314,10 +314,10 @@ export default function TemplatesPage() {
       {/* Stats */}
       <div className="stats-grid-4" style={{ marginBottom: '2rem' }}>
         {[
-          { label: 'Total Templates', value: TEMPLATES.length,  color: '#e2e8f0' },
-          { label: 'Basic',           value: basicCount,         color: '#10B981' },
-          { label: 'Complex',         value: complexCount,       color: '#6366F1' },
-          { label: 'Node Types',      value: 8,                  color: '#00D4FF' },
+          { label: 'Total Templates', value: TEMPLATES.length,  color: '#A8927A' },
+          { label: 'Basic',           value: basicCount,         color: '#15803d' },
+          { label: 'Complex',         value: complexCount,       color: '#9A3412' },
+          { label: 'Node Types',      value: 8,                  color: '#1E3A5F' },
         ].map(s => (
           <div key={s.label} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.875rem', padding: '1.25rem 1.5rem' }}>
             <p style={{ fontSize: '1.875rem', fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</p>

@@ -49,14 +49,14 @@ export default function NexusPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem' }}>
         <div>
-          <p style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: 'var(--color-muted)', letterSpacing: '0.12em', marginBottom: '0.4rem' }}>CONNECTIONS</p>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.4rem' }}>Nexus</h1>
+          <p style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: '#4C1D95', letterSpacing: '0.12em', marginBottom: '0.4rem' }}>CONNECTIONS</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--color-text)' }}>Nexus</h1>
           <p style={{ color: 'var(--color-muted)', fontSize: '0.875rem' }}>
             Manage reusable API connectors. Use them in HTTP Call (Nexus) nodes or configure a quick URL inline in Studio.
           </p>
         </div>
         <button onClick={openCreate}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: 'var(--color-accent)', color: '#0a0d14', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', flexShrink: 0 }}>
+          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: '#4C1D95', color: '#F9F3EC', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', flexShrink: 0 }}>
           <Plus size={15} /> New Connector
         </button>
       </div>
@@ -98,12 +98,12 @@ function ConnectorCard({ connector, onEdit, onDelete }: {
   onEdit: () => void
   onDelete: () => void
 }) {
-  const authColor = connector.authType === 'NONE' ? 'var(--color-muted)' : '#00d4ff'
+  const authColor = connector.authType === 'NONE' ? 'var(--color-muted)' : '#4C1D95'
 
   return (
     <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-      <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem', background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Link size={15} style={{ color: 'var(--color-accent)' }} />
+      <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem', background: 'rgba(76,29,149,0.1)', border: '1px solid rgba(76,29,149,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Link size={15} style={{ color: '#4C1D95' }} />
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -233,7 +233,7 @@ function ConnectorModal({ initial, onSave, onClose }: {
         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
           <button onClick={onClose} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
           <button onClick={submit} disabled={saving || !form.name?.trim()}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1.25rem', background: 'var(--color-accent)', color: '#0a0d14', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', opacity: (!form.name?.trim() || saving) ? 0.5 : 1 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1.25rem', background: '#4C1D95', color: '#F9F3EC', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', opacity: (!form.name?.trim() || saving) ? 0.5 : 1 }}>
             {saving ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={14} />}
             {saving ? 'Saving…' : 'Save'}
           </button>
@@ -269,7 +269,7 @@ function KVEditor({ rows, onChange, keyPlaceholder, valuePlaceholder }: {
           </button>
         </div>
       ))}
-      <button onClick={add} style={{ alignSelf: 'flex-start', fontSize: '0.75rem', color: 'var(--color-accent)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.2rem 0' }}>
+      <button onClick={add} style={{ alignSelf: 'flex-start', fontSize: '0.75rem', color: '#4C1D95', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.2rem 0' }}>
         <Plus size={12} /> Add
       </button>
     </div>
@@ -291,7 +291,7 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
       <Key size={32} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
       <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>No connectors yet</h2>
       <p style={{ fontSize: '0.875rem', marginBottom: '1.5rem' }}>Create a connector to store API credentials and reuse them in your flows.</p>
-      <button onClick={onCreate} style={{ padding: '0.5rem 1.25rem', background: 'var(--color-accent)', color: '#0a0d14', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}>
+      <button onClick={onCreate} style={{ padding: '0.5rem 1.25rem', background: '#4C1D95', color: '#F9F3EC', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}>
         Create Connector
       </button>
     </div>

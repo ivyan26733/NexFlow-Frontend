@@ -5,8 +5,9 @@ import dynamic from 'next/dynamic'
 import NavSettingsDropdown from '@/components/nav/NavSettingsDropdown'
 import { AuthGuardProvider } from '@/components/AuthGuardProvider'
 
-const UserMenu    = dynamic(() => import('@/components/nav/UserMenu'),    { ssr: false })
-const AuthRedirect = dynamic(() => import('@/components/AuthRedirect'),   { ssr: false })
+const UserMenu         = dynamic(() => import('@/components/nav/UserMenu'),        { ssr: false })
+const AuthRedirect     = dynamic(() => import('@/components/AuthRedirect'),         { ssr: false })
+const FloatingAssistant = dynamic(() => import('@/components/FloatingAssistant'),   { ssr: false })
 
 export const metadata: Metadata = {
   title:       'Nexflow',
@@ -19,16 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{ margin: 0, minHeight: '100vh', background: 'var(--color-base)', color: 'var(--color-text)' }}>
         <nav className="app-nav">
           <a href="/" className="nav-brand">
-            <span
-              className="logo-box"
-              style={{
-                background: 'linear-gradient(135deg, #00D4FF 0%, #6366F1 100%)',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-                fontWeight: 800,
-                color: '#0a0d14',
-              }}
-            >
+            <span className="logo-box" style={{ borderRadius: '6px' }}>
               N
             </span>
             <span className="logo-text">NEXFLOW</span>
@@ -40,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <a href="/transactions">Transactions</a>
           <a href="/templates">Templates</a>
           <a href="/nexus">Nexus</a>
+          <a href="/transfer">Transfer</a>
           <a href="/about">About</a>
           <div className="nav-divider" />
           <NavSettingsDropdown />
@@ -52,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthGuardProvider>
           <main style={{ minHeight: 'calc(100vh - 3.5rem)' }}>{children}</main>
         </AuthGuardProvider>
+        <FloatingAssistant />
       </body>
     </html>
   )

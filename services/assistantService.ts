@@ -1,5 +1,5 @@
-// NexFlow Assistant — calls the assistant server.
-// BASE URL reads NEXT_PUBLIC_ASSISTANT_URL first, falls back to the main API URL.
+// NexFlow Assistant - calls the assistant server.
+// BASE URL reads NEXT_PUBLIC_ASSISTANT_URL first, then falls back to the main API URL.
 
 const BASE = process.env.NEXT_PUBLIC_ASSISTANT_URL
   ?? process.env.NEXT_PUBLIC_API_URL
@@ -11,7 +11,7 @@ export interface ChatMessage {
 }
 
 // Compact flow representation sent to the assistant for flow-scan requests.
-// Strips all visual/render fields — only topology and config matter.
+// Only the logic and config matter here, not the visual canvas details.
 export interface FlowNodeSnapshot {
   id:     string
   type:   string
@@ -74,6 +74,8 @@ export async function sendMessage(
   flow?:        FlowSnapshot,
   transactions?: TransactionDigest[],
 ): Promise<AssistantResponse> {
+  // The assistant gets the user message plus optional flow and transaction context.
+  // That lets it answer both "how do I build this?" and "why is this failing?".
   const res = await fetch(`${BASE}/api/assistant/chat`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },

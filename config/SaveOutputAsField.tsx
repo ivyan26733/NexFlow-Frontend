@@ -11,6 +11,7 @@ interface Props {
 }
 
 export default function SaveOutputAsField({ config, onChange }: Props) {
+  // This name becomes nex.NAME in downstream nodes.
   const currentSaveAs = (config.saveOutputAs as string) ?? ''
   const [inputValue, setInputValue] = useState(currentSaveAs)
   const [lastValid, setLastValid] = useState(currentSaveAs)

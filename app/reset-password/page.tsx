@@ -59,8 +59,8 @@ function ResetPasswordForm() {
           <span style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             width: '2rem', height: '2rem',
-            background: 'linear-gradient(135deg, #00D4FF 0%, #6366F1 100%)',
-            borderRadius: '6px', fontSize: '0.875rem', fontWeight: 800, color: '#0a0d14',
+            background: 'var(--grad-accent)',
+            borderRadius: '6px', fontSize: '0.875rem', fontWeight: 800, color: 'var(--color-on-accent)',
           }}>N</span>
           <span style={{ fontWeight: 700, fontSize: '1.05rem', letterSpacing: '0.05em' }}>NEXFLOW</span>
         </div>
@@ -69,10 +69,10 @@ function ResetPasswordForm() {
           <>
             <div style={{
               width: '3rem', height: '3rem', borderRadius: '0.75rem',
-              background: 'rgba(0,230,118,0.1)', border: '1px solid #00e676',
+              background: 'var(--color-success-bg)', border: '1px solid rgba(21,128,61,0.45)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem',
             }}>
-              <CheckCircle size={20} style={{ color: '#00e676' }} />
+              <CheckCircle size={20} style={{ color: 'var(--color-success)' }} />
             </div>
             <h1 style={{ fontSize: '1.375rem', fontWeight: 700, marginBottom: '0.5rem' }}>Password updated</h1>
             <p style={{ fontSize: '0.875rem', color: 'var(--color-muted)', marginBottom: '1.75rem', lineHeight: 1.6 }}>

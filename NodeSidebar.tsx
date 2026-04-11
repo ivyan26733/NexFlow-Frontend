@@ -95,7 +95,7 @@ function StartNodeHint() {
   const meta = NODE_META.START
 
   return (
-    <div className="studio-sidebar-node" style={{ borderStyle: 'dashed', opacity: 0.7, borderLeftColor: meta.color, background: 'rgba(26, 34, 53, 0.5)' }}>
+    <div className="studio-sidebar-node" style={{ borderStyle: 'dashed', opacity: 0.85, borderLeftColor: meta.color, background: 'rgba(254, 243, 199, 0.35)' }}>
       <div className="studio-sidebar-node-dot" style={{ background: meta.color }} />
       <span style={{ color: 'var(--color-muted)' }}>Start (auto)</span>
     </div>

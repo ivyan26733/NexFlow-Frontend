@@ -9,10 +9,10 @@ import { usePagination, PaginationControls } from '@/Pagination'
 import { MillennialLoader } from '@/MillennialLoader'
 
 const STATUS_META: Record<string, { color: string; bg: string; border: string }> = {
-  SUCCESS: { color: 'var(--color-success)', bg: 'rgba(0,230,118,0.08)',  border: 'rgba(0,230,118,0.2)'  },
-  FAILURE: { color: 'var(--color-failure)', bg: 'rgba(255,68,68,0.08)',  border: 'rgba(255,68,68,0.2)'  },
-  RUNNING: { color: 'var(--color-accent)',  bg: 'rgba(0,212,255,0.08)',  border: 'rgba(0,212,255,0.2)'  },
-  ALL:     { color: 'var(--color-muted)',   bg: 'transparent',           border: 'var(--color-border)'  },
+  SUCCESS: { color: '#15803d', bg: 'rgba(21,128,61,0.1)', border: 'rgba(21,128,61,0.22)' },
+  FAILURE: { color: '#b91c1c', bg: 'rgba(185,28,28,0.1)', border: 'rgba(185,28,28,0.22)' },
+  RUNNING: { color: '#1E3A5F', bg: 'rgba(30,58,95,0.1)', border: 'rgba(30,58,95,0.22)' },
+  ALL:     { color: 'var(--color-muted)', bg: 'transparent', border: 'var(--color-border)' },
 }
 
 export default function TransactionsPage() {
@@ -29,6 +29,7 @@ export default function TransactionsPage() {
   async function loadExecutions(mode: 'recent' | 'full' = listMode) {
     setLoading(true)
     try {
+      // We fetch counts and rows together so the summary cards and table stay in sync.
       const [s, data] = await Promise.all([
         api.executions.stats(),
         mode === 'full' ? api.executions.listFullHistory() : api.executions.listRecent(),
@@ -62,6 +63,7 @@ export default function TransactionsPage() {
   }, [executions, search])
 
   const filtered = useMemo(() => {
+    // Search first, then apply the status filter so the counters stay intuitive.
     if (filter === 'ALL') return searchFiltered
     return searchFiltered.filter(e => e.status === filter)
   }, [searchFiltered, filter])
@@ -76,6 +78,7 @@ export default function TransactionsPage() {
   }), [searchFiltered])
   const runningCount = stats?.running ?? executions.filter(e => e.status === 'RUNNING').length
 
+  // Helps keep the empty-state logic readable in both desktop and mobile layouts.
   const searchActive = search.trim().length > 0
 
   return (
@@ -96,10 +99,10 @@ export default function TransactionsPage() {
       {/* ── Stats (always all-time / accessible totals from DB) ── */}
       <div className="stats-grid-4">
         {[
-          { label: 'Total',   value: stats?.total ?? 0,    color: '#e2e8f0' },
-          { label: 'Success', value: stats?.success ?? 0, color: 'var(--color-success)' },
-          { label: 'Failure', value: stats?.failure ?? 0, color: 'var(--color-failure)' },
-          { label: 'Running', value: stats?.running ?? 0, color: 'var(--color-accent)'  },
+          { label: 'Total',   value: stats?.total ?? 0,    color: 'var(--color-text-light)' },
+          { label: 'Success', value: stats?.success ?? 0, color: '#15803d' },
+          { label: 'Failure', value: stats?.failure ?? 0, color: '#b91c1c' },
+          { label: 'Running', value: stats?.running ?? 0, color: '#1E3A5F' },
         ].map(s => (
           <div key={s.label} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.875rem', padding: '1.25rem 1.5rem' }}>
             <p style={{ fontSize: '1.875rem', fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</p>
@@ -155,9 +158,9 @@ export default function TransactionsPage() {
               fontSize: '0.8rem',
               borderRadius: '0.625rem',
               cursor: loading ? 'wait' : 'pointer',
-              border: '1px solid var(--color-accent)',
-              background: 'rgba(0,212,255,0.08)',
-              color: 'var(--color-accent)',
+              border: '1px solid rgba(30,58,95,0.35)',
+              background: 'rgba(30,58,95,0.08)',
+              color: '#1E3A5F',
               fontFamily: 'var(--font-mono)',
             }}
           >

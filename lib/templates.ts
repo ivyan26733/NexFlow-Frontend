@@ -41,7 +41,7 @@ export const TEMPLATES: Template[] = [
     nodeCount: 4,
     useCase: 'Pull data from a public or private API endpoint',
     icon: '⬡',
-    color: '#00D4FF',
+    color: '#1E3A5F',
     canvas: {
       nodes: [
         n('s', 'START',   'Start',           100, 200),
@@ -70,7 +70,7 @@ export const TEMPLATES: Template[] = [
     nodeCount: 3,
     useCase: 'Summarize, classify or transform text with AI',
     icon: '◎',
-    color: '#6366F1',
+    color: '#9A3412',
     canvas: {
       nodes: [
         n('s', 'START',   'Start',       100, 200),
@@ -197,7 +197,7 @@ export const TEMPLATES: Template[] = [
     nodeCount: 7,
     useCase: 'Compare AI provider responses in parallel and pick the best',
     icon: '⑃',
-    color: '#00D4FF',
+    color: '#1E3A5F',
     canvas: {
       nodes: [
         n('s',  'START',  'Start',          100, 300),
@@ -338,7 +338,7 @@ export const TEMPLATES: Template[] = [
     nodeCount: 7,
     useCase: 'Route requests to different paths based on computed score',
     icon: '⬡',
-    color: '#6366F1',
+    color: '#9A3412',
     canvas: {
       nodes: [
         n('s',  'START',    'Start',            100, 300),

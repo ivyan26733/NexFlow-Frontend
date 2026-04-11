@@ -95,7 +95,7 @@ export default function StudioPage() {
   edgesRef.current = edges
   flowIdRef.current = flowId
 
-  /* ───────────────────────── Load flow ───────────────────────── */
+  /* Load the saved flow metadata and canvas together. */
 
   useEffect(() => {
     const loadingFlowId = flowId
@@ -125,7 +125,7 @@ export default function StudioPage() {
     load()
   }, [flowId])
 
-  /* ───────────────────────── Live execution ───────────────────────── */
+  /* Live execution updates come from websockets so the canvas can show running nodes. */
 
   useExecutionSocket({
     executionId,
@@ -186,7 +186,7 @@ export default function StudioPage() {
     const sourceNode = nodes.find(n => n.id === source)
 
     if (sourceNode?.data?.nodeType === 'FORK' && sourceHandle && target) {
-      // Direct FORK branch handle → node: record target in branchNodeIds
+      // A direct FORK branch handle means this node belongs to that branch list.
       const branchName = sourceHandle
       setNodes(prevNodes => prevNodes.map(n => {
         if (n.id !== source) return n
@@ -206,8 +206,7 @@ export default function StudioPage() {
         }
       }))
     } else if (source && target) {
-      // Intra-branch edge: if the source already belongs to a FORK branch,
-      // cascade the target into that same branch so executeBranch sees all nodes.
+      // If an edge is inside a branch, keep that branch's node list in sync too.
       setNodes(prevNodes => prevNodes.map(n => {
         if (n.data.nodeType !== 'FORK') return n
         const prevConfig = (n.data.config ?? {}) as ForkNodeConfig & { branchNodeIds?: Record<string, string[]> }
@@ -233,8 +232,8 @@ export default function StudioPage() {
     const style = conditionType === 'CONTINUE'
       ? { stroke: '#F59E0B', strokeWidth: 2, strokeDasharray: '6 3' }
       : conditionType === 'FAILURE'
-        ? { stroke: '#ff4444', strokeWidth: 2 }
-        : { stroke: '#00e676', strokeWidth: 2 }
+        ? { stroke: '#b91c1c', strokeWidth: 2 }
+        : { stroke: '#15803d', strokeWidth: 2 }
     setEdges(eds =>
       addEdge(
         {
@@ -252,15 +251,14 @@ export default function StudioPage() {
   const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
     if (viewMode) return
 
-    // Build a set of (source, target) pairs being removed so we can check reachability
+    // Deleted edges may remove whole branch paths, so we check what is still reachable.
     const deletedPairs = new Set(deletedEdges.map(e => `${e.source}::${e.target}`))
 
     deletedEdges.forEach(edge => {
       const sourceNode = nodes.find(n => n.id === edge.source)
 
       if (sourceNode?.data?.nodeType === 'FORK' && edge.sourceHandle) {
-        // Direct FORK handle edge deleted — remove target and its transitive descendants
-        // from this branch (they are no longer reachable via the branch entry)
+        // Removing a branch entry edge should also unhook the branch target from that list.
         const branchName = edge.sourceHandle
         setNodes(prevNodes => prevNodes.map(n => {
           if (n.id !== edge.source) return n
@@ -281,9 +279,7 @@ export default function StudioPage() {
           }
         }))
       } else if (edge.source && edge.target) {
-        // Intra-branch edge deleted: remove target from any branch where source is present
-        // but only if the deleted edge was the sole connection (no other surviving edge
-        // from a branch member leads to the same target).
+        // For normal edges, only remove the target if nothing else still reaches it.
         const survivingEdges = edges.filter(e =>
           !deletedPairs.has(`${e.source}::${e.target}`)
         )
@@ -383,7 +379,9 @@ export default function StudioPage() {
   async function triggerFlow(payload: Record<string, unknown>) {
     setNodeStatuses({})
 
-    // Phase 1: prepare execution (create record, do NOT start)
+    // Studio uses a two-step start:
+    // 1) create the execution row
+    // 2) start it only after the websocket is ready
     const exec = await api.executions.prepare(flowSlug, payload)
     // eslint-disable-next-line no-console
     console.info('[Studio] Execution prepared, id=', exec.id)
@@ -604,7 +602,7 @@ function SaveConfirmModal({ warnings, onConfirm, onCancel }: {
             style={{
               padding: '0.5rem 1.25rem', borderRadius: '0.5rem', fontSize: '0.825rem',
               border: 'none',
-              background: hasWarnings ? 'linear-gradient(135deg,#F59E0B,#d97706)' : 'linear-gradient(135deg,#00d4ff,#7c3aed)',
+              background: hasWarnings ? 'linear-gradient(135deg,#F59E0B,#d97706)' : 'var(--grad-accent)',
               color: '#fff', cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit',
             }}
           >
@@ -912,7 +910,7 @@ function apiNodeToRfNode(n: ApiNode): Node {
 
 function apiEdgeToRfEdge(e: ApiEdge): Edge {
   const sourceHandle = e.sourceHandle ?? (e.conditionType === 'FAILURE' ? 'failure' : e.conditionType === 'CONTINUE' ? 'continue' : undefined)
-  const stroke = e.conditionType === 'CONTINUE' ? '#F59E0B' : (e.sourceHandle === 'failure' || e.conditionType === 'FAILURE') ? '#ff4444' : '#00e676'
+  const stroke = e.conditionType === 'CONTINUE' ? '#F59E0B' : (e.sourceHandle === 'failure' || e.conditionType === 'FAILURE') ? '#b91c1c' : '#15803d'
   const strokeDasharray = e.conditionType === 'CONTINUE' ? '6 3' : undefined
   return {
     id: e.id,

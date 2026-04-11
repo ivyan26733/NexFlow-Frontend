@@ -36,7 +36,7 @@ export default function TransactionDetailPage() {
     api.executions.getById(id as string)
       .then(d => {
         setDetail(d)
-        // Auto-expand failure nodes
+        // Auto-expand failed nodes first so the likely problem area is visible immediately.
         const auto: Record<string, boolean> = {}
         if (d.ncoSnapshot?.nodes) {
           Object.entries(d.ncoSnapshot.nodes).forEach(([, n]) => {
@@ -44,6 +44,7 @@ export default function TransactionDetailPage() {
           })
         }
         setExpanded(auto)
+        // The transaction detail page uses the saved canvas to map node IDs back to labels.
         if (d.flowId) {
           api.canvas.load(d.flowId).then(canvas => setFlowNodes(canvas.nodes ?? [])).catch(() => {})
         }
@@ -57,6 +58,7 @@ export default function TransactionDetailPage() {
     const logs = Object.entries(detail.ncoSnapshot.nodes).map(([, n]) => n as NodeLog)
     const order = detail.ncoSnapshot?.nodeExecutionOrder ?? []
     if (order.length > 0) {
+      // Keep the execution log in the exact order the engine ran the nodes.
       logs.sort((a, b) => {
         const ai = order.indexOf(a.nodeId)
         const bi = order.indexOf(b.nodeId)
@@ -83,9 +85,8 @@ export default function TransactionDetailPage() {
       if (!map[key]) map[key] = []
       map[key].push(ne)
     }
-    // Deduplicate: per branch, keep only one record per nodeId.
-    // Prefer the terminal record (SUCCESS/FAILURE) over RUNNING stubs.
-    // If multiple terminal records exist, prefer the latest (by finishedAt).
+    // Branch node rows can be written more than once, so collapse them down
+    // to the final record the user should care about while debugging.
     const deduped: Record<string, NodeExecution[]> = {}
     for (const [branch, executions] of Object.entries(map)) {
       const byNode: Record<string, NodeExecution> = {}
@@ -251,7 +252,7 @@ function NodeRow({ log, saveAs, isSelected, isLast, expanded, onToggleExpand, on
 }) {
   const isSuccess = log.status === 'SUCCESS'
   const isFailure = log.status === 'FAILURE'
-  const statusCol = isSuccess ? '#10b981' : isFailure ? '#ef4444' : '#00d4ff'
+  const statusCol = isSuccess ? '#15803d' : isFailure ? '#b91c1c' : '#1E3A5F'
   const hasError  = !!log.errorMessage || !!log.failureOutput
   const rowBorder = isLast ? 'none' : '1px solid var(--color-border)'
   const rowBg     = isSelected ? 'rgba(255,255,255,0.03)' : 'transparent'
@@ -517,7 +518,7 @@ function getFixHint(msg: string): string | null {
 
 /* ── Status dot ── */
 function NodeStatusDot({ status }: { status: NodeStatus }) {
-  const color = status === 'SUCCESS' ? '#10b981' : status === 'FAILURE' ? '#ef4444' : '#00d4ff'
+  const color = status === 'SUCCESS' ? '#15803d' : status === 'FAILURE' ? '#b91c1c' : '#1E3A5F'
   return (
     <div style={{ width: 9, height: 9, borderRadius: '50%', background: color, flexShrink: 0, boxShadow: `0 0 5px ${color}88` }} />
   )
@@ -525,7 +526,7 @@ function NodeStatusDot({ status }: { status: NodeStatus }) {
 
 /* ── Status badge ── */
 function StatusBadge({ status }: { status: string }) {
-  const color = status === 'SUCCESS' ? '#10b981' : status === 'FAILURE' ? '#ef4444' : '#00d4ff'
+  const color = status === 'SUCCESS' ? '#15803d' : status === 'FAILURE' ? '#b91c1c' : '#1E3A5F'
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.875rem', borderRadius: '9999px', background: color + '18', border: `1px solid ${color}44` }}>
       <div style={{ width: 7, height: 7, borderRadius: '50%', background: color }} />

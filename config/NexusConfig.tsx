@@ -25,7 +25,7 @@ export default function NexusConfig({ config, onChange }: Props) {
   const [error,       setError]       = useState<string | null>(null)
   const [selected,    setSelected]    = useState<NexusConnector | null>(null)
 
-  // Respect explicit requestMode so "Use connector" works before a connector is picked
+  // requestMode lets the user choose inline vs connector before the connector is set.
   const mode: RequestMode = (c.requestMode ?? (c.connectorId ? 'connector' : 'inline')) as RequestMode
 
   useEffect(() => {
@@ -107,7 +107,7 @@ export default function NexusConfig({ config, onChange }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
-      {/* Mode: Quick request (inline) vs Use connector — all on same page, no redirect */}
+      {/* Choose between a quick inline request and a saved connector. */}
       <Field label="REQUEST TYPE">
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button
@@ -215,7 +215,7 @@ export default function NexusConfig({ config, onChange }: Props) {
         </div>
       )}
 
-      {/* Mode-specific fields */}
+      {/* Show only the fields that match the selected connector type. */}
       {selected?.connectorType === 'REST' && (
         <RestFields c={c} set={set} />
       )}
@@ -226,6 +226,7 @@ export default function NexusConfig({ config, onChange }: Props) {
         </>
       )}
 
+      {/* Retry applies to this node too, so transient network errors can be retried. */}
       <RetryConfig config={config} onChange={onChange} />
     </div>
   )

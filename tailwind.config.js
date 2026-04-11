@@ -18,17 +18,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Nexflow design tokens
-        base:    '#0a0d14',
-        surface: '#111827',
-        panel:   '#1a2235',
-        border:  '#1e2d45',
-        accent:  '#00d4ff',
-        success: '#00e676',
-        failure: '#ff4444',
-        warning: '#ffab00',
-        muted:   '#4a5568',
-        text:    '#e2e8f0',
+        // Cognac & Navy — mirror app/globals.css semantic tokens
+        base:    '#F2E9DC',
+        surface: '#F9F3EC',
+        panel:   '#E8DCCF',
+        border:  '#C8B9A5',
+        accent:  '#9A3412',
+        success: '#14532D',
+        failure: '#7F1D1D',
+        warning: '#78350F',
+        muted:   '#6B5A45',
+        text:    '#1A1008',
       },
       fontFamily: {
         sans: ['var(--font-geist)', 'sans-serif'],

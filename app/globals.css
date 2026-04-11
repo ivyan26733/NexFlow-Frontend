@@ -4,19 +4,51 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Cognac & Navy — aligned with app/about (warm editorial) */
 :root {
   --font-geist: 'DM Sans', sans-serif;
   --font-mono:  'Space Mono', monospace;
-  --color-base:    #0a0d14;
-  --color-surface: #111827;
-  --color-panel:   #1a2235;
-  --color-border:  #1e2d45;
-  --color-accent:  #00d4ff;
-  --color-text:    #e2e8f0;
-  --color-muted:   #64748b;
-  --color-success: #00e676;
-  --color-failure: #ff4444;
-  --color-warning: #ffab00;
+
+  --color-base:        #F2E9DC;  /* warm sand */
+  --color-panel:       #E8DCCF;  /* toasted cream — panels, alt sections */
+  --color-surface:     #F9F3EC;  /* elevated cards */
+  --color-surface-alt: #FDF8F3;  /* lightest warm */
+  --color-border:      #C8B9A5;  /* tan border */
+  --color-border-soft: #D8CBBA;
+
+  --color-accent:      #9A3412;  /* terracotta — primary */
+  --color-accent-hover: #C2410C;
+  --color-accent-soft: #FEF0E7;  /* soft terracotta wash */
+  --color-on-accent:   #F9F3EC;  /* text on terracotta buttons */
+
+  --color-navy:        #1E3A5F;  /* contrast anchor */
+  --color-navy-soft:   #EFF6FF;
+
+  --color-text:        #1A1008;  /* warm near-black */
+  --color-muted:       #6B5A45;  /* warm brown */
+  --color-text-mid:    #3D3020;
+  --color-text-light:  #A8927A;
+
+  --grad-accent:       linear-gradient(135deg, #9A3412 0%, #1E3A5F 100%);
+  --grad-hero-warm:    linear-gradient(160deg, #F2E9DC 0%, #E8DCCF 55%, #DDD0BF 100%);
+
+  --color-success:     #14532D;
+  --color-success-bg:  #DCFCE7;
+  --color-failure:     #7F1D1D;
+  --color-failure-bg:  #FEE2E2;
+  --color-warning:     #78350F;
+  --color-warning-bg:  #FEF3C7;
+
+  /* Running / in-progress (charts, live status) — navy, not cyan */
+  --color-running:       #1E3A5F;
+  --color-running-soft: rgba(30, 58, 95, 0.12);
+  --color-running-faint: rgba(30, 58, 95, 0.06);
+
+  /* Studio canvas — slightly deeper sand so dark nodes read clearly */
+  --studio-canvas-bg:     #DDD0BF;
+  --studio-controls-bg:   #F9F3EC;
+  --studio-controls-edge: #C8B9A5;
+  --shadow-warm:          0 1px 4px rgba(26, 16, 8, 0.08), 0 4px 20px rgba(26, 16, 8, 0.06);
 }
 
 * {
@@ -74,10 +106,13 @@ select.input-base { appearance: none; cursor: pointer; }
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 0.25rem;
-  background: var(--color-accent);
+  background: var(--grad-accent);
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--color-on-accent);
+  font-weight: 800;
+  font-size: 0.875rem;
 }
 .app-nav .nav-brand .logo-text {
   font-family: var(--font-mono);
@@ -123,17 +158,17 @@ select.input-base { appearance: none; cursor: pointer; }
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   background: var(--color-accent);
-  color: var(--color-base);
+  color: var(--color-on-accent);
   border: none;
   border-radius: 0.5rem;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s;
+  transition: opacity 0.15s, transform 0.1s, background 0.15s;
   white-space: nowrap;
 }
 .dashboard-btn-primary:hover,
-.btn-primary:hover { opacity: 0.88; }
+.btn-primary:hover { opacity: 0.92; background: var(--color-accent-hover); }
 .dashboard-btn-primary:active,
 .btn-primary:active { transform: scale(0.98); }
 .dashboard-btn-primary:disabled,
@@ -177,14 +212,14 @@ select.input-base { appearance: none; cursor: pointer; }
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   color: var(--color-accent);
-  background: rgba(0, 212, 255, 0.08);
-  border: 1px solid rgba(0, 212, 255, 0.25);
+  background: var(--color-accent-soft);
+  border: 1px solid rgba(154, 52, 18, 0.28);
   border-radius: 0.5rem;
   text-decoration: none;
   transition: background 0.15s, border-color 0.15s;
 }
 .about-link:hover {
-  background: rgba(0, 212, 255, 0.15);
+  background: rgba(154, 52, 18, 0.12);
   border-color: var(--color-accent);
   color: var(--color-text);
 }
@@ -203,7 +238,7 @@ select.input-base { appearance: none; cursor: pointer; }
   padding: 1.25rem;
   cursor: pointer;
 }
-.dashboard-card:hover { border-color: var(--color-accent); background: var(--color-panel); }
+.dashboard-card:hover { border-color: var(--color-accent); background: var(--color-surface-alt); }
 .dashboard-card-title { font-weight: 500; color: var(--color-text); }
 .dashboard-card-meta { font-size: 0.75rem; color: var(--color-muted); margin-top: 0.5rem; }
 .dashboard-empty {
@@ -219,7 +254,7 @@ select.input-base { appearance: none; cursor: pointer; }
 .dashboard-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(26, 16, 8, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -350,7 +385,7 @@ select.input-base { appearance: none; cursor: pointer; }
 .studio-toolbar-btn:hover { color: var(--color-text); }
 .studio-toolbar-btn.accent {
   background: var(--color-accent);
-  color: var(--color-base);
+  color: var(--color-on-accent);
   border-color: var(--color-accent);
 }
 .studio-toolbar-btn.accent:hover { opacity: 0.9; }
@@ -389,17 +424,17 @@ select.input-base { appearance: none; cursor: pointer; }
   height: 2rem;
   border-radius: 999px;
   border: 1px solid var(--color-border);
-  background: rgba(10, 13, 20, 0.9);
+  background: rgba(249, 243, 236, 0.92);
   color: var(--color-muted);
   cursor: pointer;
   backdrop-filter: blur(6px);
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 .studio-sidebar-toggle:hover {
-  background: rgba(17, 24, 39, 0.95);
+  background: var(--color-surface-alt);
   border-color: var(--color-accent);
   color: var(--color-text);
-  box-shadow: 0 0 0 1px rgba(0,212,255,0.25);
+  box-shadow: 0 0 0 1px rgba(154, 52, 18, 0.22);
   transform: translateY(-1px);
 }
 @media (min-width: 1024px) {
@@ -669,11 +704,11 @@ select.input-base { appearance: none; cursor: pointer; }
   margin-top: 1.25rem;
   padding: 0.6rem 0.9rem;
   border-radius: 9999px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 55%),
-              radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.12), transparent 55%),
+  border: 1px solid var(--color-border-soft);
+  background: radial-gradient(circle at top left, rgba(154, 52, 18, 0.08), transparent 55%),
+              radial-gradient(circle at bottom right, rgba(30, 58, 95, 0.07), transparent 55%),
               var(--color-surface);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.35);
+  box-shadow: var(--shadow-warm);
 }
 .pagination-summary {
   display: flex;
@@ -712,8 +747,8 @@ select.input-base { appearance: none; cursor: pointer; }
   min-width: 2.3rem;
   height: 2rem;
   border-radius: 9999px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--color-border);
+  background: var(--color-panel);
   color: var(--color-text);
   font-size: 0.75rem;
   cursor: pointer;
@@ -724,10 +759,10 @@ select.input-base { appearance: none; cursor: pointer; }
   transition: background 0.12s ease, border-color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease, color 0.12s ease;
 }
 .pagination-btn:hover:not(:disabled) {
-  background: rgba(15, 23, 42, 0.95);
-  border-color: rgba(59, 130, 246, 0.8);
-  color: #e0f2fe;
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+  background: var(--color-surface-alt);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  box-shadow: 0 0 0 1px rgba(154, 52, 18, 0.2);
 }
 .pagination-btn:active:not(:disabled) {
   transform: scale(0.97);
@@ -775,7 +810,7 @@ select.input-base { appearance: none; cursor: pointer; }
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-warm);
   z-index: 20;
 }
 .card-menu-item {
@@ -820,10 +855,13 @@ select.input-base { appearance: none; cursor: pointer; }
   font-family: var(--font-geist), system-ui, sans-serif;
   font-size: 4rem;
   font-weight: 700;
-  color: #fff;
+  background: var(--grad-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   letter-spacing: -0.02em;
   line-height: 1;
-  text-shadow: 0 0 40px rgba(0, 212, 255, 0.25);
+  filter: drop-shadow(0 2px 12px rgba(154, 52, 18, 0.2));
 }
 .nexflow-loader-wave-wrap {
   width: 140px;
@@ -866,14 +904,15 @@ select.input-base { appearance: none; cursor: pointer; }
 }
 .nexus-page input::placeholder,
 .nexus-page textarea::placeholder {
-  color: #94A3B8;
+  color: var(--color-text-light);
 }
 .nexus-page select option {
-  background: #080D18;
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 .nexus-page ::-webkit-scrollbar { width: 4px; height: 4px; }
 .nexus-page ::-webkit-scrollbar-track { background: transparent; }
-.nexus-page ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 2px; }
+.nexus-page ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
 
 /* ── Node config panel (side panel when a node is opened) ───────────────────── */
 .node-config-panel {
@@ -942,7 +981,7 @@ select.input-base { appearance: none; cursor: pointer; }
   background: var(--color-surface);
   border-color: var(--color-accent);
   color: var(--color-accent);
-  box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.15);
+  box-shadow: 0 0 0 1px rgba(154, 52, 18, 0.18);
 }
 .config-panel-btn:active {
   transform: scale(0.98);
@@ -1161,7 +1200,7 @@ select.input-base { appearance: none; cursor: pointer; }
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .node-config-panel .input-base:focus {
-  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(154, 52, 18, 0.22);
 }
 
 @media (max-width: 640px) {
@@ -1228,8 +1267,9 @@ select.input-base { appearance: none; cursor: pointer; }
 
 /* ── Scrollbar ─────────────────────────────── */
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: #0a0d14; }
-::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 2px; }
+::-webkit-scrollbar-track { background: var(--color-panel); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-light); }
 
 @keyframes shimmer {
   0% { background-position: 200% 0; }
@@ -1238,23 +1278,23 @@ select.input-base { appearance: none; cursor: pointer; }
 
 /* ── React Flow canvas overrides ───────────────────────────── */
 .react-flow__container { width: 100% !important; height: 100% !important; }
-.react-flow { background-color: #0a0d14 !important; }
-.react-flow__background { background-color: #0a0d14 !important; }
-.react-flow__minimap    { background: #111827 !important; border: 1px solid #1e2d45; border-radius: 8px; }
-.react-flow__controls   { background: #111827 !important; border: 1px solid #1e2d45 !important; border-radius: 8px; overflow: hidden; }
+.react-flow { background-color: var(--studio-canvas-bg) !important; }
+.react-flow__background { background-color: var(--studio-canvas-bg) !important; }
+.react-flow__minimap    { background: var(--studio-controls-bg) !important; border: 1px solid var(--studio-controls-edge); border-radius: 8px; }
+.react-flow__controls   { background: var(--studio-controls-bg) !important; border: 1px solid var(--studio-controls-edge) !important; border-radius: 8px; overflow: hidden; }
 .react-flow__controls-button {
-  background: #111827 !important;
+  background: var(--studio-controls-bg) !important;
   border: none !important;
-  border-bottom: 1px solid #1e2d45 !important;
-  color: #e2e8f0 !important;
-  fill: #e2e8f0 !important;
+  border-bottom: 1px solid var(--studio-controls-edge) !important;
+  color: var(--color-text) !important;
+  fill: var(--color-text) !important;
 }
-.react-flow__controls-button:hover { background: #1a2235 !important; }
+.react-flow__controls-button:hover { background: var(--color-panel) !important; }
 
 /* edges */
 .react-flow__edge-path           { stroke-width: 2; }
-.react-flow__edge.selected .react-flow__edge-path { stroke: #00d4ff !important; }
-.react-flow__connection-line     { stroke: #00d4ff; stroke-width: 2; }
+.react-flow__edge.selected .react-flow__edge-path { stroke: var(--color-accent) !important; }
+.react-flow__connection-line     { stroke: var(--color-accent); stroke-width: 2; }
 
 /* selection box */
-.react-flow__selection { background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.4); }
+.react-flow__selection { background: rgba(154, 52, 18, 0.06); border: 1px solid rgba(154, 52, 18, 0.35); }

@@ -82,8 +82,8 @@ function LoginForm() {
           <span style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             width: '2rem', height: '2rem',
-            background: 'linear-gradient(135deg, #00D4FF 0%, #6366F1 100%)',
-            borderRadius: '6px', fontSize: '0.875rem', fontWeight: 800, color: '#0a0d14',
+            background: 'var(--grad-accent)',
+            borderRadius: '6px', fontSize: '0.875rem', fontWeight: 800, color: 'var(--color-on-accent)',
           }}>N</span>
           <span style={{ fontWeight: 700, fontSize: '1.05rem', letterSpacing: '0.05em' }}>NEXFLOW</span>
         </div>

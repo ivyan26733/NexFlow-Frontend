@@ -39,6 +39,8 @@ export function AssistantPanel({ onClose }: AssistantPanelProps) {
     const msg = (text ?? input).trim()
     if (!msg || loading) return
 
+    // Keep the UI responsive while the request is in flight.
+    // We append the user message immediately so the chat history mirrors what was sent.
     setInput('')
     setError('')
 
@@ -48,6 +50,7 @@ export function AssistantPanel({ onClose }: AssistantPanelProps) {
     setLoading(true)
 
     try {
+      // The assistant only sees the conversation history we pass here.
       const { reply } = await sendMessage(msg, messages)
       setMessages([...updatedHistory, { role: 'assistant', content: reply }])
     } catch (err: unknown) {
@@ -417,7 +420,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: 38,
     borderRadius: 8,
     border: 'none',
-    background: 'linear-gradient(135deg, #00d4ff, #7c3aed)',
+    background: 'linear-gradient(135deg, #9A3412, #1E3A5F)',
     color: '#fff',
     fontSize: 18,
     fontWeight: 700,

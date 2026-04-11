@@ -33,7 +33,7 @@ const PROVIDER_META: Record<string, { icon: string; color: string; keyPlaceholde
   },
   MISTRAL: {
     icon: '◈',
-    color: '#6366F1',
+    color: '#1E3A5F',
     keyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
     docsUrl: 'https://console.mistral.ai/api-keys/',
   },
@@ -475,9 +475,9 @@ export default function AiProvidersPage() {
       {/* ── Stats ── */}
       <div className="stats-grid-3">
         {[
-          { label: 'Providers',  value: totalCount,      color: '#e2e8f0' },
+          { label: 'Providers',  value: totalCount,      color: 'var(--color-text-light)' },
           { label: 'Configured', value: configuredCount, color: 'var(--color-accent)' },
-          { label: 'Active',     value: activeCount,     color: 'var(--color-success)' },
+          { label: 'Active',     value: activeCount,     color: '#15803d' },
         ].map(s => (
           <div key={s.label} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.875rem', padding: '1.25rem 1.5rem' }}>
             <p style={{ fontSize: '1.875rem', fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</p>

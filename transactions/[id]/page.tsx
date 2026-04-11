@@ -119,7 +119,7 @@ export default function TransactionDetailPage() {
 }
 
 function NodeLogCard({ log, isOpen, onToggle }: { log: NodeLog; isOpen: boolean; onToggle: () => void }) {
-  const statusCol = log.status === 'SUCCESS' ? '#00e676' : log.status === 'FAILURE' ? '#ff4444' : '#00d4ff'
+  const statusCol = log.status === 'SUCCESS' ? '#15803d' : log.status === 'FAILURE' ? '#b91c1c' : '#1E3A5F'
 
   return (
     <div style={{ background: 'var(--color-surface)', border: `1px solid`, borderColor: isOpen ? statusCol + '44' : 'var(--color-border)', borderRadius: '0.75rem', overflow: 'hidden', transition: 'border-color 0.15s' }}>
@@ -147,20 +147,20 @@ function NodeLogCard({ log, isOpen, onToggle }: { log: NodeLog; isOpen: boolean;
           {/* Error message */}
           {log.errorMessage && (
             <div style={{ background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.25)', borderRadius: '0.5rem', padding: '0.75rem 1rem' }}>
-              <p style={{ fontSize: '0.7rem', color: '#ff4444', fontFamily: 'var(--font-mono)', marginBottom: '0.25rem' }}>ERROR</p>
+              <p style={{ fontSize: '0.7rem', color: '#b91c1c', fontFamily: 'var(--font-mono)', marginBottom: '0.25rem' }}>ERROR</p>
               <p style={{ fontSize: '0.8rem', color: '#ff8080', fontFamily: 'var(--font-mono)' }}>{log.errorMessage}</p>
             </div>
           )}
 
           {/* Input / Request */}
           {log.input && Object.keys(log.input).length > 0 && (
-            <JsonBlock label="INPUT / REQUEST" data={log.input} color="#00d4ff" />
+            <JsonBlock label="INPUT / REQUEST" data={log.input} color="#1E3A5F" />
           )}
 
           {/* Output blocks */}
-          {log.output && <JsonBlock label="OUTPUT" data={log.output} color="#00e676" />}
-          {log.successOutput && <JsonBlock label="SUCCESS OUTPUT (HTTP RESPONSE)" data={log.successOutput} color="#00e676" />}
-          {log.failureOutput && <JsonBlock label="FAILURE OUTPUT (HTTP ERROR)" data={log.failureOutput} color="#ff4444" />}
+          {log.output && <JsonBlock label="OUTPUT" data={log.output} color="#15803d" />}
+          {log.successOutput && <JsonBlock label="SUCCESS OUTPUT (HTTP RESPONSE)" data={log.successOutput} color="#15803d" />}
+          {log.failureOutput && <JsonBlock label="FAILURE OUTPUT (HTTP ERROR)" data={log.failureOutput} color="#b91c1c" />}
         </div>
       )}
     </div>
@@ -198,14 +198,14 @@ function JsonBlock({ label, data, color }: { label: string; data: Record<string,
 }
 
 function NodeStatusIcon({ status }: { status: NodeStatus }) {
-  if (status === 'SUCCESS') return <CheckCircle size={16} style={{ color: '#00e676', flexShrink: 0 }} />
-  if (status === 'FAILURE') return <XCircle     size={16} style={{ color: '#ff4444', flexShrink: 0 }} />
-  if (status === 'RUNNING') return <Loader2     size={16} style={{ color: '#00d4ff', flexShrink: 0, animation: 'spin 1s linear infinite' }} />
+  if (status === 'SUCCESS') return <CheckCircle size={16} style={{ color: '#15803d', flexShrink: 0 }} />
+  if (status === 'FAILURE') return <XCircle     size={16} style={{ color: '#b91c1c', flexShrink: 0 }} />
+  if (status === 'RUNNING') return <Loader2     size={16} style={{ color: '#1E3A5F', flexShrink: 0, animation: 'spin 1s linear infinite' }} />
   return <Clock size={16} style={{ color: 'var(--color-muted)', flexShrink: 0 }} />
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const color = status === 'SUCCESS' ? '#00e676' : status === 'FAILURE' ? '#ff4444' : '#00d4ff'
+  const color = status === 'SUCCESS' ? '#15803d' : status === 'FAILURE' ? '#b91c1c' : '#1E3A5F'
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.875rem', borderRadius: '9999px', background: color + '18', border: `1px solid ${color}44` }}>
       <div style={{ width: 7, height: 7, borderRadius: '50%', background: color }} />

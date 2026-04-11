@@ -54,9 +54,9 @@ export default function UserMenu() {
             borderRadius: '0.375rem', fontWeight: 500, whiteSpace: 'nowrap',
           }}>Sign in</a>
           <a href="/signup" style={{
-            fontSize: '0.8rem', color: '#0a0d14', textDecoration: 'none',
+            fontSize: '0.8rem', color: 'var(--color-on-accent)', textDecoration: 'none',
             padding: '0.375rem 0.75rem',
-            background: 'linear-gradient(135deg, #00D4FF 0%, #6366F1 100%)',
+            background: 'var(--grad-accent)',
             borderRadius: '0.375rem', fontWeight: 600, whiteSpace: 'nowrap',
           }}>Sign up</a>
         </div>
@@ -86,9 +86,9 @@ export default function UserMenu() {
       >
         <div style={{
           width: '1.5rem', height: '1.5rem', borderRadius: '50%',
-          background: 'linear-gradient(135deg, #00D4FF 0%, #6366F1 100%)',
+          background: 'var(--grad-accent)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '0.625rem', fontWeight: 700, color: '#0a0d14', flexShrink: 0,
+          fontSize: '0.625rem', fontWeight: 700, color: 'var(--color-on-accent)', flexShrink: 0,
         }}>
           {user.name.charAt(0).toUpperCase()}
         </div>
@@ -112,7 +112,7 @@ export default function UserMenu() {
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             borderRadius: '0.625rem',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+            boxShadow: 'var(--shadow-warm)',
             overflow: 'hidden',
           }}
         >

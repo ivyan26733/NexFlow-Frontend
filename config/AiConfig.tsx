@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { api } from '@/api'
 
 // ── Static model registry (no API call needed) ─────────────────────────
+// Keep the common model list local so the dropdown works even before the API responds.
 const PROVIDER_MODELS: Record<string, { models: string[]; default: string }> = {
   ANTHROPIC: {
     models: [
@@ -17,7 +18,6 @@ const PROVIDER_MODELS: Record<string, { models: string[]; default: string }> = {
     models: ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'],
     default: 'gpt-4o-mini',
   },
-  // Only models that support generateContent (excludes embed, predict, bidi-only, etc.)
   GEMINI: {
     models: [
       'gemini-2.5-flash',
@@ -82,14 +82,15 @@ const PROVIDER_MODELS: Record<string, { models: string[]; default: string }> = {
   },
 }
 
+// Warm-theme provider colors (legible on light backgrounds)
 const PROVIDER_META: Record<string, { icon: string; color: string; label: string }> = {
-  ANTHROPIC: { icon: '◎', color: '#e879f9', label: 'Anthropic' },
-  OPENAI:    { icon: '⬡', color: '#10B981', label: 'OpenAI' },
-  GEMINI:    { icon: '✦', color: '#4285F4', label: 'Gemini' },
-  GROQ:      { icon: '⚡', color: '#F59E0B', label: 'Groq' },
-  MISTRAL:   { icon: '◈', color: '#6366F1', label: 'Mistral' },
-  MLVOCA:    { icon: '◇', color: '#14B8A6', label: 'MLvoca (testing)' },
-  CUSTOM:    { icon: '⚙', color: '#94A3B8', label: 'Custom' },
+  ANTHROPIC: { icon: '◎', color: '#C2410C',  label: 'Anthropic' },
+  OPENAI:    { icon: '⬡', color: '#0F766E',  label: 'OpenAI' },
+  GEMINI:    { icon: '✦', color: '#1D4ED8',  label: 'Gemini' },
+  GROQ:      { icon: '⚡', color: '#B45309',  label: 'Groq' },
+  MISTRAL:   { icon: '◈', color: '#1E3A5F',  label: 'Mistral' },
+  MLVOCA:    { icon: '◇', color: '#0F766E',  label: 'MLvoca (testing)' },
+  CUSTOM:    { icon: '⚙', color: '#6B5A45',  label: 'Custom' },
 }
 
 interface InputBinding {
@@ -107,14 +108,15 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   return (
     <div style={{ marginBottom: '16px' }}>
       <label style={{
-        display: 'block', fontSize: '10px', color: '#64748B',
-        letterSpacing: '0.1em', marginBottom: '6px',
+        display: 'block', fontSize: '10px', color: 'var(--color-muted)',
+        letterSpacing: '0.1em', marginBottom: '6px', fontFamily: 'var(--font-mono)',
+        textTransform: 'uppercase',
       }}>
         {label}
       </label>
       {children}
       {hint && (
-        <p style={{ fontSize: '10px', color: '#334155', marginTop: '4px', lineHeight: 1.5 }}>
+        <p style={{ fontSize: '10px', color: 'var(--color-text-light)', marginTop: '4px', lineHeight: 1.5 }}>
           {hint}
         </p>
       )}
@@ -125,10 +127,10 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '20px 0 12px' }}>
-      <span style={{ fontSize: '9px', color: '#334155', letterSpacing: '0.18em', whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: '9px', color: 'var(--color-muted)', letterSpacing: '0.18em', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }}>
         {children}
       </span>
-      <div style={{ flex: 1, height: '1px', background: '#0F172A' }} />
+      <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }} />
     </div>
   )
 }
@@ -142,6 +144,7 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
   const maxTokens     = (config.maxTokens     as number) ?? 1000
   const temperature   = (config.temperature   as number) ?? 0
 
+  // This badge only reflects what the API reports; the backend still owns selection.
   const [providerStatus, setProviderStatus] = useState<Record<string, boolean>>({})
   const promptRef = useRef<HTMLTextAreaElement>(null)
 
@@ -196,7 +199,7 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
   const color  = meta.color
 
   return (
-    <div style={{ fontSize: '12px', fontFamily: 'DM Mono, monospace' }}>
+    <div style={{ fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
 
       <SectionLabel>LLM PROVIDER</SectionLabel>
 
@@ -210,38 +213,35 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
           const isActive      = provider === key
           const isConfigured  = providerStatus[key]
 
-          const cardStyle: React.CSSProperties = {
-            padding: '10px 6px',
-            border: isActive ? `1px solid ${pm.color}60` : '1px solid #0F172A',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            background: isActive ? `${pm.color}15` : '#030609',
-            textAlign: 'center',
-            transition: 'all 0.15s',
-            opacity: 1,
-            position: 'relative',
-            outline: isActive ? `1px solid ${pm.color}30` : 'none',
-            outlineOffset: '1px',
-          }
-
           return (
             <div
               key={key}
               onClick={() => selectProvider(key)}
               title={key}
-              style={cardStyle}
+              style={{
+                padding: '10px 6px',
+                border: isActive ? `1.5px solid ${pm.color}` : '1px solid var(--color-border)',
+                borderRadius: '7px',
+                cursor: 'pointer',
+                background: isActive ? `${pm.color}12` : 'var(--color-surface)',
+                textAlign: 'center',
+                transition: 'all 0.15s',
+                position: 'relative',
+                outline: isActive ? `2px solid ${pm.color}25` : 'none',
+                outlineOffset: '1px',
+              }}
               onMouseEnter={e => {
                 if (!isActive) {
                   const el = e.currentTarget as HTMLDivElement
-                  el.style.borderColor = '#1E293B'
-                  el.style.background  = '#0A0F1A'
+                  el.style.borderColor = pm.color + '80'
+                  el.style.background  = pm.color + '08'
                 }
               }}
               onMouseLeave={e => {
                 if (!isActive) {
                   const el = e.currentTarget as HTMLDivElement
-                  el.style.borderColor = '#0F172A'
-                  el.style.background  = '#030609'
+                  el.style.borderColor = 'var(--color-border)'
+                  el.style.background  = 'var(--color-surface)'
                 }
               }}
             >
@@ -250,23 +250,22 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
                   position: 'absolute', top: '5px', right: '5px',
                   width: '5px', height: '5px', borderRadius: '50%',
                   background: pm.color,
-                  boxShadow: `0 0 6px ${pm.color}`,
                 }} />
               )}
               {isConfigured && !isActive && (
                 <div style={{
                   position: 'absolute', top: '5px', right: '5px',
                   width: '5px', height: '5px', borderRadius: '50%',
-                  background: '#10B981', opacity: 0.6,
+                  background: '#15803D', opacity: 0.7,
                 }} />
               )}
-              <div style={{ fontSize: '16px', marginBottom: '4px', color: isActive ? pm.color : '#475569' }}>
+              <div style={{ fontSize: '16px', marginBottom: '4px', color: isActive ? pm.color : 'var(--color-muted)' }}>
                 {pm.icon}
               </div>
               <div style={{
                 fontSize: '9px', letterSpacing: '0.04em',
-                color: isActive ? pm.color : '#334155',
-                fontWeight: isActive ? '600' : 'normal',
+                color: isActive ? pm.color : 'var(--color-muted)',
+                fontWeight: isActive ? '700' : 'normal',
               }}>
                 {pm.label}
               </div>
@@ -278,12 +277,12 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
       {!providerStatus[provider] && Object.keys(providerStatus).length > 0 && (
         <div style={{
           padding: '8px 12px', marginBottom: '8px',
-          border: '1px solid rgba(245,158,11,0.2)',
-          borderRadius: '5px', background: 'rgba(245,158,11,0.05)',
-          fontSize: '11px', color: '#F59E0B',
+          border: '1px solid rgba(180,83,9,0.25)',
+          borderRadius: '5px', background: 'rgba(180,83,9,0.06)',
+          fontSize: '11px', color: '#B45309',
         }}>
           ⚠ No API key for {meta.label}.{' '}
-          <a href="/settings/ai-providers" style={{ color: '#F59E0B', textDecoration: 'underline' }}>
+          <a href="/settings/ai-providers" style={{ color: '#B45309', textDecoration: 'underline' }}>
             Settings → AI Providers
           </a>
         </div>
@@ -297,7 +296,7 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
             key={provider}
             value={model}
             onChange={e => set('model', e.target.value)}
-            style={inputSt}
+            className="input-base"
           >
             <option value="">— default —</option>
             {models.map(m => (
@@ -310,7 +309,7 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
             value={model}
             onChange={e => set('model', e.target.value)}
             placeholder="Enter model name"
-            style={inputSt}
+            className="input-base"
           />
         )}
       </Field>
@@ -327,7 +326,8 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
           onChange={e => set('prompt', e.target.value)}
           placeholder={'e.g. Filter {{orders}} where amount > {{threshold}}.\nReturn { filtered: array, totalCount: number }'}
           rows={5}
-          style={{ ...inputSt, resize: 'vertical', minHeight: '96px', lineHeight: '1.6' }}
+          className="input-base"
+          style={{ resize: 'vertical', minHeight: '96px', lineHeight: '1.6' }}
         />
       </Field>
 
@@ -341,7 +341,7 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
               style={{
                 fontSize: '10px', padding: '3px 8px',
                 background: `${color}0D`, border: `1px solid ${color}30`,
-                borderRadius: '4px', color, cursor: 'pointer',
+                borderRadius: '4px', color, cursor: 'pointer', fontFamily: 'var(--font-mono)',
               }}
             >
               {'{{' + b.name + '}}'}
@@ -354,17 +354,17 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
 
       <div style={{
         padding: '8px 12px', marginBottom: '12px',
-        background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.1)',
-        borderRadius: '5px', fontSize: '11px', color: '#64748B',
+        background: 'rgba(154,52,18,0.05)', border: '1px solid rgba(154,52,18,0.15)',
+        borderRadius: '5px', fontSize: '11px', color: 'var(--color-muted)',
       }}>
-        🔒 AI can <strong>only</strong> see data you bind here. Credentials are blocked.
+        AI can <strong>only</strong> see data you bind here. Credentials are blocked.
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
         {inputBindings.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 20px', gap: '6px' }}>
-            <span style={{ fontSize: '9px', color: '#1E293B', letterSpacing: '0.08em' }}>NAME</span>
-            <span style={{ fontSize: '9px', color: '#1E293B', letterSpacing: '0.08em' }}>NEX PATH</span>
+            <span style={{ fontSize: '9px', color: 'var(--color-muted)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)' }}>NAME</span>
+            <span style={{ fontSize: '9px', color: 'var(--color-muted)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)' }}>NEX PATH</span>
           </div>
         )}
         {inputBindings.map((b, i) => (
@@ -373,20 +373,20 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
               value={b.name}
               onChange={e => updateBinding(i, 'name', e.target.value)}
               placeholder="orders"
-              style={inputSt}
+              className="input-base"
             />
             <input
               value={b.nexPath}
               onChange={e => updateBinding(i, 'nexPath', e.target.value)}
               placeholder="nex.shopify.body.items"
-              style={inputSt}
+              className="input-base"
             />
             <button
               type="button"
               onClick={() => removeBinding(i)}
-              style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', fontSize: '16px', padding: 0 }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#475569')}
+              style={{ background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', fontSize: '16px', padding: 0 }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#991B1B')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-muted)')}
             >×</button>
           </div>
         ))}
@@ -398,7 +398,7 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
         style={{
           fontSize: '11px', color, background: 'none', border: 'none',
           cursor: 'pointer', padding: '4px 0', display: 'flex',
-          alignItems: 'center', gap: '6px', marginBottom: '4px',
+          alignItems: 'center', gap: '6px', marginBottom: '4px', fontFamily: 'var(--font-mono)',
         }}
       >
         <span style={{ fontSize: '16px' }}>+</span> Add input binding
@@ -412,7 +412,8 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
           onChange={e => set('outputSchema', e.target.value)}
           placeholder='{ "filtered": "array", "totalCount": "number" }'
           rows={3}
-          style={{ ...inputSt, resize: 'vertical' }}
+          className="input-base"
+          style={{ resize: 'vertical' }}
         />
       </Field>
 
@@ -424,7 +425,7 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
             type="number" min={50} max={8000}
             value={maxTokens}
             onChange={e => set('maxTokens', parseInt(e.target.value) || 1000)}
-            style={inputSt}
+            className="input-base"
           />
         </Field>
         <Field label="TEMPERATURE" hint="0 = precise, 1 = creative">
@@ -432,7 +433,7 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
             type="number" min={0} max={1} step={0.1}
             value={temperature}
             onChange={e => set('temperature', parseFloat(e.target.value) || 0)}
-            style={inputSt}
+            className="input-base"
           />
         </Field>
       </div>
@@ -440,11 +441,7 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
       {nodeLabel && (
         <>
           <SectionLabel>OUTPUT REFERENCE</SectionLabel>
-          <div style={{
-            padding: '10px 12px', background: '#030609',
-            border: '1px solid #0F172A', borderRadius: '6px',
-            fontSize: '11px', color: '#334155', lineHeight: 2,
-          }}>
+          <div className="config-panel-code-block">
             <div>result → <span style={{ color }}>{`nex.${nodeLabel.toLowerCase().replace(/\s+/g,'')}.result`}</span></div>
             <div>model  → <span style={{ color }}>{`nex.${nodeLabel.toLowerCase().replace(/\s+/g,'')}.model`}</span></div>
             <div>tokens → <span style={{ color }}>{`nex.${nodeLabel.toLowerCase().replace(/\s+/g,'')}.inputTokens`}</span></div>
@@ -454,11 +451,4 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
 
     </div>
   )
-}
-
-const inputSt: React.CSSProperties = {
-  width: '100%', padding: '8px 10px',
-  background: '#030609', border: '1px solid #0F172A',
-  borderRadius: '5px', color: '#CBD5E1',
-  fontSize: '12px', fontFamily: 'DM Mono, monospace', outline: 'none',
 }

@@ -2,67 +2,71 @@ import type { NodeType } from '@/types'
 
 export interface NodeMeta {
   label:       string
-  color:       string       // border / accent color
-  bgColor:     string       // node background
+  color:       string       // border / icon / handle (main hex)
+  bgColor:     string       // node body: light pairing at ~60% opacity over canvas
   description: string
   isTerminal:  boolean
   icon?:       string       // e.g. '↺' for LOOP
   group?:      string       // e.g. 'LOGIC'
 }
 
+// Single source of truth for how each node should look in the sidebar and canvas.
+/** Solid warm backgrounds — opaque on the studio canvas (#DDD0BF) */
+const bg = (r: number, g: number, b: number) => `rgba(${r},${g},${b},0.96)`
+
 export const NODE_META: Record<NodeType, NodeMeta> = {
   START: {
     label:       'Start',
-    color:       '#00d4ff',
-    bgColor:     '#0a1929',
+    color:       '#B45309',
+    bgColor:     bg(255, 247, 220), // warm amber-cream
     description: 'Entry point — receives the inbound trigger payload',
     isTerminal:  false,
   },
 
   NEXUS: {
     label:       'Nexus',
-    color:       '#e879f9',
-    bgColor:     '#1a0020',
+    color:       '#1D4ED8',
+    bgColor:     bg(219, 234, 254), // sky blue
     description: 'Saved connector or inline API call (REST/SQL)',
     isTerminal:  false,
   },
 
   SUB_FLOW: {
     label:       'Sub-Flow',
-    color:       '#38bdf8',
-    bgColor:     '#001524',
+    color:       '#15803D',
+    bgColor:     bg(220, 252, 231), // fresh green
     description: 'Call another flow — SYNC (wait) or ASYNC (fire & forget)',
     isTerminal:  false,
   },
 
   VARIABLE: {
     label:       'Variable',
-    color:       '#f59e0b',
-    bgColor:     '#1a1200',
+    color:       '#6B5A45',
+    bgColor:     bg(245, 240, 234), // warm parchment
     description: 'Define static values or reference previous node outputs',
     isTerminal:  false,
   },
 
   MAPPER: {
     label:       'Mapper',
-    color:       '#34d399',
-    bgColor:     '#001a0e',
+    color:       '#0F766E',
+    bgColor:     bg(204, 251, 241), // teal mint
     description: 'Shape a new object from any previous data',
     isTerminal:  false,
   },
 
   DECISION: {
     label:       'Decision',
-    color:       '#fb923c',
-    bgColor:     '#1a0d00',
+    color:       '#C2410C',
+    bgColor:     bg(255, 237, 213), // warm orange
     description: 'Branch flow based on a condition',
     isTerminal:  false,
   },
 
   LOOP: {
     label:       'Loop',
-    color:       '#F59E0B',
-    bgColor:     '#1a1200',
+    color:       '#9F1239',
+    bgColor:     bg(254, 228, 232), // rose pink
     description: 'Repeat until condition is false',
     isTerminal:  false,
     icon:        '↺',
@@ -71,32 +75,32 @@ export const NODE_META: Record<NodeType, NodeMeta> = {
 
   SCRIPT: {
     label:       'Script',
-    color:       '#a78bfa',
-    bgColor:     '#1e1b4b',
+    color:       '#6D28D9',
+    bgColor:     bg(245, 243, 255), // light violet
     description: 'Run JavaScript or Python — use input.variables, input.nodes, input.trigger',
     isTerminal:  false,
   },
 
   SUCCESS: {
     label:       'Success',
-    color:       '#00e676',
-    bgColor:     '#001a0a',
+    color:       '#15803D',
+    bgColor:     bg(220, 252, 231), // fresh green
     description: 'Terminal — flow ended successfully',
     isTerminal:  true,
   },
 
   FAILURE: {
     label:       'Failure',
-    color:       '#ff4444',
-    bgColor:     '#1a0000',
+    color:       '#991B1B',
+    bgColor:     bg(254, 226, 226), // rose red
     description: 'Terminal — flow ended with failure',
     isTerminal:  true,
   },
 
   AI: {
     label:       'AI',
-    color:       '#8B5CF6',
-    bgColor:     '#1a0a2e',
+    color:       '#7C3AED',
+    bgColor:     bg(237, 233, 254), // lavender
     description: 'Transform or classify data using any LLM',
     isTerminal:  false,
     icon:        '✦',
@@ -105,8 +109,8 @@ export const NODE_META: Record<NodeType, NodeMeta> = {
 
   FORK: {
     label:       'Fork',
-    color:       '#f59e0b',
-    bgColor:     '#1a1200',
+    color:       '#B45309',
+    bgColor:     bg(255, 247, 220), // warm amber-cream
     description: 'Split flow into parallel branches — paired with JOIN',
     isTerminal:  false,
     icon:        '⑃',
@@ -115,8 +119,8 @@ export const NODE_META: Record<NodeType, NodeMeta> = {
 
   JOIN: {
     label:       'Join',
-    color:       '#10b981',
-    bgColor:     '#001a0e',
+    color:       '#065F46',
+    bgColor:     bg(209, 250, 229), // emerald mint
     description: 'Merge parallel branches back into a single flow',
     isTerminal:  false,
     icon:        '⑄',
@@ -124,7 +128,7 @@ export const NODE_META: Record<NodeType, NodeMeta> = {
   },
 }
 
-// Sidebar draggable nodes — order controls vertical order
+// This list drives the draggable sidebar order.
 export const DRAGGABLE_NODES: NodeType[] = [
   'NEXUS',
   'SUB_FLOW',
@@ -140,7 +144,7 @@ export const DRAGGABLE_NODES: NodeType[] = [
   'FAILURE',
 ]
 
-// Grouped sections in the sidebar
+// These sections are only for the left sidebar grouping.
 export const NODE_GROUPS: { label: string; types: NodeType[] }[] = [
   { label: 'CALL',     types: ['NEXUS', 'SUB_FLOW'] },
   { label: 'LOGIC',    types: ['SCRIPT', 'VARIABLE', 'MAPPER', 'DECISION', 'LOOP'] },

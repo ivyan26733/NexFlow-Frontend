@@ -92,11 +92,11 @@ export default function GroupsPage() {
   }
 
   const avatarColors = [
-    'linear-gradient(135deg,#00D4FF,#6366F1)',
-    'linear-gradient(135deg,#f59e0b,#ef4444)',
-    'linear-gradient(135deg,#10b981,#3b82f6)',
-    'linear-gradient(135deg,#8b5cf6,#ec4899)',
-    'linear-gradient(135deg,#06b6d4,#22c55e)',
+    'linear-gradient(135deg,#9A3412,#1E3A5F)',
+    'linear-gradient(135deg,#c2410c,#92400e)',
+    'linear-gradient(135deg,#15803d,#14532d)',
+    'linear-gradient(135deg,#b45309,#78350f)',
+    'linear-gradient(135deg,#57534e,#44403c)',
   ]
 
   return (
@@ -123,8 +123,8 @@ export default function GroupsPage() {
       {/* ── Stats ──────────────────────────────────────────────── */}
       <div className="stats-grid-3">
         {[
-          { label: 'Total Groups',    value: groups.length,                              color: '#e2e8f0', icon: <Users size={18} />  },
-          { label: 'All-Access',      value: groups.filter(g => g.allFlowsAccess).length, color: '#00d4ff', icon: <Globe size={18} />  },
+          { label: 'Total Groups',    value: groups.length,                              color: '#A8927A', icon: <Users size={18} />  },
+          { label: 'All-Access',      value: groups.filter(g => g.allFlowsAccess).length, color: '#1E3A5F', icon: <Globe size={18} />  },
           { label: 'Selective Access', value: groups.filter(g => !g.allFlowsAccess).length, color: '#f59e0b', icon: <Lock size={18} />   },
         ].map(s => (
           <div key={s.label} style={{
@@ -243,7 +243,7 @@ export default function GroupsPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
                   {[
                     { val: false, label: 'Selective', desc: 'Choose specific flows', icon: <Lock size={16} />, color: '#f59e0b' },
-                    { val: true,  label: 'All Flows', desc: 'Access every flow',    icon: <Globe size={16} />, color: '#00d4ff' },
+                    { val: true,  label: 'All Flows', desc: 'Access every flow',    icon: <Globe size={16} />, color: '#1E3A5F' },
                   ].map(opt => (
                     <button
                       key={String(opt.val)}
@@ -316,7 +316,7 @@ function GroupCard({
     ? nonMembers.filter(u => u.name.toLowerCase().includes(memberSearch.toLowerCase()) || u.email.toLowerCase().includes(memberSearch.toLowerCase()))
     : nonMembers
 
-  const avatarColors = ['linear-gradient(135deg,#00D4FF,#6366F1)','linear-gradient(135deg,#f59e0b,#ef4444)','linear-gradient(135deg,#10b981,#3b82f6)','linear-gradient(135deg,#8b5cf6,#ec4899)','linear-gradient(135deg,#06b6d4,#22c55e)']
+  const avatarColors = ['linear-gradient(135deg,#9A3412,#1E3A5F)','linear-gradient(135deg,#c2410c,#92400e)','linear-gradient(135deg,#15803d,#14532d)','linear-gradient(135deg,#b45309,#78350f)','linear-gradient(135deg,#57534e,#44403c)']
 
   return (
     <div style={{
@@ -343,7 +343,7 @@ function GroupCard({
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           {group.allFlowsAccess
-            ? <Globe size={18} style={{ color: '#00d4ff' }} />
+            ? <Globe size={18} style={{ color: '#1E3A5F' }} />
             : <Lock size={18} style={{ color: '#f59e0b' }} />}
         </div>
 
@@ -359,7 +359,7 @@ function GroupCard({
             </span>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem',
-              color: group.allFlowsAccess ? '#00d4ff' : '#f59e0b',
+              color: group.allFlowsAccess ? '#1E3A5F' : '#f59e0b',
               fontFamily: 'var(--font-mono)',
             }}>
               {group.allFlowsAccess ? '● All flows' : '○ Selective'}
@@ -376,7 +376,7 @@ function GroupCard({
                 background: avatarColors[mi % avatarColors.length],
                 border: '2px solid var(--color-surface)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.65rem', fontWeight: 700, color: '#0a0d14',
+                fontSize: '0.65rem', fontWeight: 700, color: 'var(--color-on-accent)',
                 marginLeft: mi > 0 ? '-0.5rem' : 0,
               }}>
                 {m.name.charAt(0).toUpperCase()}
@@ -450,7 +450,7 @@ function GroupCard({
                       width: '2rem', height: '2rem', borderRadius: '50%', flexShrink: 0,
                       background: avatarColors[ui % avatarColors.length],
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '0.7rem', fontWeight: 700, color: '#0a0d14',
+                      fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-on-accent)',
                     }}>{u.name.charAt(0).toUpperCase()}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: '0.875rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</p>
@@ -505,7 +505,7 @@ function GroupCard({
                         >
                           <div style={{
                             width: '1.75rem', height: '1.75rem', borderRadius: '50%', flexShrink: 0,
-                            background: 'linear-gradient(135deg,#6366F1,#8b5cf6)',
+                            background: 'var(--grad-accent)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: '0.65rem', fontWeight: 700, color: '#fff',
                           }}>{u.name.charAt(0).toUpperCase()}</div>
@@ -537,8 +537,8 @@ function GroupCard({
                   background: 'rgba(0,212,255,0.07)', border: '1px solid rgba(0,212,255,0.2)',
                   borderRadius: '0.75rem', padding: '1.25rem 1.5rem', textAlign: 'center',
                 }}>
-                  <Globe size={24} style={{ color: '#00d4ff', marginBottom: '0.5rem' }} />
-                  <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#00d4ff' }}>All-Access Group</p>
+                  <Globe size={24} style={{ color: '#1E3A5F', marginBottom: '0.5rem' }} />
+                  <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E3A5F' }}>All-Access Group</p>
                   <p style={{ fontSize: '0.775rem', color: 'var(--color-muted)', marginTop: '0.25rem' }}>
                     Members can access every flow in the workspace
                   </p>

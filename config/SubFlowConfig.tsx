@@ -179,7 +179,7 @@ export default function SubFlowConfig({ config, onChange, currentFlowId }: Props
                         fontSize: '0.6rem', fontFamily: 'var(--font-mono)', padding: '0.1rem 0.4rem',
                         borderRadius: '4px',
                         background: flow.status === 'ACTIVE' ? 'rgba(0,230,118,0.1)' : 'rgba(100,116,139,0.15)',
-                        color: flow.status === 'ACTIVE' ? '#00e676' : 'var(--color-muted)',
+                        color: flow.status === 'ACTIVE' ? '#15803d' : 'var(--color-muted)',
                         flexShrink: 0,
                       }}>
                         {flow.status}
@@ -230,12 +230,12 @@ export default function SubFlowConfig({ config, onChange, currentFlowId }: Props
               Child result available as{' '}
               <span className="config-panel-code-inline">{'{{nodes.thisNodeId.successOutput.nco.nodes.*}}'}</span>
               {' '}or <span className="config-panel-code-inline">{'{{nex.childResult.field}}'}</span> (if child node saved as &quot;childResult&quot;).
-              If child fails, this node routes to the <span style={{ color: '#ff4444' }}>failure</span> edge.
+              If child fails, this node routes to the <span style={{ color: '#b91c1c' }}>failure</span> edge.
             </p>
           ) : (
             <p style={{ fontSize: '0.7rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>
               Child flow is <strong style={{ color: 'var(--color-text)' }}>triggered in background</strong>.
-              Parent continues immediately on the <span style={{ color: '#00e676' }}>success</span> edge.
+              Parent continues immediately on the <span style={{ color: '#15803d' }}>success</span> edge.
               No child result is available. Good for notifications, logging, side effects.
             </p>
           )}

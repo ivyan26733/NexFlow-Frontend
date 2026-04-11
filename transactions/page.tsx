@@ -132,16 +132,16 @@ export default function TransactionsPage() {
 }
 
 function StatusIcon({ status }: { status: ExecStatus | 'ALL' }) {
-  if (status === 'SUCCESS') return <CheckCircle size={14} style={{ color: '#00e676' }} />
-  if (status === 'FAILURE') return <XCircle     size={14} style={{ color: '#ff4444' }} />
-  if (status === 'RUNNING') return <Loader2     size={14} style={{ color: '#00d4ff', animation: 'spin 1s linear infinite' }} />
+  if (status === 'SUCCESS') return <CheckCircle size={14} style={{ color: '#15803d' }} />
+  if (status === 'FAILURE') return <XCircle     size={14} style={{ color: '#b91c1c' }} />
+  if (status === 'RUNNING') return <Loader2     size={14} style={{ color: '#1E3A5F', animation: 'spin 1s linear infinite' }} />
   return <Clock size={14} style={{ color: 'var(--color-muted)' }} />
 }
 
 function statusColor(status: ExecStatus | 'ALL' | string) {
-  if (status === 'SUCCESS') return '#00e676'
-  if (status === 'FAILURE') return '#ff4444'
-  if (status === 'RUNNING') return '#00d4ff'
+  if (status === 'SUCCESS') return '#15803d'
+  if (status === 'FAILURE') return '#b91c1c'
+  if (status === 'RUNNING') return '#1E3A5F'
   return 'var(--color-muted)'
 }
 

@@ -100,8 +100,8 @@ export default function DecisionConfig({ config, onChange }: Props) {
         <>
           <div style={{ padding: '0.5rem 0.625rem', background: 'var(--color-panel)', borderRadius: '0.375rem', border: '1px solid var(--color-border)', fontSize: '0.7rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>
             If <span style={{ color: 'var(--color-text)' }}>LEFT op RIGHT</span> is true →{' '}
-            <span style={{ color: '#00e676' }}>SUCCESS</span> edge, otherwise →{' '}
-            <span style={{ color: '#ff4444' }}>FAILURE</span> edge.
+            <span style={{ color: '#15803d' }}>SUCCESS</span> edge, otherwise →{' '}
+            <span style={{ color: '#b91c1c' }}>FAILURE</span> edge.
           </div>
 
           <Field label="LEFT VALUE">
