@@ -1,11 +1,15 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { api } from '@/api'
 
 /* ── Pages where the assistant should NOT appear ───────────────── */
-const EXCLUDED_PREFIXES = ['/admin', '/groups', '/login', '/signup', '/verify-otp', '/forgot-password', '/reset-password']
+const EXCLUDED_PREFIXES = [
+  '/admin', '/groups', '/login', '/signup',
+  '/verify-otp', '/forgot-password', '/reset-password',
+  '/studio',
+]
 
 /* ── Map route → human-readable page name ──────────────────────── */
 function getPageName(path: string): string {
@@ -65,7 +69,6 @@ function TypingDots() {
 function renderMarkdown(text: string) {
   const lines = text.split('\n')
   return lines.map((line, li) => {
-    // Split by **bold** and `code`
     const parts = line.split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
     return (
       <span key={li}>
@@ -97,45 +100,83 @@ function renderMarkdown(text: string) {
 
 export default function FloatingAssistant() {
   const pathname = usePathname()
-  const [open, setOpen]       = useState(false)
+  const [open, setOpen]         = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput]     = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState<string | null>(null)
-  const [pulse, setPulse]     = useState(true)  // pulse ring on first load
+  const [input, setInput]       = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState<string | null>(null)
+  const [pulse, setPulse]       = useState(true)
+
+  /* ── Drag state ── */
+  const [pos, setPos]           = useState({ bottom: 24, right: 24 })
+  const [isDragging, setIsDragging] = useState(false)
+  const dragging    = useRef(false)
+  const hasMoved    = useRef(false)
+  const dragAnchor  = useRef<{ mx: number; my: number; bottom: number; right: number } | null>(null)
+
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef  = useRef<HTMLTextAreaElement>(null)
 
-  // Stop pulsing after 6 seconds
   useEffect(() => {
     const t = setTimeout(() => setPulse(false), 6000)
     return () => clearTimeout(t)
   }, [])
 
-  // Auto-scroll to latest message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  // Focus input when panel opens
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 120)
   }, [open])
 
-  // Exclude pages
   const isExcluded = EXCLUDED_PREFIXES.some(p => pathname.startsWith(p))
   if (isExcluded) return null
 
+  /* ── Drag handlers ──────────────────────────────────────────── */
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    dragging.current = true
+    hasMoved.current = false
+    dragAnchor.current = { mx: e.clientX, my: e.clientY, bottom: pos.bottom, right: pos.right }
+    setIsDragging(true)
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragging.current || !dragAnchor.current) return
+    const dx = e.clientX - dragAnchor.current.mx
+    const dy = e.clientY - dragAnchor.current.my
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) hasMoved.current = true
+    if (!hasMoved.current) return
+    const W = window.innerWidth
+    const H = window.innerHeight
+    setPos({
+      right:  Math.max(8, Math.min(W - 62, dragAnchor.current.right  - dx)),
+      bottom: Math.max(8, Math.min(H - 62, dragAnchor.current.bottom - dy)),
+    })
+  }
+
+  function handlePointerUp() {
+    const moved = hasMoved.current
+    dragging.current = false
+    hasMoved.current = false
+    setIsDragging(false)
+    dragAnchor.current = null
+    if (!moved) {
+      setOpen(o => !o)
+      setPulse(false)
+    }
+  }
+
+  /* ── Chat actions ────────────────────────────────────────────── */
   async function send() {
     const text = input.trim()
     if (!text || loading) return
     setError(null)
     setInput('')
-
     const userMsg: Message = { role: 'user', content: text }
     setMessages(prev => [...prev, userMsg])
     setLoading(true)
-
     try {
       const history = messages.map(m => ({ role: m.role, content: m.content }))
       const pageContext = { path: pathname, name: getPageName(pathname) }
@@ -154,16 +195,19 @@ export default function FloatingAssistant() {
   }
 
   function handleKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      send()
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
   }
 
-  function clearChat() {
-    setMessages([])
-    setError(null)
-  }
+  function clearChat() { setMessages([]); setError(null) }
+
+  /* ── Computed panel geometry ─────────────────────────────────── */
+  const panelBottom  = pos.bottom + 66
+  const panelRight   = typeof window !== 'undefined'
+    ? Math.min(pos.right, Math.max(8, window.innerWidth - 368))
+    : pos.right
+  const panelMaxH    = typeof window !== 'undefined'
+    ? Math.min(520, Math.max(200, window.innerHeight - panelBottom - 8))
+    : 520
 
   return (
     <>
@@ -181,10 +225,6 @@ export default function FloatingAssistant() {
           0%   { transform: scale(1);   opacity: 0.7; }
           100% { transform: scale(1.9); opacity: 0; }
         }
-        @keyframes assistant-star-spin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
         @keyframes assistant-star-breathe {
           0%, 100% { transform: scale(1) rotate(0deg); }
           50%       { transform: scale(1.12) rotate(180deg); }
@@ -196,10 +236,11 @@ export default function FloatingAssistant() {
         <div
           style={{
             position: 'fixed',
-            bottom: 90,
-            right: 24,
+            bottom: panelBottom,
+            right: panelRight,
             width: 360,
-            maxHeight: 520,
+            maxWidth: 'calc(100vw - 16px)',
+            maxHeight: panelMaxH,
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             borderRadius: 16,
@@ -284,7 +325,6 @@ export default function FloatingAssistant() {
             gap: 10,
             minHeight: 0,
           }}>
-            {/* Welcome message */}
             {messages.length === 0 && !loading && (
               <div style={{
                 display: 'flex',
@@ -310,7 +350,6 @@ export default function FloatingAssistant() {
                 <div style={{ fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.6 }}>
                   Ask about building flows, using nodes,<br />debugging executions, or anything Nexflow.
                 </div>
-                {/* Suggestion chips */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginTop: 4 }}>
                   {[
                     'How do I use the NEXUS node?',
@@ -347,7 +386,6 @@ export default function FloatingAssistant() {
               </div>
             )}
 
-            {/* Message bubbles */}
             {messages.map((msg, i) => (
               <div
                 key={i}
@@ -358,7 +396,6 @@ export default function FloatingAssistant() {
                   alignItems: 'flex-end',
                 }}
               >
-                {/* Avatar */}
                 {msg.role === 'assistant' && (
                   <div style={{
                     width: 24, height: 24, borderRadius: 6, flexShrink: 0,
@@ -389,7 +426,6 @@ export default function FloatingAssistant() {
               </div>
             ))}
 
-            {/* Loading indicator */}
             {loading && (
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
                 <div style={{
@@ -410,7 +446,6 @@ export default function FloatingAssistant() {
               </div>
             )}
 
-            {/* Error */}
             {error && (
               <div style={{
                 padding: '9px 12px',
@@ -444,9 +479,7 @@ export default function FloatingAssistant() {
               borderRadius: 12,
               padding: '8px 10px',
               transition: 'border-color 0.15s',
-            }}
-              onFocus={() => {}}
-            >
+            }}>
               <textarea
                 ref={inputRef}
                 value={input}
@@ -504,14 +537,20 @@ export default function FloatingAssistant() {
         </div>
       )}
 
-      {/* ── Floating trigger button ── */}
+      {/* ── Draggable trigger button ── */}
       <div
         style={{
           position: 'fixed',
-          bottom: 24,
-          right: 24,
+          bottom: pos.bottom,
+          right: pos.right,
           zIndex: 9999,
+          cursor: isDragging ? 'grabbing' : 'grab',
+          touchAction: 'none',
+          userSelect: 'none',
         }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
       >
         {/* Pulse ring — shows for 6s on first load */}
         {pulse && !open && (
@@ -525,9 +564,26 @@ export default function FloatingAssistant() {
           }} />
         )}
 
+        {/* Grip indicator */}
+        <div style={{
+          position: 'absolute',
+          top: -6,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          gap: 3,
+          pointerEvents: 'none',
+          opacity: isDragging ? 0.9 : 0.4,
+          transition: 'opacity 0.2s',
+        }}>
+          {[0,1,2].map(i => (
+            <div key={i} style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--color-muted)' }} />
+          ))}
+        </div>
+
         <button
-          onClick={() => { setOpen(o => !o); setPulse(false) }}
-          title="Nexflow Assistant"
+          onClick={e => e.stopPropagation()}
+          title="Nexflow Assistant · Drag to move"
           style={{
             width: 54,
             height: 54,
@@ -536,19 +592,16 @@ export default function FloatingAssistant() {
               ? 'linear-gradient(135deg, #1E3A5F, #9A3412)'
               : 'linear-gradient(135deg, #9A3412, #1E3A5F)',
             border: 'none',
-            cursor: 'pointer',
+            cursor: 'inherit',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: open
               ? '0 4px 20px rgba(30,58,95,0.45), 0 2px 8px rgba(26,16,8,0.2)'
               : '0 4px 20px rgba(154,52,18,0.4), 0 2px 8px rgba(26,16,8,0.2)',
-            transition: 'box-shadow 0.2s, background 0.25s, transform 0.15s',
+            transition: 'box-shadow 0.2s, background 0.25s',
+            pointerEvents: 'none',
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.08)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
-          onMouseDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.95)' }}
-          onMouseUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.08)' }}
         >
           <div style={{
             animation: open

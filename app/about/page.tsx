@@ -137,17 +137,18 @@ function LiveBranchDemo() {
   const allDone = states.every(s=>s==="done");
 
   return (
-    <div style={{ fontFamily: "'DM Mono', monospace" }}>
+    <div style={{ fontFamily: "'DM Mono', monospace", minWidth: 0 }}>
       <div style={{
         background: T.surfaceHigh, border: `1px solid ${T.border}`,
-        borderRadius: '14px', padding: '28px', position: 'relative', overflow: 'hidden',
-        boxShadow: T.shadow,
+        borderRadius: '14px', padding: '28px', position: 'relative',
+        overflowX: 'auto', boxShadow: T.shadow,
       }}>
         <div style={{ position:'absolute', top:12, left:16, fontSize:'9px', color: T.textLight, letterSpacing:'0.15em' }}>STUDIO CANVAS — LIVE</div>
         {running && <div style={{ position:'absolute', top:12, right:16, fontSize:'10px', color: T.accent, letterSpacing:'0.1em' }}>{Math.round(elapsed*2.2)}ms</div>}
         {allDone && joinDone && <div style={{ position:'absolute', top:12, right:16, fontSize:'10px', color: T.success, letterSpacing:'0.1em' }}>✓ {TOTAL_PARALLEL_MS}ms</div>}
 
-        <div style={{ display:'flex', alignItems:'center', position:'relative', zIndex:1, marginTop:'16px', overflowX:'auto', gap:'4px' }}>
+        <div style={{ overflowX:'auto', marginTop:'16px', position:'relative', zIndex:1, WebkitOverflowScrolling:'touch' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'4px', width:'max-content', paddingBottom:'4px' }}>
           <LDemoNode label="TRIGGER" active={forkDone||running} done={forkDone} />
           <LDemoArrow />
           <LDemoDiamond label="FORK" symbol="⑃" color="#D97706" active={running&&!forkDone} done={forkDone} />
@@ -163,6 +164,7 @@ function LiveBranchDemo() {
           <LDemoDiamond label="JOIN" symbol="⑄" color="#059669" active={states.some(s=>s==="done")&&!joinDone} done={joinDone} />
           <LDemoArrow />
           <LDemoNode label="PROCESS" active={joinDone} done={joinDone} />
+        </div>
         </div>
 
         {allDone && joinDone && (
@@ -400,8 +402,8 @@ export default function AboutPage() {
     <div style={{ background: T.bg, minHeight:'100vh', color: T.text, fontFamily:"'DM Sans', sans-serif", overflowX:'hidden', backgroundImage:'radial-gradient(ellipse at 80% 0%, rgba(154,52,18,0.06) 0%, transparent 55%), radial-gradient(ellipse at 0% 100%, rgba(30,58,95,0.05) 0%, transparent 50%)' }}>
 
       {/* Warm background glow orbs */}
-      <div style={{ position:'fixed', top:'10%', right:'5%', width:'600px', height:'600px', background:'radial-gradient(circle, rgba(154,52,18,0.07) 0%, transparent 70%)', pointerEvents:'none', zIndex:0, transform:`translateY(${scrollY*0.08}px)` }} />
-      <div style={{ position:'fixed', bottom:'15%', left:'0%', width:'500px', height:'500px', background:'radial-gradient(circle, rgba(30,58,95,0.05) 0%, transparent 70%)', pointerEvents:'none', zIndex:0 }} />
+      <div style={{ position:'fixed', top:'10%', right:'5%', width:'min(600px, 80vw)', height:'min(600px, 80vw)', background:'radial-gradient(circle, rgba(154,52,18,0.07) 0%, transparent 70%)', pointerEvents:'none', zIndex:0, transform:`translateY(${scrollY*0.08}px)` }} />
+      <div style={{ position:'fixed', bottom:'15%', left:'-10%', width:'min(500px, 70vw)', height:'min(500px, 70vw)', background:'radial-gradient(circle, rgba(30,58,95,0.05) 0%, transparent 70%)', pointerEvents:'none', zIndex:0 }} />
 
       <style>{`
         @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(1.3)} }
@@ -476,8 +478,8 @@ export default function AboutPage() {
         </section>
 
         {/* ── WHY NEXFLOW ────────────────────────────────────────────────────── */}
-        <section className="about-section" style={{ padding:'100px 8vw', borderBottom:`1px solid ${T.border}`, background: T.surface }}>
-          <div style={{ maxWidth:'1200px' }}>
+        <section className="about-section" style={{ padding:'100px 8vw', borderBottom:`1px solid ${T.border}`, background: T.surface, overflowX: 'hidden' }}>
+          <div style={{ maxWidth:'1200px', minWidth: 0 }}>
 
             {/* Header */}
             <div style={{ marginBottom:'64px' }}>
@@ -494,7 +496,7 @@ export default function AboutPage() {
             {/* Feature 1 */}
             <div style={{ marginBottom:'88px' }}>
               <div className="about-2col" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'64px', alignItems:'start' }}>
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <div style={{
                     display:'inline-flex', alignItems:'center', gap:'7px',
                     fontSize:'9px', letterSpacing:'0.15em', color: T.warning,
@@ -527,14 +529,14 @@ export default function AboutPage() {
                     ))}
                   </div>
                 </div>
-                <div><LiveBranchDemo /></div>
+                <div style={{ minWidth: 0 }}><LiveBranchDemo /></div>
               </div>
             </div>
 
             {/* Feature 2 */}
             <div style={{ marginBottom:'80px' }}>
               <div className="about-2col" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'64px', alignItems:'start' }}>
-                <div><NexComparison /></div>
+                <div style={{ minWidth: 0 }}><NexComparison /></div>
                 <div>
                   <div style={{
                     display:'inline-flex', alignItems:'center', gap:'7px',

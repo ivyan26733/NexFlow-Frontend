@@ -11,7 +11,7 @@ import {
   BackgroundVariant,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { PanelLeftOpen } from 'lucide-react'
+import { PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 
 import { api } from '@/api'
 import { useExecutionSocket } from '@/useExecutionSocket'
@@ -81,7 +81,10 @@ export default function StudioPage() {
   const [flowName, setFlowName] = useState('')
   const [flowSlug, setFlowSlug] = useState('')
 
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  // Default open on desktop (≥1024px), closed on mobile
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 1024 : true
+  )
   const [loading, setLoading] = useState(true)
 
   // refs → avoid stale closure during save + prevent double-save
@@ -450,7 +453,7 @@ export default function StudioPage() {
   return (
     <div className="studio-root">
       <div className={`studio-sidebar-wrapper ${sidebarOpen ? 'open' : 'collapsed'}`}>
-        <NodeSidebar onAddNode={handleAddNode} />
+        <NodeSidebar onAddNode={handleAddNode} onClose={() => setSidebarOpen(false)} />
       </div>
 
       <div className="studio-main">
@@ -473,8 +476,9 @@ export default function StudioPage() {
               type="button"
               className="studio-sidebar-toggle"
               onClick={() => setSidebarOpen(prev => !prev)}
+              title={sidebarOpen ? 'Collapse panel' : 'Expand panel'}
             >
-              <PanelLeftOpen size={16} />
+              {sidebarOpen ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
             </button>
             <ReactFlowProvider>
               <StudioCanvas

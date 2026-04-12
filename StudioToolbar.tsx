@@ -87,7 +87,7 @@ export default function StudioToolbar({
         <div className="studio-toolbar-actions">
           <button type="button" onClick={() => setShowHelp(true)} className="studio-toolbar-btn" title="How to run & reference syntax">
             <HelpCircle size={16} />
-            Help
+            <span className="toolbar-label">Help</span>
           </button>
           {!viewMode && onBeautify && (
             <button
@@ -97,7 +97,7 @@ export default function StudioToolbar({
               title="Align all nodes in order (no overlap)"
             >
               <Sparkles size={16} />
-              Beautify
+              <span className="toolbar-label">Beautify</span>
             </button>
           )}
           {!viewMode && onOpenAI && (
@@ -111,25 +111,24 @@ export default function StudioToolbar({
                 alignItems: 'center',
                 gap: '0.35rem',
                 borderColor: 'rgba(154,52,18,0.28)',
-                background:
-                  'linear-gradient(135deg,rgba(154,52,18,0.1),rgba(30,58,95,0.1))',
+                background: 'linear-gradient(135deg,rgba(154,52,18,0.1),rgba(30,58,95,0.1))',
                 color: '#1E3A5F',
                 fontWeight: 600,
               }}
             >
               <Sparkles size={16} />
-              AI Assistant
+              <span className="toolbar-label">AI</span>
             </button>
           )}
           {!viewMode && (
             <>
-              <button type="button" onClick={onSave} disabled={saving} className="studio-toolbar-btn">
+              <button type="button" onClick={onSave} disabled={saving} className="studio-toolbar-btn" title="Save flow">
                 {saving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={16} />}
-                {saving ? 'Saving...' : 'Save'}
+                <span className="toolbar-label">{saving ? 'Saving…' : 'Save'}</span>
               </button>
-              <button type="button" onClick={() => setShowTrigger(true)} className="studio-toolbar-btn accent">
+              <button type="button" onClick={() => setShowTrigger(true)} className="studio-toolbar-btn accent" title="Trigger flow">
                 <Play size={16} />
-                Trigger
+                <span className="toolbar-label">Trigger</span>
               </button>
             </>
           )}

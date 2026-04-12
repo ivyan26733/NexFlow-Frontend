@@ -3,7 +3,9 @@
 import { NODE_GROUPS, NODE_META } from './nodeConfig'
 import type { NodeType } from '@/types'
 
-export default function NodeSidebar({ onAddNode }: { onAddNode?: (t: NodeType) => void }) {
+import { PanelLeftClose } from 'lucide-react'
+
+export default function NodeSidebar({ onAddNode, onClose }: { onAddNode?: (t: NodeType) => void; onClose?: () => void }) {
   function onDragStart(event: React.DragEvent, nodeType: NodeType) {
     event.dataTransfer.setData('nodeType', nodeType)
     event.dataTransfer.effectAllowed = 'move'
@@ -13,8 +15,28 @@ export default function NodeSidebar({ onAddNode }: { onAddNode?: (t: NodeType) =
     <aside className="studio-sidebar">
 
       <div className="studio-sidebar-header">
-        <p className="title">NODES</p>
-        <p className="subtitle">Drag onto canvas · tap to add on mobile</p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <div>
+            <p className="title">NODES</p>
+            <p className="subtitle">Drag onto canvas · tap to add on mobile</p>
+          </div>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              title="Collapse panel"
+              style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: '1.75rem', height: '1.75rem', flexShrink: 0,
+                border: '1px solid var(--color-border)', borderRadius: '0.375rem',
+                background: 'transparent', color: 'var(--color-muted)',
+                cursor: 'pointer', marginTop: '0.125rem',
+              }}
+            >
+              <PanelLeftClose size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="studio-sidebar-body">

@@ -1,6 +1,7 @@
   'use client'
 
 import { useState, useEffect } from 'react'
+import { PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 import { api } from '@/api'
 import type { NexusConnector as ApiNexusConnector } from '@/index'
 
@@ -172,7 +173,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                 const next: KVPair[] = pairs.map((p, j) => (j === i ? [p[0], e.target.value] : p))
                 onChange(next)
               }}
-              style={{ ...inputStyle, flex: 1, minWidth: '200px' }}
+              style={{ ...inputStyle, flex: 1, minWidth: 0 }}
             />
             <button
               type="button"
@@ -398,7 +399,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
     const [showDelete,       setShowDelete]       = useState(false)
     const [toast,            setToast]            = useState<{ message: string; type: string } | null>(null)
     const [loading,          setLoading]          = useState(true)
-    const [sidebarOpen,      setSidebarOpen]      = useState(true)
+    const [sidebarOpen,      setSidebarOpen]      = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
     const [isMobile,         setIsMobile]         = useState(false)
 
     // Load connectors on mount
@@ -549,37 +550,24 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
         {/* ── BODY ─────────────────────────────────────────────────────── */}
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden', flexDirection: isMobile ? 'column' : 'row' }}>
 
-          {/* Mobile sidebar toggle */}
-          {isMobile && (
+          {/* Sidebar toggle — always visible when sidebar is closed */}
+          {!sidebarOpen && (
             <button
               type="button"
-              onClick={() => setSidebarOpen(open => !open)}
-              style={{
-                position: 'absolute',
-                top: 12,
-                right: 12,
-                zIndex: 40,
-                padding: '6px 10px',
-                borderRadius: '999px',
-                border: '1px solid var(--color-border)',
-                background: 'var(--color-surface)',
-                color: 'var(--color-text)',
-                fontSize: '11px',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-              }}
+              className="studio-sidebar-toggle"
+              onClick={() => setSidebarOpen(true)}
+              title="Show connector list"
             >
-              {sidebarOpen ? 'Hide list' : 'Connectors'}
+              <PanelLeftOpen size={14} />
             </button>
           )}
 
           {/* ── LEFT PANEL ───────────────────────────────────────────── */}
           <div style={{
-            width: isMobile ? '78vw' : '300px',
+            width: isMobile ? 'min(78vw, 280px)' : '300px',
             flexShrink: 0,
             borderRight: '1px solid var(--color-border)',
-            display: sidebarOpen || !isMobile ? 'flex' : 'none',
+            display: sidebarOpen ? 'flex' : 'none',
             flexDirection: 'column',
             overflow: 'hidden',
             background: 'var(--color-panel)',
@@ -591,12 +579,22 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
           }}>
             {/* Search / count */}
             <div style={{
-              padding: '16px 20px',
+              padding: '12px 16px',
               borderBottom: '1px solid var(--color-border)',
               fontSize: '10px', color: 'var(--color-text)',
               letterSpacing: '0.1em',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px',
             }}>
-              {loading ? 'LOADING...' : `${connectors.length} CONNECTOR${connectors.length !== 1 ? 'S' : ''}`}
+              <span>{loading ? 'LOADING...' : `${connectors.length} CONNECTOR${connectors.length !== 1 ? 'S' : ''}`}</span>
+              <button
+                type="button"
+                className="studio-sidebar-toggle"
+                onClick={() => setSidebarOpen(false)}
+                title="Collapse connector list"
+                style={{ position: 'static', flexShrink: 0 }}
+              >
+                <PanelLeftClose size={14} />
+              </button>
             </div>
 
             {/* List */}
@@ -726,7 +724,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                 </button>
               </div>
             ) : (
-              <div style={{ maxWidth: '800px', padding: '40px 48px', margin: '0 auto' }}>
+              <div style={{ maxWidth: '800px', padding: 'clamp(20px, 4vw, 40px) clamp(16px, 5vw, 48px)', margin: '0 auto' }}>
 
                 {/* Panel header */}
                 <div style={{
@@ -778,7 +776,7 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
                 {/* ── Connector Type ── */}
                 <SectionLabel>CONNECTOR TYPE</SectionLabel>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '28px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px', marginBottom: '28px' }}>
                   {([
                     {
                       type: 'REST' as const,

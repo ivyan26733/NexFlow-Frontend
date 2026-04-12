@@ -78,17 +78,24 @@ body {
 .input-base:focus { outline: none; border-color: var(--color-accent); }
 select.input-base { appearance: none; cursor: pointer; }
 
-/* ── Nav (layout guaranteed) ─────────────────────────────────── */
+/* ── Night / dim mode ────────────────────────────────────────── */
+html.dim-mode {
+  filter: brightness(0.78) contrast(0.88) sepia(0.06);
+}
+
+/* ── Nav ─────────────────────────────────────────────────────── */
 .app-nav {
   height: 3.5rem;
   display: flex;
   align-items: center;
   padding: 0 1.5rem;
-  gap: 1.5rem;
+  gap: 1.25rem;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
-  position: sticky;
+  position: fixed;      /* always visible — sticky breaks with overflow-x:hidden on html/body */
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 40;
 }
 .app-nav a {
@@ -101,6 +108,7 @@ select.input-base { appearance: none; cursor: pointer; }
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 0;
 }
 .app-nav .nav-brand .logo-box {
   width: 1.75rem;
@@ -126,6 +134,148 @@ select.input-base { appearance: none; cursor: pointer; }
   width: 1px;
   height: 1rem;
   background: var(--color-border);
+  flex-shrink: 0;
+}
+
+/* Desktop-only nav items (links, dividers, settings, version) */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+.nav-desktop { display: flex; align-items: center; }
+
+/* Mobile 3-dot trigger — hidden on desktop */
+.nav-mobile-trigger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+.nav-mobile-trigger:hover { color: var(--color-text); border-color: var(--color-accent); }
+
+/*
+ * Mobile dropdown menu.
+ * Rendered outside <nav> in JSX (so nothing clips it).
+ * position:fixed pins it to the viewport right below the navbar.
+ * Visibility is controlled purely by React conditional render — no display:none needed.
+ */
+.nav-mobile-menu {
+  position: fixed;
+  top: 3.5rem;          /* exactly below the sticky navbar */
+  left: 0;
+  right: 0;
+  bottom: 0;            /* pin to bottom — most reliable scroll on all mobile browsers */
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-bottom: 2px solid var(--color-border);
+  box-shadow: 0 12px 32px rgba(26,16,8,0.18);
+  animation: nav-menu-in 0.18s cubic-bezier(0.4,0,0.2,1);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.nav-mobile-links {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.nav-mobile-item {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.9375rem;
+  color: var(--color-muted);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-border);
+  transition: background 0.1s, color 0.1s;
+  gap: 0.625rem;
+  background: none;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.nav-mobile-item:active { background: var(--color-panel); }
+
+/* Landscape phone — 2-col grid for nav links so all items fit without scrolling */
+@media (orientation: landscape) and (max-width: 1024px) {
+  .nav-mobile-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .nav-mobile-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+  }
+  /* Divider between left and right columns */
+  .nav-mobile-links .nav-mobile-item:nth-child(odd) {
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+/*
+ * Mobile landscape — phones in landscape mode are typically 500–900px wide
+ * but only 320–500px tall. The max-width:768px portrait breakpoint doesn't
+ * fire. Use max-height:500px + orientation:landscape to catch these devices.
+ */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Hide desktop nav items, show the mobile 3-dot trigger */
+  .nav-desktop        { display: none !important; }
+  .nav-mobile-trigger { display: flex !important; }
+  .app-nav            { gap: 0.625rem; padding: 0 0.875rem; }
+
+  /* Compact dropdown: slim navbar offset, 2-column link grid */
+  .nav-mobile-menu {
+    top: 3rem;          /* match compact navbar height in landscape */
+    flex-direction: row;
+    flex-wrap: wrap;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(100vh - 3rem);
+  }
+  .nav-mobile-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 60%;         /* left portion for nav links */
+    flex-shrink: 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--color-border);
+  }
+  .nav-mobile-links .nav-mobile-item:nth-child(odd) {
+    border-right: 1px solid var(--color-border);
+  }
+  /* Right portion for settings/user actions */
+  .nav-mobile-menu > div:last-child {
+    width: 40%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .nav-mobile-item {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8rem;
+  }
+}
+
+@keyframes nav-menu-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive breakpoint ───────────────────────────────────── */
+@media (max-width: 768px) {
+  .nav-desktop        { display: none !important; }
+  .nav-mobile-trigger { display: flex; }
+  .app-nav            { gap: 0.75rem; padding: 0 1rem; }
 }
 
 /* ── Dashboard (homepage layout) ────────────────────────────── */
@@ -281,15 +431,20 @@ select.input-base { appearance: none; cursor: pointer; }
 }
 .studio-sidebar-wrapper {
   position: relative;
-  transition: transform 0.22s ease, width 0.22s ease, opacity 0.22s ease;
+  width: 15rem;
+  flex-shrink: 0;
+  transition: transform 0.22s ease, width 0.22s ease, opacity 0.22s ease, margin 0.22s ease;
 }
 .studio-sidebar-wrapper.collapsed {
   transform: translateX(-100%);
   width: 0;
   opacity: 0;
+  overflow: hidden;
+  margin-right: 0;
 }
 .studio-sidebar-wrapper.open {
   transform: translateX(0);
+  width: 15rem;
   opacity: 1;
 }
 .studio-sidebar {
@@ -438,11 +593,6 @@ select.input-base { appearance: none; cursor: pointer; }
   transform: translateY(-1px);
 }
 @media (min-width: 1024px) {
-  .studio-sidebar-wrapper.collapsed {
-    transform: translateX(0);
-    width: auto;
-    opacity: 1;
-  }
   .studio-sidebar-toggle {
     left: 1rem;
     top: 1rem;
@@ -469,6 +619,19 @@ select.input-base { appearance: none; cursor: pointer; }
   }
   .studio-canvas-wrap > div {
     min-height: 320px;
+  }
+}
+
+/* ── Transfer page grid ─────────────────────────────────────────────────── */
+.transfer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .transfer-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -633,30 +796,79 @@ select.input-base { appearance: none; cursor: pointer; }
   .info-banner-grid { grid-template-columns: 1fr; gap: 1rem; }
 }
 
-/* Pulses endpoint pill — allow wrapping */
-@media (max-width: 600px) {
-  .pulse-endpoint-pill {
-    flex-wrap: wrap;
-  }
-  .pulse-endpoint-url {
-    word-break: break-all;
-    white-space: normal !important;
-  }
-  .pulse-card-actions {
-    flex-wrap: wrap;
-  }
+/* ── Pulses page ─────────────────────────────────────────────────────────── */
+
+/* Card summary row — desktop: single line with icon | content | actions */
+.pulse-card-row {
+  padding: 1.375rem 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
 }
 
-/* Pulse info banner — allow code to wrap */
-@media (max-width: 600px) {
+/* Page header spacing */
+.pulses-header { margin-bottom: 2.5rem; }
+
+/* Pulse info banner — allow code to wrap on small screens */
+@media (max-width: 640px) {
   .pulse-info-banner {
     flex-wrap: wrap;
+    padding: 0.875rem 1rem;
   }
   .pulse-info-banner code {
     word-break: break-all;
     white-space: normal;
+    font-size: 0.775rem;
   }
 }
+
+/* Tablet: tighten card padding */
+@media (max-width: 768px) {
+  .pulses-page { padding: 1.5rem 1rem !important; }
+  .pulses-header { margin-bottom: 1.5rem; }
+  .pulses-header h1 { font-size: 1.5rem !important; }
+  .pulse-card-row { padding: 1rem 1.25rem; gap: 0.875rem; }
+}
+
+/* Mobile: card row wraps — actions move below endpoint */
+@media (max-width: 600px) {
+  .pulses-page { padding: 1.25rem 0.875rem !important; }
+  .pulse-card-row {
+    flex-wrap: wrap;
+    padding: 0.875rem 1rem;
+    gap: 0.75rem;
+  }
+  /* Icon + content stay on first line together */
+  .pulse-card-row > div:first-child {
+    /* icon — keep its fixed size */
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+  /* Actions wrap to a full-width row at the bottom */
+  .pulse-card-actions {
+    width: 100%;
+    justify-content: flex-end;
+    padding-top: 0.25rem;
+    border-top: 1px solid var(--color-border);
+  }
+  /* Endpoint pill: constrain and allow URL to truncate */
+  .pulse-endpoint-pill {
+    max-width: 100% !important;
+  }
+  .pulse-endpoint-url {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap !important;
+  }
+  /* Test panel padding */
+  .pulse-test-panel {
+    padding: 1rem !important;
+  }
+}
+
+/* Desktop test panel padding */
+.pulse-test-panel { padding: 1.75rem; }
 
 /* Responsive nav tweaks */
 @media (max-width: 640px) {
@@ -1383,3 +1595,164 @@ select.input-base { appearance: none; cursor: pointer; }
 
 /* selection box */
 .react-flow__selection { background: rgba(154, 52, 18, 0.06); border: 1px solid rgba(154, 52, 18, 0.35); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   END-TO-END RESPONSIVE — landscape + mobile polish
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* 1. Global overflow guard — nothing should push the page wider than viewport */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* 2. ── Navbar — landscape phone */
+@media (max-width: 768px) {
+  .app-nav {
+    overflow-x: visible;
+  }
+}
+
+/* Landscape: compact bottom-section items to match link grid sizing */
+@media (orientation: landscape) and (max-width: 1024px) {
+  .nav-mobile-menu > div .nav-mobile-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Landscape phones: tighten the navbar bar height */
+@media (orientation: landscape) and (max-height: 500px) {
+  .app-nav {
+    height: 3rem;
+  }
+  body {
+    padding-top: 3rem;  /* override the default 3.5rem to match compact nav */
+  }
+  .nav-mobile-menu {
+    top: 3rem;
+  }
+}
+
+/* 3. ── Studio toolbar — scrollable + compact on mobile ── */
+@media (max-width: 768px) {
+  .studio-toolbar {
+    padding: 0 0.625rem;
+    gap: 0.375rem;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    height: auto;
+    min-height: 3rem;
+  }
+  .studio-toolbar::-webkit-scrollbar { display: none; }
+
+  .studio-toolbar-breadcrumb {
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 0.8125rem;
+  }
+  .studio-toolbar-title {
+    max-width: 5rem;
+    font-size: 0.8125rem;
+  }
+  .studio-toolbar-actions {
+    gap: 0.25rem;
+    flex-shrink: 0;
+  }
+  .studio-toolbar-btn {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8rem;
+    gap: 0.25rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  /* Chevron between breadcrumb and title */
+  .studio-toolbar > svg { flex-shrink: 0; }
+}
+
+/* On very small / landscape phones: hide text labels, show icons only */
+@media (max-width: 540px) {
+  .toolbar-label { display: none; }
+  .studio-toolbar-btn { padding: 0.375rem 0.4375rem; }
+  .studio-toolbar-title { max-width: 4rem; }
+}
+
+/* 4. ── Studio layout — landscape mobile uses horizontal layout ── */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Keep horizontal (sidebar|canvas) layout in landscape — saves vertical space */
+  .studio-root {
+    flex-direction: row !important;
+    height: calc(100dvh - 3.5rem);
+  }
+  /* Canvas can be shorter in landscape */
+  .studio-canvas-wrap > div {
+    min-height: 0;
+  }
+}
+
+/* Use dvh for studio height so mobile browser chrome is handled correctly */
+@media (max-width: 768px) {
+  .studio-root {
+    height: calc(100dvh - 3.5rem);
+  }
+}
+
+/* 5. ── Page-level: ensure full-width usage of landscape viewport ── */
+@media (max-width: 768px) {
+  /* All pages fill the available width */
+  .dashboard-page,
+  .page-wrapper {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Nexus page — right panel padding responsive */
+  .nexus-page {
+    overflow: hidden;
+  }
+
+  /* Transfer grid already responsive — ensure no side gap */
+  .transfer-grid {
+    padding: 0;
+  }
+}
+
+/* 6. ── Landscape: reduce heavy top padding that wastes screen height ── */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Dashboard padding is too tall in landscape phone */
+  .dashboard-page {
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+  }
+  .page-wrapper {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+  /* Stats grids — tighten margin */
+  .stats-grid-4,
+  .stats-grid-3 {
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* 7. ── Pagination: stack on narrow landscape ── */
+@media (max-width: 540px) {
+  .pagination-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+  }
+  .pagination-page-size { font-size: 0.7rem; }
+}
+
+/* 8. ── Studio minimap + controls: hide on very small screens ── */
+@media (max-width: 480px) {
+  .react-flow__minimap { display: none; }
+}
+@media (max-height: 480px) {
+  .react-flow__minimap { display: none; }
+}

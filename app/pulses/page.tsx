@@ -27,10 +27,10 @@ export default function PulsesPage() {
   }
 
   return (
-    <div className="page-wrapper" style={{ maxWidth: '88rem', margin: '0 auto', padding: '2.5rem 2rem' }}>
+    <div className="page-wrapper pulses-page" style={{ maxWidth: '88rem', margin: '0 auto', padding: '2.5rem 2rem' }}>
 
       {/* ── Header ── */}
-      <div style={{ marginBottom: '2.5rem' }}>
+      <div className="pulses-header">
         <p className="dashboard-label" style={{ marginBottom: '0.5rem' }}>TRIGGERS</p>
         <h1 style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1.15 }}>Pulses</h1>
         <p style={{ color: 'var(--color-muted)', fontSize: '0.9375rem', marginTop: '0.375rem' }}>
@@ -128,13 +128,13 @@ function PulseCard({ flow, onOpenView, onOpenEdit, onDelete }: {
     <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '1rem', overflow: 'hidden', transition: 'border-color 0.15s', ...(testOpen ? { borderColor: 'rgba(0,212,255,0.3)' } : {}) }}>
 
       {/* ── Summary row ── */}
-      <div style={{ padding: '1.375rem 1.75rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+      <div className="pulse-card-row">
         <div style={{ width: '3rem', height: '3rem', borderRadius: '0.875rem', flexShrink: 0, background: 'linear-gradient(135deg,rgba(0,212,255,0.15),rgba(99,102,241,0.15))', border: '1px solid rgba(0,212,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Zap size={18} style={{ color: 'var(--color-accent)' }} />
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text)' }}>{flow.name}</h3>
             <span style={{
               fontSize: '0.7rem', fontFamily: 'var(--font-mono)', padding: '0.2rem 0.5rem',
@@ -144,7 +144,7 @@ function PulseCard({ flow, onOpenView, onOpenEdit, onDelete }: {
             }}>{flow.status}</span>
           </div>
           {/* Endpoint pill */}
-          <div className="pulse-endpoint-pill" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', background: 'var(--color-base)', border: '1px solid var(--color-border)', borderRadius: '0.625rem', padding: '0.5rem 0.875rem', maxWidth: '40rem' }}>
+          <div className="pulse-endpoint-pill" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', background: 'var(--color-base)', border: '1px solid var(--color-border)', borderRadius: '0.625rem', padding: '0.5rem 0.875rem' }}>
             <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#10b981', background: 'rgba(16,185,129,0.12)', padding: '0.125rem 0.4rem', borderRadius: '0.25rem', flexShrink: 0 }}>POST</span>
             <span className="pulse-endpoint-url" style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{endpoint}</span>
             <button onClick={copy} title="Copy URL" style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--color-success)' : 'var(--color-muted)', display: 'flex', padding: '0.125rem', transition: 'color 0.15s', flexShrink: 0 }}>
@@ -170,7 +170,7 @@ function PulseCard({ flow, onOpenView, onOpenEdit, onDelete }: {
 
       {/* ── Test panel ── */}
       {testOpen && (
-        <div style={{ borderTop: '1px solid var(--color-border)', padding: '1.75rem', background: 'var(--color-panel)' }}>
+        <div className="pulse-test-panel" style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-panel)' }}>
           <div className="two-col-panel" style={{ gap: '1.5rem' }}>
 
             {/* Request */}

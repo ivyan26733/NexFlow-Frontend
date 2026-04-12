@@ -187,7 +187,7 @@ export default function TransferPage() {
   // ── RENDER ─────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ maxWidth: '90rem', margin: '0 auto', padding: '2.5rem 2rem' }}>
+    <div style={{ maxWidth: '90rem', margin: '0 auto', padding: 'clamp(1rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2rem)' }}>
 
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
@@ -198,8 +198,8 @@ export default function TransferPage() {
         </p>
       </div>
 
-      {/* Two-panel layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+      {/* Two-panel layout — stacks to single column on mobile */}
+      <div className="transfer-grid">
 
         {/* ── LEFT: EXPORT ─────────────────────────────────────────────────── */}
         <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '1rem', overflow: 'hidden' }}>
@@ -250,7 +250,7 @@ export default function TransferPage() {
           </div>
 
           {/* Flow list */}
-          <div style={{ minHeight: '20rem', maxHeight: '28rem', overflowY: 'auto' }}>
+          <div style={{ minHeight: '12rem', maxHeight: 'min(28rem, 50vh)', overflowY: 'auto' }}>
             {loading ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '10rem', color: 'var(--color-muted)', gap: '0.5rem' }}>
                 <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Loading flows…
@@ -370,7 +370,7 @@ export default function TransferPage() {
           </div>
 
           {/* File list */}
-          <div style={{ minHeight: '16rem', maxHeight: '24rem', overflowY: 'auto' }}>
+          <div style={{ minHeight: '8rem', maxHeight: 'min(24rem, 45vh)', overflowY: 'auto' }}>
             {importEntries.length === 0 ? (
               <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-muted)' }}>
                 <FileJson size={28} style={{ opacity: 0.2, marginBottom: '0.75rem' }} />
