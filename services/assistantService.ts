@@ -1,6 +1,8 @@
 // NexFlow Assistant - calls the assistant server.
 // BASE URL reads NEXT_PUBLIC_ASSISTANT_URL first, then falls back to the main API URL.
 
+import { getAuthHeaders } from '@/lib/auth'
+
 const BASE = process.env.NEXT_PUBLIC_ASSISTANT_URL
   ?? process.env.NEXT_PUBLIC_API_URL
   ?? 'http://localhost:8090'
@@ -62,7 +64,7 @@ export async function fetchRecentTransactions(
 ): Promise<TransactionDigest[]> {
   const res = await fetch(
     `${apiBase}/api/executions/recent?flowId=${flowId}&hours=${hours}`,
-    { headers: { 'Content-Type': 'application/json' } },
+    { headers: { 'Content-Type': 'application/json', ...getAuthHeaders() } },
   )
   if (!res.ok) return []
   return res.json()
@@ -74,12 +76,17 @@ export async function sendMessage(
   flow?:        FlowSnapshot,
   transactions?: TransactionDigest[],
 ): Promise<AssistantResponse> {
-  // The assistant gets the user message plus optional flow and transaction context.
-  // That lets it answer both "how do I build this?" and "why is this failing?".
+  // Prepend a plain-text instruction so the LLM never responds in JSON or code-fenced JSON.
+  const PLAIN_TEXT_PREFIX =
+    'Respond in plain conversational text or markdown (use **bold**, `code`, bullet points, newlines). ' +
+    'Never return raw JSON or wrap your entire answer in a JSON object. '
+
+  const prefixedMessage = PLAIN_TEXT_PREFIX + message
+
   const res = await fetch(`${BASE}/api/assistant/chat`, {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ message, history, flow, transactions }),
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body:    JSON.stringify({ message: prefixedMessage, history, flow, transactions }),
   })
 
   if (!res.ok) {

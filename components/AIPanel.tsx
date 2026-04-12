@@ -195,7 +195,7 @@ export function AIPanel({ onClose, nodes = [], edges = [], flowId }: AIPanelProp
         {messages.map((msg, i) => (
           <div key={i} style={{ ...s.bubble, ...(msg.role === 'user' ? s.userBubble : s.aiBubble) }}>
             <div style={s.bubbleRole}>{msg.role === 'user' ? '🧑 You' : '🤖 Assistant'}</div>
-            <div style={{ color: '#e2e8f0' }}>{renderContent(msg.content)}</div>
+            <div>{renderContent(msg.content)}</div>
           </div>
         ))}
 
