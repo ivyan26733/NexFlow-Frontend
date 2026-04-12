@@ -433,6 +433,9 @@ html.dim-mode {
   position: relative;
   width: 15rem;
   flex-shrink: 0;
+  /* Must be bounded so the sidebar can scroll internally */
+  height: 100%;
+  overflow: hidden;
   transition: transform 0.22s ease, width 0.22s ease, opacity 0.22s ease, margin 0.22s ease;
 }
 .studio-sidebar-wrapper.collapsed {
@@ -454,7 +457,13 @@ html.dim-mode {
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
+  /* Fill wrapper height so overflow-y actually triggers */
+  height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
+  /* Prevent scroll from escaping to the canvas underneath */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 .studio-sidebar-header {
   padding: 1rem 1.25rem;
@@ -610,9 +619,11 @@ html.dim-mode {
     position: absolute;
     z-index: 30;
     height: 100%;
+    overflow: hidden;
   }
   .studio-sidebar {
     max-width: 80vw;
+    height: 100%;
   }
   .studio-canvas-row {
     flex: 1;
