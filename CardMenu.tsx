@@ -12,7 +12,8 @@ export interface CardMenuItem {
   danger?: boolean
   icon?: ReactNode
 }
-interface CardMenuProps {
+interface CardMenuProps 
+{
   items: CardMenuItem[]
   className?: string
   onOpenChange?: (open: boolean) => void
