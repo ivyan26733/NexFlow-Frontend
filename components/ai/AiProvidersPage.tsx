@@ -399,7 +399,7 @@ export default function AiProvidersPage() {
   const [loading,   setLoading]   = useState(true)
   const [toast,     setToast]     = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
-  const isAdmin = getStoredUser()?.role === 'ADMIN'
+  const isAdmin = true // All users can manage their own AI provider keys
 
   useEffect(() => { loadProviders() }, [])
 
