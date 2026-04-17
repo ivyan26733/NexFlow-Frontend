@@ -18,7 +18,7 @@ const STATUS_META: Record<string, { color: string; bg: string; dot: string }> = 
   ARCHIVED: { color: '#b91c1c', bg: 'rgba(185,28,28,0.1)',    dot: '#b91c1c' },
 }
 
-export default function FlowsPage() {
+export default function FlowsPage()  {
   const router = useRouter()
   const { requireAuth } = useAuthGuard()
   const [flows,     setFlows]     = useState<Flow[]>([])
