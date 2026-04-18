@@ -24,12 +24,12 @@ function useReveal(threshold = 0.12) {
   return { ref, visible }
 }
 
-function Reveal({ children, delay = 0, style = {} }: {
-  children: React.ReactNode; delay?: number; style?: React.CSSProperties
+function Reveal({ children, delay = 0, style = {}, className }: {
+  children: React.ReactNode; delay?: number; style?: React.CSSProperties; className?: string
 }) {
   const { ref, visible } = useReveal()
   return (
-    <div ref={ref} style={{
+    <div ref={ref} className={className} style={{
       opacity: visible ? 1 : 0,
       transform: visible ? 'translateY(0)' : 'translateY(36px)',
       transition: `opacity 0.75s ease ${delay}ms, transform 0.75s ease ${delay}ms`,
@@ -408,6 +408,33 @@ export default function HomePage() {
         }
         .nx-btn-ghost:hover { border-color:var(--color-accent); background:var(--color-accent-soft); }
         .nx-divider { height:1px; background:linear-gradient(90deg,transparent,var(--color-border),transparent); }
+
+        /* ── Responsive layout ── */
+        .nx-section   { padding:100px 24px; }
+        .nx-two-col   { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr)); gap:64px; align-items:center; }
+        .nx-stats-row { display:flex; flex-wrap:wrap; background:var(--color-surface); border:1px solid var(--color-border); border-radius:16px; box-shadow:var(--shadow-warm); overflow:hidden; margin-top:64px; }
+        .nx-stats-item{ flex:1 1 120px; padding:20px 36px; text-align:center; border-right:1px solid var(--color-border); box-sizing:border-box; }
+        .nx-stats-item:last-child { border-right:none; }
+        .nx-span2     { grid-column:span 2; }
+        .nx-mini-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .nx-dev-grid  { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; }
+        .nx-code-block{ overflow-x:auto; }
+        .nx-badge     { display:inline-flex; align-items:center; gap:8px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:100px; padding:5px 16px 5px 6px; margin-bottom:28px; font-size:13px; font-weight:600; color:var(--color-muted); box-shadow:var(--shadow-warm); max-width:100%; }
+
+        @media (max-width:680px) {
+          .nx-hero      { padding:90px 16px 60px !important; }
+          .nx-section   { padding:60px 16px; }
+          .nx-two-col   { gap:32px; }
+          .nx-stats-item{ flex:1 1 44%; padding:16px 12px; border-right:none; border-bottom:1px solid var(--color-border); }
+          .nx-stats-item:nth-child(odd) { border-right:1px solid var(--color-border) !important; }
+          .nx-stats-item:last-child     { border-bottom:none; }
+          .nx-stats-item:nth-last-child(2):nth-child(odd) { border-bottom:none; }
+          .nx-span2     { grid-column:span 1; }
+          .nx-mini-grid { grid-template-columns:1fr; }
+          .nx-dev-grid  { grid-template-columns:1fr; }
+          .nx-badge     { font-size:11px; text-align:center; justify-content:center; }
+          .nx-btn-primary,.nx-btn-ghost { padding:11px 20px; font-size:14px; width:100%; justify-content:center; }
+        }
       `}</style>
 
       {/* Auth Modal */}
@@ -416,17 +443,17 @@ export default function HomePage() {
       )}
 
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
-      <section style={{
+      <section className="nx-hero" style={{
         minHeight: '100vh', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        padding: '120px 24px 80px', position: 'relative', overflow: 'hidden',
+        padding: '120px 16px 80px', position: 'relative', overflow: 'hidden',
         background: 'var(--grad-hero-warm)',
       }}>
         <div style={{ position: 'absolute', top: '8%', right: '8%', width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(154,52,18,0.08) 0%, transparent 70%)', animation: 'nx-float 7s ease-in-out infinite', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '12%', left: '5%', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(30,58,95,0.08) 0%, transparent 70%)', animation: 'nx-float 9s ease-in-out 2s infinite', pointerEvents: 'none' }} />
 
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 100, padding: '5px 16px 5px 6px', marginBottom: 28, fontSize: 13, fontWeight: 600, color: 'var(--color-muted)', boxShadow: 'var(--shadow-warm)' }}>
-          <span style={{ background: 'var(--grad-accent)', borderRadius: 100, padding: '2px 10px', fontSize: 11, color: 'var(--color-on-accent)', fontWeight: 700 }}>NEW</span>
+        <div className="nx-badge">
+          <span style={{ background: 'var(--grad-accent)', borderRadius: 100, padding: '2px 10px', fontSize: 11, color: 'var(--color-on-accent)', fontWeight: 700, flexShrink: 0 }}>NEW</span>
           AI-powered workflow automation for developers
         </div>
 
@@ -445,14 +472,14 @@ export default function HomePage() {
           <GhostBtn   label="Sign in"                mode="login"  />
         </div>
 
-        <div style={{ display: 'flex', gap: 0, marginTop: 64, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 16, boxShadow: 'var(--shadow-warm)', overflow: 'hidden', flexWrap: 'wrap' }}>
+        <div className="nx-stats-row">
           {[
-            { label: 'Node types',       to: 12,  suffix: '' },
-            { label: 'AI providers',     to: 5,   suffix: '+' },
+            { label: 'Node types',        to: 12,  suffix: '' },
+            { label: 'AI providers',      to: 5,   suffix: '+' },
             { label: 'Parallel branches', to: 100, suffix: '+' },
-            { label: 'Script languages', to: 2,   suffix: '' },
-          ].map((s, i) => (
-            <div key={s.label} style={{ padding: '20px 36px', textAlign: 'center', borderRight: i < 3 ? '1px solid var(--color-border)' : 'none' }}>
+            { label: 'Script languages',  to: 2,   suffix: '' },
+          ].map(s => (
+            <div key={s.label} className="nx-stats-item">
               <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--color-accent)' }}><Counter to={s.to} suffix={s.suffix} /></div>
               <div style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 3, fontWeight: 600 }}>{s.label}</div>
             </div>
@@ -485,7 +512,7 @@ export default function HomePage() {
       <div className="nx-divider" />
 
       {/* ── PROBLEM ───────────────────────────────────────────────────────── */}
-      <section style={{ padding: '100px 24px', maxWidth: 1080, margin: '0 auto' }}>
+      <section className="nx-section" style={{ maxWidth: 1080, margin: '0 auto' }}>
         <Reveal>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>The Problem</p>
@@ -512,7 +539,7 @@ export default function HomePage() {
       <div className="nx-divider" />
 
       {/* ── HOW IT WORKS ──────────────────────────────────────────────────── */}
-      <section id="how-it-works" style={{ padding: '100px 24px', background: 'var(--color-panel)' }}>
+      <section id="how-it-works" className="nx-section" style={{ background: 'var(--color-panel)' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <Reveal>
             <div style={{ textAlign: 'center', marginBottom: 64 }}>
@@ -537,7 +564,7 @@ export default function HomePage() {
       <div className="nx-divider" />
 
       {/* ── NODE TYPES ────────────────────────────────────────────────────── */}
-      <section id="features" style={{ padding: '100px 24px', maxWidth: 1200, margin: '0 auto' }}>
+      <section id="features" className="nx-section" style={{ maxWidth: 1200, margin: '0 auto' }}>
         <Reveal>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>12 Node Types</p>
@@ -563,8 +590,8 @@ export default function HomePage() {
       <div className="nx-divider" />
 
       {/* ── AI SECTION ────────────────────────────────────────────────────── */}
-      <section id="ai" style={{ padding: '100px 24px', background: 'var(--color-panel)' }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 64, alignItems: 'center' }}>
+      <section id="ai" className="nx-section" style={{ background: 'var(--color-panel)' }}>
+        <div className="nx-two-col" style={{ maxWidth: 1080, margin: '0 auto' }}>
           <Reveal>
             <div>
               <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>AI Built In</p>
@@ -597,8 +624,8 @@ export default function HomePage() {
       <div className="nx-divider" />
 
       {/* ── TRANSPARENCY ──────────────────────────────────────────────────── */}
-      <section style={{ padding: '100px 24px', maxWidth: 1080, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 64, alignItems: 'center' }}>
+      <section className="nx-section" style={{ maxWidth: 1080, margin: '0 auto' }}>
+        <div className="nx-two-col">
           <Reveal>
             <div className="nx-card" style={{ padding: 24, fontFamily: 'var(--font-mono)', fontSize: 13 }}>
               <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
@@ -632,7 +659,7 @@ export default function HomePage() {
               <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>Full Transparency</p>
               <h2 style={{ fontSize: 'clamp(26px, 4vw, 44px)', fontWeight: 800, letterSpacing: '-1.5px', lineHeight: 1.1, marginBottom: 20 }}>See exactly what<br /><span className="nx-accent-text">happened. Always.</span></h2>
               <p style={{ fontSize: 16, lineHeight: 1.75, color: 'var(--color-muted)', marginBottom: 28 }}>Every execution is a full audit trail. Per-node input, output, and duration. If something fails, you know exactly where and why — in seconds.</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="nx-mini-grid">
                 {[
                   { icon: '◎', title: 'Per-node I/O',    desc: 'Full input and output for every step' },
                   { icon: '⏱', title: 'Duration tracking', desc: 'Know which nodes are slow' },
@@ -654,7 +681,7 @@ export default function HomePage() {
       <div className="nx-divider" />
 
       {/* ── DEVELOPER ─────────────────────────────────────────────────────── */}
-      <section style={{ padding: '100px 24px', background: 'var(--color-panel)' }}>
+      <section className="nx-section" style={{ background: 'var(--color-panel)' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <Reveal>
             <div style={{ textAlign: 'center', marginBottom: 56 }}>
@@ -662,9 +689,9 @@ export default function HomePage() {
               <h2 style={{ fontSize: 'clamp(28px, 4.5vw, 48px)', fontWeight: 800, letterSpacing: '-1.5px', lineHeight: 1.1 }}>No-code speed.<br /><span className="nx-accent-text">Code-level power.</span></h2>
             </div>
           </Reveal>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
-            <Reveal delay={0} style={{ gridColumn: 'span 2' }}>
-              <div style={{ background: 'var(--color-navy)', border: '1px solid rgba(30,58,95,0.3)', borderRadius: 16, padding: 28, fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 1.8 }}>
+          <div className="nx-dev-grid">
+            <Reveal delay={0} className="nx-span2">
+              <div className="nx-code-block" style={{ background: 'var(--color-navy)', border: '1px solid rgba(30,58,95,0.3)', borderRadius: 16, padding: 28, fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 1.8 }}>
                 <div style={{ fontSize: 11, color: 'rgba(249,243,236,0.35)', marginBottom: 14 }}>Script Node — JavaScript</div>
                 <div><span style={{ color: '#c084fc' }}>const</span> <span style={{ color: '#93c5fd' }}>orders</span> <span style={{ color: '#f9f3ec' }}>=</span> <span style={{ color: '#c084fc' }}>nex</span><span style={{ color: '#f9f3ec' }}>.</span><span style={{ color: '#6ee7b7' }}>fetchOrders</span><span style={{ color: '#f9f3ec' }}>.</span><span style={{ color: '#6ee7b7' }}>body</span><span style={{ color: '#f9f3ec' }}>.</span><span style={{ color: '#6ee7b7' }}>data</span><span style={{ color: '#f9f3ec' }}>;</span></div>
                 <div><span style={{ color: '#c084fc' }}>const</span> <span style={{ color: '#93c5fd' }}>highValue</span> <span style={{ color: '#f9f3ec' }}>=</span> <span style={{ color: '#93c5fd' }}>orders</span><span style={{ color: '#f9f3ec' }}>.</span><span style={{ color: '#6ee7b7' }}>filter</span><span style={{ color: '#f9f3ec' }}>(o =&gt; o.</span><span style={{ color: '#6ee7b7' }}>total</span> <span style={{ color: '#f9f3ec' }}>&gt;</span> <span style={{ color: '#fcd34d' }}>1000</span><span style={{ color: '#f9f3ec' }}>);</span></div>
@@ -694,7 +721,7 @@ export default function HomePage() {
       <div className="nx-divider" />
 
       {/* ── FINAL CTA ─────────────────────────────────────────────────────── */}
-      <section style={{ padding: '120px 24px', textAlign: 'center', background: 'var(--grad-hero-warm)' }}>
+      <section className="nx-section" style={{ textAlign: 'center', background: 'var(--grad-hero-warm)' }}>
         <Reveal>
           <h2 style={{ fontSize: 'clamp(32px, 5.5vw, 64px)', fontWeight: 800, letterSpacing: '-2px', lineHeight: 1.05, marginBottom: 20 }}>
             Ready to build<br /><span className="nx-accent-text">something real?</span>
