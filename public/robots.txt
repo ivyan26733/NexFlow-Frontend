@@ -1,0 +1,24 @@
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /login
+Allow: /signup
+
+# Keep authenticated app pages out of search index
+Disallow: /dashboard
+Disallow: /flows
+Disallow: /studio
+Disallow: /transactions
+Disallow: /settings
+Disallow: /admin
+Disallow: /nexus
+Disallow: /groups
+Disallow: /pulses
+Disallow: /transfer
+Disallow: /templates
+Disallow: /verify-otp
+Disallow: /reset-password
+Disallow: /forgot-password
+Disallow: /api/
+
+Sitemap: https://nex-flow-frontend.vercel.app/sitemap.xml

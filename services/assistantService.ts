@@ -64,7 +64,7 @@ export async function fetchRecentTransactions(
 ): Promise<TransactionDigest[]> {
   const res = await fetch(
     `${apiBase}/api/executions/recent?flowId=${flowId}&hours=${hours}`,
-    { headers: { 'Content-Type': 'application/json', ...getAuthHeaders() } },
+    { credentials: 'include', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() } },
   )
   if (!res.ok) return []
   return res.json()
@@ -84,9 +84,10 @@ export async function sendMessage(
   const prefixedMessage = PLAIN_TEXT_PREFIX + message
 
   const res = await fetch(`${BASE}/api/assistant/chat`, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-    body:    JSON.stringify({ message: prefixedMessage, history, flow, transactions }),
+    method:      'POST',
+    credentials: 'include',
+    headers:     { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body:        JSON.stringify({ message: prefixedMessage, history, flow, transactions }),
   })
 
   if (!res.ok) {

@@ -90,6 +90,76 @@ export default function AppNav() {
     return pathname.startsWith(href)
   }
 
+  // Landing page — marketing nav using app theme variables
+  if (pathname === '/home') {
+    return (
+      <nav style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 32px', height: '58px',
+        background: 'rgba(242,233,220,0.88)',   /* --color-base with opacity */
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderBottom: '1px solid var(--color-border)',
+        boxShadow: '0 1px 8px rgba(26,16,8,0.06)',
+      }}>
+        {/* Brand */}
+        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+          <span style={{
+            width: '28px', height: '28px',
+            background: 'var(--grad-accent)',
+            borderRadius: '7px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '13px', color: 'var(--color-on-accent)', fontWeight: 800,
+          }}>N</span>
+          <span style={{ fontWeight: 800, fontSize: '14px', color: 'var(--color-text)', letterSpacing: '0.8px' }}>NEXFLOW</span>
+        </a>
+
+        {/* Centre links */}
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+          {[
+            { label: 'Features',     href: '#features'     },
+            { label: 'How it works', href: '#how-it-works' },
+            { label: 'AI Nodes',     href: '#ai'           },
+            { label: 'About',        href: '/about'        },
+          ].map(l => (
+            <a key={l.label} href={l.href} style={{
+              padding: '6px 14px', borderRadius: '8px', fontSize: '13px',
+              fontWeight: 600, color: 'var(--color-muted)',
+              textDecoration: 'none',
+              transition: 'color 0.15s ease, background 0.15s ease',
+            }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text)'
+                ;(e.currentTarget as HTMLAnchorElement).style.background = 'var(--color-panel)'
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-muted)'
+                ;(e.currentTarget as HTMLAnchorElement).style.background = 'transparent'
+              }}
+            >{l.label}</a>
+          ))}
+        </div>
+
+        {/* Auth CTAs */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <a href="/login" style={{
+            padding: '7px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+            color: 'var(--color-text)', textDecoration: 'none',
+            border: '1.5px solid var(--color-border)',
+            transition: 'border-color 0.15s ease',
+          }}>Log in</a>
+          <a href="/signup" style={{
+            padding: '7px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
+            background: 'var(--grad-accent)',
+            color: 'var(--color-on-accent)', textDecoration: 'none',
+            boxShadow: '0 2px 8px rgba(154,52,18,0.25)',
+          }}>Get started →</a>
+        </div>
+      </nav>
+    )
+  }
+
   return (
     <>
       <nav ref={navRef} className="app-nav">
