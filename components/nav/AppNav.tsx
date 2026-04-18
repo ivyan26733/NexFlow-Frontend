@@ -141,20 +141,27 @@ export default function AppNav() {
           ))}
         </div>
 
-        {/* Auth CTAs */}
+        {/* Auth CTAs — dispatch event so /home page opens its modal */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <a href="/login" style={{
-            padding: '7px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-            color: 'var(--color-text)', textDecoration: 'none',
-            border: '1.5px solid var(--color-border)',
-            transition: 'border-color 0.15s ease',
-          }}>Log in</a>
-          <a href="/signup" style={{
-            padding: '7px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
-            background: 'var(--grad-accent)',
-            color: 'var(--color-on-accent)', textDecoration: 'none',
-            boxShadow: '0 2px 8px rgba(154,52,18,0.25)',
-          }}>Get started →</a>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('nexflow-open-auth', { detail: 'login' }))}
+            style={{
+              padding: '7px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+              color: 'var(--color-text)', background: 'none',
+              border: '1.5px solid var(--color-border)', cursor: 'pointer',
+              fontFamily: 'inherit',
+              transition: 'border-color 0.15s ease',
+            }}
+          >Log in</button>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('nexflow-open-auth', { detail: 'signup' }))}
+            style={{
+              padding: '7px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
+              background: 'var(--grad-accent)', color: 'var(--color-on-accent)',
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              boxShadow: '0 2px 8px rgba(154,52,18,0.25)',
+            }}
+          >Get started →</button>
         </div>
       </nav>
     )

@@ -346,6 +346,13 @@ export default function HomePage() {
   const closeAuth  = useCallback(() => setAuthMode(null),     [])
   const switchAuth = useCallback((m: AuthMode) => setAuthMode(m), [])
 
+  // Listen for nav bar buttons dispatching auth open events
+  useEffect(() => {
+    const h = (e: Event) => setAuthMode((e as CustomEvent<AuthMode>).detail)
+    window.addEventListener('nexflow-open-auth', h)
+    return () => window.removeEventListener('nexflow-open-auth', h)
+  }, [])
+
   // Helper: button that opens modal
   const PrimaryBtn = ({ label, mode }: { label: string; mode: AuthMode }) => (
     <button onClick={() => setAuthMode(mode)} className="nx-btn-primary">{label}</button>
