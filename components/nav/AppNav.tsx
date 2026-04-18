@@ -92,6 +92,7 @@ export default function AppNav() {
 
   // Landing page — marketing nav using app theme variables
   if (pathname === '/home') {
+    const loggedIn = isLoggedIn()
     return (
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
@@ -141,27 +142,36 @@ export default function AppNav() {
           ))}
         </div>
 
-        {/* Auth CTAs — dispatch event so /home page opens its modal */}
+        {/* Auth CTAs */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button
-            onClick={() => window.dispatchEvent(new CustomEvent('nexflow-open-auth', { detail: 'login' }))}
-            style={{
-              padding: '7px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-              color: 'var(--color-text)', background: 'none',
-              border: '1.5px solid var(--color-border)', cursor: 'pointer',
-              fontFamily: 'inherit',
-              transition: 'border-color 0.15s ease',
-            }}
-          >Log in</button>
-          <button
-            onClick={() => window.dispatchEvent(new CustomEvent('nexflow-open-auth', { detail: 'signup' }))}
-            style={{
+          {loggedIn ? (
+            <a href="/dashboard" style={{
               padding: '7px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
               background: 'var(--grad-accent)', color: 'var(--color-on-accent)',
-              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              boxShadow: '0 2px 8px rgba(154,52,18,0.25)',
-            }}
-          >Get started →</button>
+              textDecoration: 'none', boxShadow: '0 2px 8px rgba(154,52,18,0.25)',
+            }}>Go to Dashboard →</a>
+          ) : (
+            <>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('nexflow-open-auth', { detail: 'login' }))}
+                style={{
+                  padding: '7px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+                  color: 'var(--color-text)', background: 'none',
+                  border: '1.5px solid var(--color-border)', cursor: 'pointer',
+                  fontFamily: 'inherit', transition: 'border-color 0.15s ease',
+                }}
+              >Log in</button>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('nexflow-open-auth', { detail: 'signup' }))}
+                style={{
+                  padding: '7px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
+                  background: 'var(--grad-accent)', color: 'var(--color-on-accent)',
+                  border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                  boxShadow: '0 2px 8px rgba(154,52,18,0.25)',
+                }}
+              >Get started →</button>
+            </>
+          )}
         </div>
       </nav>
     )

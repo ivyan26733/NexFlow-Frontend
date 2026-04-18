@@ -338,8 +338,16 @@ function AuthModal({ mode, onClose, onSwitch }: {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
+  const router = useRouter()
   const scrollY = useScrollY()
   const [authMode, setAuthMode] = useState<AuthMode | null>(null)
+
+  // If already logged in, skip the landing page entirely
+  useEffect(() => {
+    import('@/lib/auth').then(({ isLoggedIn }) => {
+      if (isLoggedIn()) router.replace('/dashboard')
+    })
+  }, [router])
 
   const openLogin  = useCallback(() => setAuthMode('login'),  [])
   const openSignup = useCallback(() => setAuthMode('signup'), [])
