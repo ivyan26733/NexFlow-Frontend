@@ -46,16 +46,33 @@ const SCAN_PATTERNS = [
 ]
 
 const TRANSACTION_PATTERNS = [
+  // explicit history requests
   /check\s+(last|recent)\s+(hour|transactions?|executions?)/i,
-  /why\s+is\s+it\s+fail/i,
-  /why\s+(is|did|does)\s+(the\s+)?flow\s+fail/i,
   /recent\s+(transactions?|executions?)/i,
   /last\s+hour/i,
-  /diagnose/i,
-  /what\s+went\s+wrong/i,
+  /last\s+run/i,
+  /last\s+execution/i,
+  /execution\s+history/i,
+  // failure / error questions
+  /why\s+is\s+it\s+fail/i,
+  /why\s+(is|did|does)\s+(the\s+)?flow\s+fail/i,
+  /why\s+(is|does)\s+it\s+(fail|break|not\s+work)/i,
+  /why\s+(did|does)\s+it\s+(fail|error)/i,
+  /flow\s+(is\s+)?(fail|failing|failed|broken)/i,
+  /my\s+flow\s+(is\s+)?(fail|failing|failed)/i,
+  /reason\s+(of|for)\s+(the\s+)?(fail|failure|error)/i,
+  /what\s+(is|was)\s+the\s+(error|fail|problem|reason|issue)/i,
+  /what\s+(went|is)\s+wrong/i,
+  /what\s+happened(\s+(to|with)\s+my\s+flow)?/i,
+  /error\s+(message|detail|info|reason)/i,
   /transaction\s+error/i,
   /execution\s+(error|fail)/i,
-  /why\s+(is|does)\s+it\s+(fail|break|not\s+work)/i,
+  /show\s+me\s+the\s+error/i,
+  /what\s+error/i,
+  /failed\s+(node|step|execution)/i,
+  // diagnose / debug
+  /diagnose/i,
+  /debug\s+(the\s+)?(last|recent|fail)/i,
   /running\s+state/i,
   /stuck\s+in/i,
 ]
@@ -136,10 +153,8 @@ export function AIPanel({ onClose, nodes = [], edges = [], flowId }: AIPanelProp
       let txnPayload: TransactionDigest[] | undefined
       const attachTxn = forceTxn || isTransactionRequest(msg)
       if (attachTxn && flowId) {
-        // This is the debugging path: we pull recent executions first,
-        // then send those rows to the assistant together with the chat message.
         const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090'
-        const recent = await fetchRecentTransactions(apiBase, flowId, 1)
+        const recent = await fetchRecentTransactions(apiBase, flowId, 24)
         if (recent.length > 0) txnPayload = recent
       }
 

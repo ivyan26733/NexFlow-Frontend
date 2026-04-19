@@ -34,12 +34,12 @@ export interface FlowSnapshot {
 
 // Compact per-node summary sent to the assistant for transaction diagnostics.
 export interface TransactionNodeDigest {
-  label:       string
-  type:        string
-  status:      string
-  branchName?: string | null
-  error?:      string | null
-  durationMs:  number
+  label:         string
+  type:          string
+  status:        string
+  branchName?:   string | null
+  errorMessage?: string | null
+  durationMs:    number
 }
 
 export interface TransactionDigest {
@@ -60,7 +60,7 @@ export interface AssistantResponse {
 export async function fetchRecentTransactions(
   apiBase: string,
   flowId:  string,
-  hours = 1,
+  hours = 24,
 ): Promise<TransactionDigest[]> {
   const res = await fetch(
     `${apiBase}/api/executions/recent?flowId=${flowId}&hours=${hours}`,

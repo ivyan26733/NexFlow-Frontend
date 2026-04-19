@@ -19,9 +19,12 @@ export function usePagination<T>(items: T[], initialPageSize = 10): UsePaginatio
   const totalItems = items.length
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
 
+  // Reset to page 1 only when the item count changes (filter applied / items deleted),
+  // NOT on every render — the items array is a new reference each render which would
+  // reset the page after every Next click.
   useEffect(() => {
     setPage(1)
-  }, [items, pageSize])
+  }, [totalItems, pageSize])
 
   const pageItems = useMemo(() => {
     const safePage = Math.min(Math.max(1, page), totalPages)
