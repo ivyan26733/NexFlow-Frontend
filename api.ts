@@ -14,6 +14,7 @@ import type {
   AuthUser,
   UserGroup,
   FlowAccess,
+  FlowSchedule,
 } from './index'
 import { getAuthHeaders } from './lib/auth'
 
@@ -75,6 +76,9 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(bundle),
       }),
+
+    clone: (id: string) =>
+      request<Flow>(`/api/flows/${id}/clone`, { method: 'POST' }),
   },
 
   // ─── CANVAS ───────────────────────────────────────────────
@@ -212,6 +216,30 @@ export const api = {
 
     test: (provider: string) =>
       request<LlmTestResult>(`/api/llm-providers/${provider}/test`, { method: 'POST' }),
+  },
+
+  // ─── SCHEDULES ───────────────────────────────────────────────────────────────
+  schedules: {
+    list: () =>
+      request<FlowSchedule[]>('/api/schedules'),
+
+    create: (body: { flowId: string; label: string; cronExpression: string; timezone: string; enabled: boolean }) =>
+      request<FlowSchedule>('/api/schedules', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+
+    update: (id: string, body: { label: string; cronExpression: string; timezone: string; enabled: boolean }) =>
+      request<FlowSchedule>(`/api/schedules/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
+
+    toggle: (id: string) =>
+      request<FlowSchedule>(`/api/schedules/${id}/toggle`, { method: 'PATCH' }),
+
+    delete: (id: string) =>
+      request<void>(`/api/schedules/${id}`, { method: 'DELETE' }),
   },
 
   // ─── AUTH ─────────────────────────────────────────────────────────────────

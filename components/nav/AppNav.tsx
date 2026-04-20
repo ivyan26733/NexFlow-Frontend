@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { href: '/',             label: 'Dashboard'    },
   { href: '/flow',         label: 'Flows'        },
   { href: '/pulses',       label: 'Pulses'       },
+  { href: '/schedules',    label: 'Schedules'    },
   { href: '/transactions', label: 'Transactions' },
   { href: '/templates',    label: 'Templates'    },
   { href: '/nexus',        label: 'Nexus'        },

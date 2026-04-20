@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Play, Clock, Zap, Search, X, Edit3, Eye, LogIn, User, Archive, CheckCircle2, FilePenLine, Trash2, Download, Upload } from 'lucide-react'
+import { Plus, Play, Clock, Zap, Search, X, Edit3, Eye, LogIn, User, Archive, CheckCircle2, FilePenLine, Trash2, Download, Upload, Copy, Lock } from 'lucide-react'
 import CardMenu from '@/CardMenu'
 import { api } from '@/api'
-import type { Flow, FlowStatus } from '@/types'
+import type { Flow, FlowStatus, AuthUser } from '@/types'
 import { usePagination, PaginationControls } from '@/Pagination'
 import { MillennialLoader } from '@/MillennialLoader'
-import { isLoggedIn } from '@/lib/auth'
+import { isLoggedIn, getStoredUser } from '@/lib/auth'
 import { useAuthGuard } from '@/components/AuthGuardProvider'
 
 const STATUS_META: Record<string, { color: string; bg: string; dot: string }> = {
@@ -30,6 +30,7 @@ export default function FlowsPage() {
   const [newName,   setNewName]   = useState('')
   const [search,    setSearch]    = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'DRAFT' | 'ARCHIVED'>('ALL')
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
   const createRef = useRef(false)
   const importInputRef = useRef<HTMLInputElement>(null)
 
@@ -39,6 +40,7 @@ export default function FlowsPage() {
       setLoading(false)
       return
     }
+    setCurrentUser(getStoredUser())
     api.flows.list().then(setFlows).catch(console.error).finally(() => setLoading(false))
   }, [])
 
@@ -76,6 +78,25 @@ export default function FlowsPage() {
   async function updateFlowStatus(id: string, status: FlowStatus) {
     const updated = await api.flows.update(id, { status })
     setFlows(fs => fs.map(f => (f.id === id ? { ...f, status: updated.status, updatedAt: updated.updatedAt } : f)))
+  }
+
+  async function cloneFlow(id: string) {
+    try {
+      const cloned = await api.flows.clone(id)
+      setFlows(fs => [cloned, ...fs])
+      router.push(`/studio/${cloned.id}`)
+    } catch (e) {
+      console.error('Clone failed', e)
+      alert('Failed to clone flow.')
+    }
+  }
+
+  function handleEditFlow(flow: Flow) {
+    if (flow.status === 'ACTIVE') {
+      router.push(`/studio/${flow.id}?mode=view`)
+    } else {
+      router.push(`/studio/${flow.id}`)
+    }
   }
 
   async function exportFlow(flow: Flow) {
@@ -211,11 +232,13 @@ export default function FlowsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(18rem, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
             {pagedFlows.map(flow => (
               <FlowCard key={flow.id} flow={flow}
+                currentUser={currentUser}
                 onOpenView={() => router.push(`/studio/${flow.id}?mode=view`)}
-                onOpenEdit={() => router.push(`/studio/${flow.id}`)}
+                onOpenEdit={() => requireAuth(() => handleEditFlow(flow))}
                 onDelete={() => handleDeleteFlow(flow.id)}
                 onSetStatus={(status) => requireAuth(() => updateFlowStatus(flow.id, status))}
                 onExport={() => exportFlow(flow)}
+                onClone={() => requireAuth(() => cloneFlow(flow.id))}
               />
             ))}
           </div>
@@ -259,17 +282,22 @@ export default function FlowsPage() {
 }
 
 function FlowCard({
-  flow, onOpenView, onOpenEdit, onDelete, onSetStatus, onExport,
+  flow, currentUser, onOpenView, onOpenEdit, onDelete, onSetStatus, onExport, onClone,
 }: {
   flow: Flow
+  currentUser: AuthUser | null
   onOpenView: () => void
   onOpenEdit: () => void
   onDelete: () => void
   onSetStatus: (status: FlowStatus) => void
   onExport: () => void
+  onClone: () => void
 }) {
   const sc = STATUS_META[flow.status] ?? STATUS_META.DRAFT
   const isActive = flow.status === 'ACTIVE'
+  // Status changes + delete are owner/admin only
+  const canManage = !currentUser ? false
+    : currentUser.role === 'ADMIN' || currentUser.id === flow.userId
   const updated = new Date(flow.updatedAt)
   const updatedLabel = Number.isNaN(updated.getTime())
     ? 'Unknown'
@@ -312,14 +340,18 @@ function FlowCard({
           </span>
           <CardMenu items={[
             { label: 'View mode',  onClick: onOpenView, icon: <Eye size={14} /> },
-            { label: 'Edit mode',  onClick: onOpenEdit, icon: <Edit3 size={14} /> },
-            { label: 'Export',     onClick: onExport,   icon: <Download size={14} /> },
-            ...(flow.status !== 'ACTIVE' ? [{ label: 'Mark Active', onClick: () => onSetStatus('ACTIVE'), icon: <CheckCircle2 size={14} /> }] : []),
-            ...(flow.status !== 'DRAFT' ? [{ label: 'Move to Draft', onClick: () => onSetStatus('DRAFT'), icon: <FilePenLine size={14} /> }] : []),
-            ...(flow.status !== 'ARCHIVED'
-              ? [{ label: 'Archive', onClick: () => onSetStatus('ARCHIVED'), icon: <Archive size={14} /> }]
-              : [{ label: 'Unarchive to Draft', onClick: () => onSetStatus('DRAFT'), icon: <FilePenLine size={14} /> }]),
-            { label: 'Delete', onClick: onDelete, danger: true, icon: <Trash2 size={14} /> },
+            {
+              label: isActive ? 'Edit mode (set to Draft first)' : 'Edit mode',
+              onClick: onOpenEdit,
+              icon: isActive ? <Lock size={14} /> : <Edit3 size={14} />,
+            },
+            { label: 'Export', onClick: onExport, icon: <Download size={14} /> },
+            { label: 'Clone',  onClick: onClone,  icon: <Copy size={14} /> },
+            ...(canManage && flow.status !== 'ACTIVE'   ? [{ label: 'Mark Active',       onClick: () => onSetStatus('ACTIVE'),   icon: <CheckCircle2 size={14} /> }] : []),
+            ...(canManage && flow.status !== 'DRAFT'    ? [{ label: 'Move to Draft',     onClick: () => onSetStatus('DRAFT'),    icon: <FilePenLine size={14} /> }] : []),
+            ...(canManage && flow.status !== 'ARCHIVED' ? [{ label: 'Archive',           onClick: () => onSetStatus('ARCHIVED'), icon: <Archive size={14} /> }] : []),
+            ...(canManage && flow.status === 'ARCHIVED' ? [{ label: 'Unarchive to Draft',onClick: () => onSetStatus('DRAFT'),    icon: <FilePenLine size={14} /> }] : []),
+            ...(canManage ? [{ label: 'Delete', onClick: onDelete, danger: true, icon: <Trash2 size={14} /> }] : []),
           ]} />
         </div>
       </div>
@@ -349,8 +381,14 @@ function FlowCard({
           <button onClick={onOpenView} title="View" style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '0.375rem', padding: '0.25rem 0.5rem', cursor: 'pointer', color: 'var(--color-muted)', display: 'flex', alignItems: 'center' }}>
             <Eye size={13} />
           </button>
-          <button onClick={onOpenEdit} title="Edit" style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '0.375rem', padding: '0.25rem 0.5rem', cursor: 'pointer', color: 'var(--color-muted)', display: 'flex', alignItems: 'center' }}>
-            <Edit3 size={13} />
+          <button
+            onClick={onOpenEdit}
+            title={isActive ? 'Flow is ACTIVE — set to Draft to edit' : 'Edit'}
+            style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '0.375rem',
+                     padding: '0.25rem 0.5rem', cursor: 'pointer',
+                     color: isActive ? 'var(--color-muted)' : 'var(--color-muted)',
+                     display: 'flex', alignItems: 'center', opacity: isActive ? 0.5 : 1 }}>
+            {isActive ? <Lock size={13} /> : <Edit3 size={13} />}
           </button>
         </div>
       </div>

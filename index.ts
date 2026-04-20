@@ -280,6 +280,26 @@ export interface NcoSnapshot {
   error?:     string
 }
 
+// ─── Flow Schedule (cron-based trigger) ──────────────────────────────────────
+
+export interface FlowSchedule {
+  id:             string
+  flowId:         string
+  flowName:       string
+  flowSlug:       string
+  flowStatus:     string   // ACTIVE | DRAFT | PAUSED | ARCHIVED | DELETED
+  userId:         string
+  label:          string
+  cronExpression: string
+  timezone:       string
+  enabled:        boolean
+  payload:        Record<string, unknown>
+  lastRunAt:      string | null
+  nextRunAt:      string | null
+  createdAt:      string
+  updatedAt:      string
+}
+
 // Per-node execution log inside NCO
 export interface NodeLog {
   nodeId:         string
