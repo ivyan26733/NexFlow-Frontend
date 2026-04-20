@@ -645,7 +645,7 @@ export default function SchedulesPage() {
 
   const activeCount = schedules.filter(s => s.enabled).length
 
-  if (loading) return <MillennialLoader message="Loading schedules…" />
+  if (loading) return <MillennialLoader label="Loading schedules…" />
 
   return (
     <div className="page-wrapper" style={{ maxWidth:'88rem', margin:'0 auto', padding:'2.5rem 2rem' }}>
