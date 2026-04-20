@@ -39,6 +39,7 @@ export type {
   UserGroup,
   GroupMember,
   FlowAccess,
+  FlowSchedule,
 } from '../index'
 
 // Fork / Join parallel execution types
