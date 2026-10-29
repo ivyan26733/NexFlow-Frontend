@@ -14,15 +14,10 @@ import '@xyflow/react/dist/style.css'
 import { PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 
 import { api } from '@/api'
-import { useExecutionSocket } from '@/useExecutionSocket'
-import { useBranchSocket } from '@/useBranchSocket'
 import { NODE_META } from '@/lib/nodeConfig'
 import type {
-  NodeStatus,
-  NodeExecutionEvent,
   FlowNode as ApiNode,
   FlowEdge as ApiEdge,
-  BranchStatus,
   ForkNodeConfig,
   NodeType as NodeKind,
 } from '@/types'
@@ -37,6 +32,7 @@ import { MillennialLoader } from '@/MillennialLoader'
 import { AIPanel } from '@/components/AIPanel'
 import { SemanticEdge, edgeKind, edgeMarker } from '@/components/studio/SemanticEdge'
 import { CanvasLegend } from '@/components/studio/CanvasLegend'
+import { RunStatusToast } from '@/components/studio/RunStatusToast'
 
 /* ───────────────────────── Node Types ───────────────────────── */
 
@@ -71,11 +67,8 @@ export default function StudioPage() {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
   const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null)
 
-  const [executionId,  setExecutionId]  = useState<string | null>(null)
-  const [nodeStatuses, setNodeStatuses] = useState<Record<string, NodeStatus>>({})
-  const [branchStatuses, setBranchStatuses] = useState<
-    Record<string, Record<string, BranchStatus>>
-  >({})
+  // The latest Studio run, followed by RunStatusToast until it finishes. `key` restarts the toast per run.
+  const [run, setRun] = useState<{ key: number; executionId: string | null; error: string | null } | null>(null)
   const [saving,       setSaving]       = useState(false)
   const [aiPanelOpen, setAiPanelOpen] = useState(false)
   const [saveModal,   setSaveModal]    = useState<{ warnings: string[] } | null>(null)
@@ -96,8 +89,6 @@ export default function StudioPage() {
   const edgesRef = useRef(edges)
   const saveInProgressRef = useRef(false)
   const flowIdRef = useRef(flowId)
-  const pendingStartRef = useRef<string | null>(null)
-  const pendingPayloadRef = useRef<Record<string, unknown> | null>(null)
   nodesRef.current = nodes
   edgesRef.current = edges
   flowIdRef.current = flowId
@@ -131,57 +122,6 @@ export default function StudioPage() {
     }
     load()
   }, [flowId])
-
-  /* Live execution updates come from websockets so the canvas can show running nodes. */
-
-  useExecutionSocket({
-    executionId,
-    onEvent: (ev: NodeExecutionEvent) =>
-      setNodeStatuses(prev => ({ ...prev, [ev.nodeId]: ev.status })),
-    onReady: async () => {
-      const idToStart = pendingStartRef.current
-      const payload = pendingPayloadRef.current
-      if (!idToStart || !payload) return
-      pendingStartRef.current = null
-      pendingPayloadRef.current = null
-      try {
-        // eslint-disable-next-line no-console
-        console.info('[Studio] STOMP subscription confirmed, starting execution', idToStart)
-        await api.executions.start(idToStart, payload)
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error('[Studio] Failed to start execution', e)
-      }
-    },
-  })
-
-  useBranchSocket({
-    executionId,
-    onBranchEvent: (event) => {
-      setBranchStatuses(prev => ({
-        ...prev,
-        [event.forkNodeId]: {
-          ...(prev[event.forkNodeId] ?? {}),
-          [event.branchName]: event.status,
-        },
-      }))
-    },
-  })
-
-  const nodesWithStatus = nodes.map(n => {
-    const liveStatus = nodeStatuses[n.id] ?? null
-    const data: any = { ...n.data, liveStatus }
-
-    if (n.type === 'FORK') {
-      data.branchStatuses = branchStatuses[n.id] ?? {}
-    }
-    if (n.type === 'JOIN') {
-      const forkId = (n.data.config as any)?.forkNodeId
-      data.branchStatuses = forkId ? (branchStatuses[forkId] ?? {}) : {}
-    }
-
-    return { ...n, data }
-  })
 
   /* ───────────────────────── Edge connect ───────────────────────── */
 
@@ -378,22 +318,17 @@ export default function StudioPage() {
     saveToastTimerRef.current = setTimeout(() => setSaveToast(null), type === 'success' ? 2500 : 4000)
   }
 
+  /** Starts a run of the saved flow; RunStatusToast reports when it finishes. */
   async function triggerFlow(payload: Record<string, unknown>) {
-    setNodeStatuses({})
-
-    // Studio uses a two-step start:
-    // 1) create the execution row
-    // 2) start it only after the websocket is ready
-    const exec = await api.executions.prepare(flowSlug, payload)
-    // eslint-disable-next-line no-console
-    console.info('[Studio] Execution prepared, id=', exec.id)
-
-    // Store ID so onReady can start it once WS subscription is established
-    pendingStartRef.current = exec.id
-    pendingPayloadRef.current = payload
-
-    // Setting executionId triggers useExecutionSocket to connect & subscribe
-    setExecutionId(exec.id)
+    const key = Date.now()
+    setRun({ key, executionId: null, error: null })
+    try {
+      const exec = await api.flows.run(flowId, payload)
+      setRun(r => (r?.key === key ? { ...r, executionId: exec.id } : r))
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'The run request failed.'
+      setRun(r => (r?.key === key ? { ...r, error: message } : r))
+    }
   }
 
   async function updateFlowName(name: string) {
@@ -437,7 +372,6 @@ export default function StudioPage() {
           label: NODE_META[nodeType as keyof typeof NODE_META]?.label ?? nodeType,
           nodeType,
           config: {},
-          liveStatus: null,
         },
       },
     ])
@@ -481,7 +415,7 @@ export default function StudioPage() {
             </button>
             <ReactFlowProvider>
               <StudioCanvas
-                nodesWithStatus={nodesWithStatus}
+                nodes={nodes}
                 edges={edges}
                 setNodes={setNodes}
                 onNodesChange={onNodesChange}
@@ -536,6 +470,15 @@ export default function StudioPage() {
           warnings={saveModal.warnings}
           onConfirm={saveCanvas}
           onCancel={() => setSaveModal(null)}
+        />
+      )}
+
+      {run && (
+        <RunStatusToast
+          key={run.key}
+          executionId={run.executionId}
+          startError={run.error}
+          onDismiss={() => setRun(null)}
         />
       )}
 
@@ -702,7 +645,7 @@ function SaveToast({ type, message, onDismiss }: { type: 'success' | 'error'; me
 /* ───────────────────────── Canvas ───────────────────────── */
 
 function StudioCanvas({
-  nodesWithStatus,
+  nodes,
   edges,
   setNodes,
   onNodesChange,
@@ -714,7 +657,7 @@ function StudioCanvas({
   setSelectedEdge,
   viewMode,
 }: {
-  nodesWithStatus: Node[]
+  nodes: Node[]
   edges: Edge[]
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>
   onNodesChange: OnNodesChange<Node>
@@ -728,25 +671,14 @@ function StudioCanvas({
 }) {
   const { screenToFlowPosition } = useReactFlow()
 
-  // Give every edge its meaning (kind → colour, dash, arrow, label) and its live state
-  // (traversed = execution went this way, active = flowing into a running node).
+  // Give every edge its meaning: kind → colour, dash pattern, arrow and label.
   const displayEdges = useMemo(() => {
-    const byId = new Map(nodesWithStatus.map(n => [n.id, n]))
+    const typeById = new Map(nodes.map(n => [n.id, n.data?.nodeType as string | undefined]))
     return edges.map(e => {
-      const src = byId.get(e.source)
-      const tgt = byId.get(e.target)
-      const { kind, label } = edgeKind(e, src?.data?.nodeType as string | undefined)
-      const ss = src?.data?.liveStatus as string | null | undefined
-      const ts = tgt?.data?.liveStatus as string | null | undefined
-      const traversed = !!ss && !!ts && (kind === 'failure' ? ss === 'FAILURE' : kind === 'success' ? ss !== 'FAILURE' : true)
-      return {
-        ...e,
-        type: 'semantic',
-        markerEnd: edgeMarker(kind),
-        data: { ...e.data, kind, label, traversed, active: traversed && ts === 'RUNNING' },
-      }
+      const { kind, label } = edgeKind(e, typeById.get(e.source))
+      return { ...e, type: 'semantic', markerEnd: edgeMarker(kind), data: { ...e.data, kind, label } }
     })
-  }, [edges, nodesWithStatus])
+  }, [edges, nodes])
 
   function onDrop(e: React.DragEvent) {
     e.preventDefault()
@@ -766,7 +698,6 @@ function StudioCanvas({
           label: NODE_META[nodeType as keyof typeof NODE_META]?.label ?? nodeType,
           nodeType,
           config: {},
-          liveStatus: null,
         },
       },
     ])
@@ -774,7 +705,7 @@ function StudioCanvas({
 
   return (
     <ReactFlow
-      nodes={nodesWithStatus}
+      nodes={nodes}
       edges={displayEdges}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
@@ -930,7 +861,6 @@ function createDefaultStartNode(): Node {
       label: NODE_META.START.label,
       nodeType: 'START',
       config: {},
-      liveStatus: null,
     },
   }
 }
@@ -942,7 +872,7 @@ function apiNodeToRfNode(n: ApiNode): Node {
     id: n.id,
     type: n.nodeType,
     position: { x: n.positionX, y: n.positionY },
-    data: { label: n.label, nodeType: n.nodeType, config: n.config, liveStatus: null },
+    data: { label: n.label, nodeType: n.nodeType, config: n.config },
   }
 }
 

@@ -5,8 +5,7 @@ import type { NodeType } from '@/types'
  *
  * Every node belongs to exactly one CATEGORY, and the category alone decides its colour.
  * Colour therefore always answers one question: "what kind of work does this step do?"
- * Runtime state (running / success / failure) is shown separately with rings, badges and
- * edge animation, so it never competes with the category colour.
+ * Run results (success / failure) are shown on the transaction page, not on the canvas.
  *
  * All category colours pass WCAG AA (≥ 4.5:1) as text on white.
  */
@@ -97,19 +96,6 @@ export const NODE_GROUPS: { category: NodeCategory; label: string; types: NodeTy
   { category: 'PARALLEL', label: 'Parallel', types: ['FORK', 'JOIN'] },
   { category: 'OUTCOME',  label: 'Outcome',  types: ['SUCCESS', 'FAILURE'] },
 ]
-
-/**
- * Runtime status colours — deliberately separate from category colours.
- * Used for node rings, status badges and the "path taken" edge highlight.
- */
-export const STATUS_COLOR = {
-  RUNNING:  '#2563EB',
-  SUCCESS:  '#15803D',
-  FAILURE:  '#B91C1C',
-  RETRYING: '#B45309',
-  CONTINUE: '#B45309',
-  PENDING:  '#64748B',
-} as const
 
 /**
  * Edge semantics — the line itself tells you which path it is,

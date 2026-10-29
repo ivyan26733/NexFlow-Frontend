@@ -44,17 +44,6 @@ export interface JoinNodeConfig {
 }
 
 /** Live event emitted when a branch changes state during execution. */
-export interface BranchExecutionEvent {
-  executionId: string
-  forkNodeId:  string
-  branchName:  string
-  status:      BranchStatus
-  durationMs?: number
-  error?:      string
-  // Discriminator used by the WebSocket subscriber
-  type?:       'BRANCH_EVENT'
-}
-
 /** Runtime metadata written to nex.join after all branches complete. */
 export interface JoinMeta {
   totalParallelMs: number
@@ -76,8 +65,5 @@ export interface ForkJoinNodeData {
   label:       string
   nodeType:    'FORK' | 'JOIN'
   config:      ForkNodeConfig | JoinNodeConfig
-  liveStatus?: string
-  /** Branch statuses during live execution — populated from BranchExecutionEvents. */
-  branchStatuses?: Record<string, BranchStatus>
 }
 

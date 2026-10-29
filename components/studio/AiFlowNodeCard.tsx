@@ -3,8 +3,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NODE_META } from '@/lib/nodeConfig'
 import { NodeIcon } from '@/components/studio/nodeIcons'
-import { StatusBadge, nodeVars } from '@/FlowNodeCard'
-import type { NodeStatus } from '@/types'
+import { nodeVars } from '@/FlowNodeCard'
 
 interface AiNodeData {
   label?: string
@@ -15,7 +14,6 @@ interface AiNodeData {
     inputBindings?: Array<{ name: string }>
     saveOutputAs?: string
   }
-  liveStatus?: NodeStatus | null
 }
 
 const PROVIDER_LABEL: Record<string, string> = {
@@ -45,8 +43,7 @@ export default function AiFlowNodeCard({ data, selected }: NodeProps) {
   return (
     <div
       className={`nf-node nf-node--ai${selected ? ' is-selected' : ''}`}
-      data-status={d.liveStatus ?? undefined}
-      style={nodeVars(meta.color, meta.bgColor, d.liveStatus)}
+      style={nodeVars(meta.color, meta.bgColor)}
       title={meta.description}
     >
       <Handle type="target" position={Position.Top} className="nf-handle nf-handle--in" />
@@ -57,7 +54,6 @@ export default function AiFlowNodeCard({ data, selected }: NodeProps) {
           <div className="nf-node__title">{d.label || 'AI'}</div>
           <div className="nf-node__caption">{PROVIDER_LABEL[provider] ?? provider} · {model}</div>
         </div>
-        <StatusBadge status={d.liveStatus} />
       </div>
 
       <div className="nf-node__body">

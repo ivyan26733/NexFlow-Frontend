@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Panel } from '@xyflow/react'
 import { Info, ChevronDown } from 'lucide-react'
-import { CATEGORY_META, EDGE_STYLE, STATUS_COLOR, type NodeCategory, type EdgeKind } from '@/lib/nodeConfig'
+import { CATEGORY_META, EDGE_STYLE, type NodeCategory, type EdgeKind } from '@/lib/nodeConfig'
 
 const STORAGE_KEY = 'nexflow.legend.open'
 const CATEGORIES = Object.keys(CATEGORY_META) as NodeCategory[]
@@ -66,18 +66,7 @@ export function CanvasLegend() {
               </ul>
             </section>
 
-            <section>
-              <h4>Ring = live status</h4>
-              <ul className="nf-legend__status">
-                {(['RUNNING', 'SUCCESS', 'FAILURE', 'RETRYING'] as const).map(s => (
-                  <li key={s}>
-                    <span className="nf-legend__ring" style={{ borderColor: STATUS_COLOR[s] }} />
-                    <span>{s.charAt(0) + s.slice(1).toLowerCase()}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="nf-legend__hint">○ hollow handle = input · ● filled = output</p>
-            </section>
+            <p className="nf-legend__hint">○ hollow handle = input · ● filled = output</p>
           </div>
         )}
       </div>

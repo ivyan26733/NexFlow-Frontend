@@ -241,11 +241,16 @@ export interface NodeExecution {
   outputNex?:   Record<string, unknown>
   durationMs?:  number | null
   errorMessage?: string | null
+  errorDetail?:  string | null
   startedAt:    string
   finishedAt?:  string | null
 }
 
 export interface ExecutionDetail extends ExecutionSummary {
+  /** Plain-language reason the run failed (null on success). */
+  errorMessage?: string | null
+  /** Technical detail behind errorMessage, for developers. */
+  errorDetail?:  string | null
   ncoSnapshot: NcoSnapshot | null
   /** Per-fork branch execution records; used by transaction detail to show branch rows under each FORK. */
   branches?: BranchExecution[]
@@ -296,6 +301,7 @@ export interface FlowSchedule {
   payload:        Record<string, unknown>
   lastRunAt:      string | null
   nextRunAt:      string | null
+  lastExecutionId?: string | null
   createdAt:      string
   updatedAt:      string
 }
@@ -309,7 +315,10 @@ export interface NodeLog {
   output?:        Record<string, unknown>
   successOutput?: Record<string, unknown>
   failureOutput?: Record<string, unknown>
+  /** Plain-language explanation. */
   errorMessage?:  string
+  /** Raw technical error, for developers. */
+  errorDetail?:   string
 }
 
 // ─── Canvas Save / Load ───────────────────────────────────────────────────────
@@ -317,14 +326,6 @@ export interface NodeLog {
 export interface CanvasData {
   nodes: FlowNode[]
   edges: FlowEdge[]
-}
-
-// ─── WebSocket Event ──────────────────────────────────────────────────────────
-
-export interface NodeExecutionEvent {
-  nodeId: string
-  status: NodeStatus
-  error:  string
 }
 
 // ─── Nexus Connector (Reusable integration definition) ────────────────────────

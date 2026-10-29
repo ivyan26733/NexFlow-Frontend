@@ -7,8 +7,6 @@ export interface SemanticEdgeData extends Record<string, unknown> {
   conditionType?: string
   kind?: EdgeKind
   label?: string
-  traversed?: boolean   // execution actually went along this edge
-  active?: boolean      // the target is running right now
 }
 
 /** Work out what an edge *means* from the handle it leaves and the node it leaves from. */
@@ -16,7 +14,7 @@ export function edgeKind(edge: Pick<Edge, 'sourceHandle' | 'data'>, sourceType?:
   const handle = edge.sourceHandle ?? undefined
   const cond   = (edge.data as SemanticEdgeData | undefined)?.conditionType
   if (handle === 'continue' || cond === 'CONTINUE') return { kind: 'continue', label: EDGE_STYLE.continue.label }
-  if (handle === 'failure'  || cond === 'FAILURE')  return { kind: 'failure', label: sourceType === 'SUB_FLOW' ? 'async' : EDGE_STYLE.failure.label }
+  if (handle === 'failure'  || cond === 'FAILURE')  return { kind: 'failure', label: EDGE_STYLE.failure.label }
   if (sourceType === 'FORK' && handle)              return { kind: 'branch', label: handle }
   if (handle === 'exit')                            return { kind: 'success', label: 'exit' }
   // Plain success edges stay unlabelled — the solid green line already says it; labels are kept for the exceptions.
@@ -48,8 +46,6 @@ export function SemanticEdge({
   const cls = [
     'nf-edge',
     `nf-edge--${kind}`,
-    data?.traversed ? 'is-traversed' : '',
-    data?.active ? 'is-active' : '',
     selected ? 'is-selected' : '',
   ].filter(Boolean).join(' ')
 
@@ -64,7 +60,6 @@ export function SemanticEdge({
         interactionWidth={24}
         style={{ stroke: style.color, strokeDasharray: style.dash }}
       />
-      {data?.active && <path d={path} className="nf-edge__flow" fill="none" style={{ stroke: style.color }} />}
       {data?.label && (
         <EdgeLabelRenderer>
           <div

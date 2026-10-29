@@ -1,10 +1,9 @@
 'use client'
 
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { NODE_META, CATEGORY_META, STATUS_COLOR } from '@/lib/nodeConfig'
+import { NODE_META, CATEGORY_META } from '@/lib/nodeConfig'
 import { NodeIcon } from '@/components/studio/nodeIcons'
 import type {
-  NodeStatus,
   NodeType,
   NexusNodeConfig,
   SubFlowNodeConfig,
@@ -15,8 +14,6 @@ interface NodeData {
   label:      string
   nodeType:   NodeType
   config:     Record<string, unknown>
-  liveStatus: NodeStatus | null
-  iterationCount?: number
 }
 
 // Nodes that can end in two ways expose two outputs: success (left) and failure (right).
@@ -26,7 +23,7 @@ const DUAL_OUTPUT: NodeType[] = ['NEXUS', 'DECISION', 'SUB_FLOW', 'SCRIPT', 'AI'
  * Anatomy (top → bottom, the direction data flows):
  *   ○ input handle         — hollow: the node *receives* here
  *   [icon] Title           — icon + colour = category, title = your label
- *          CATEGORY · TYPE
+ *          CATEGORY · TYPE       (run results live on the transaction page, not the canvas)
  *   config preview         — what the node will do, readable without opening it
  *   ● outputs              — filled: the node *emits* here (green = success, red = failure)
  */
@@ -48,8 +45,7 @@ export function FlowNodeCard({ data, selected }: NodeProps) {
   return (
     <div
       className={`nf-node${selected ? ' is-selected' : ''}`}
-      data-status={d.liveStatus ?? undefined}
-      style={nodeVars(meta.color, meta.bgColor, d.liveStatus)}
+      style={nodeVars(meta.color, meta.bgColor)}
       title={meta.description}
     >
       <Handle type="target" position={Position.Top} className="nf-handle nf-handle--in" />
@@ -60,7 +56,6 @@ export function FlowNodeCard({ data, selected }: NodeProps) {
           <div className="nf-node__title">{d.label || meta.label}</div>
           <div className="nf-node__caption">{category.label} · {meta.label}</div>
         </div>
-        <StatusBadge status={d.liveStatus} loop={isLoop} iterations={d.iterationCount} />
       </div>
 
       <div className="nf-node__body">
@@ -83,10 +78,10 @@ export function FlowNodeCard({ data, selected }: NodeProps) {
         <>
           <div className="nf-node__outputs">
             <span className="nf-out nf-out--success">✓ Success</span>
-            <span className="nf-out nf-out--failure">{d.nodeType === 'SUB_FLOW' ? '⚡ Async' : '✗ Error'}</span>
+            <span className="nf-out nf-out--failure">✗ Error</span>
           </div>
           <Handle type="source" id="success" position={Position.Bottom} className="nf-handle nf-handle--success" style={{ left: '25%' }} title="On success" />
-          <Handle type="source" id="failure" position={Position.Bottom} className="nf-handle nf-handle--failure" style={{ left: '75%' }} title={d.nodeType === 'SUB_FLOW' ? 'Async / on error' : 'On error'} />
+          <Handle type="source" id="failure" position={Position.Bottom} className="nf-handle nf-handle--failure" style={{ left: '75%' }} title="On error" />
         </>
       ) : (
         <Handle type="source" position={Position.Bottom} className="nf-handle nf-handle--out" />
@@ -103,9 +98,8 @@ function PillNode({ d, selected }: { d: NodeData; selected: boolean }) {
   return (
     <div
       className={`nf-pill${selected ? ' is-selected' : ''}`}
-      data-status={d.liveStatus ?? undefined}
       data-kind={d.nodeType}
-      style={nodeVars(meta.color, meta.bgColor, d.liveStatus)}
+      style={nodeVars(meta.color, meta.bgColor)}
       title={meta.description}
     >
       {!isStart && <Handle type="target" position={Position.Top} className="nf-handle nf-handle--in" />}
@@ -114,38 +108,13 @@ function PillNode({ d, selected }: { d: NodeData; selected: boolean }) {
         <span className="nf-pill__title">{d.label || meta.label}</span>
         <span className="nf-pill__caption">{isStart ? 'Trigger · flow begins' : meta.description}</span>
       </span>
-      <StatusBadge status={d.liveStatus} />
       {isStart && <Handle type="source" position={Position.Bottom} className="nf-handle nf-handle--out" />}
     </div>
   )
 }
 
-/* ── Status badge: words, not just colour, so it reads for everyone ── */
-
-const STATUS_TEXT: Record<string, string> = {
-  PENDING:  'Queued',
-  RUNNING:  'Running',
-  SUCCESS:  'Done',
-  FAILURE:  'Failed',
-  RETRYING: 'Retrying',
-  CONTINUE: 'Looping',
-}
-
-export function StatusBadge({ status, loop, iterations }: { status: NodeStatus | string | null | undefined; loop?: boolean; iterations?: number }) {
-  if (!status) return null
-  let text = STATUS_TEXT[status] ?? status
-  if (loop && status === 'RUNNING') text = 'Looping'
-  if (loop && status === 'SUCCESS' && typeof iterations === 'number') text = `${iterations}×`
-  return <span className="nf-status" data-status={status}>{text}</span>
-}
-
-export function nodeVars(color: string, tint: string, status: NodeStatus | string | null | undefined): React.CSSProperties {
-  const statusColor = status ? (STATUS_COLOR as Record<string, string>)[status] : undefined
-  return {
-    ['--nc' as string]: color,
-    ['--nt' as string]: tint,
-    ...(statusColor ? { ['--ns' as string]: statusColor } : {}),
-  }
+export function nodeVars(color: string, tint: string): React.CSSProperties {
+  return { ['--nc' as string]: color, ['--nt' as string]: tint }
 }
 
 /* ── Config preview — the one line that tells you what this node will do ── */

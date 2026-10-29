@@ -109,9 +109,7 @@ function PulseCard({ flow, onOpenView, onOpenEdit, onDelete }: {
     try { parsed = JSON.parse(payload) } catch { setPayloadError('Invalid JSON'); return }
     setTriggering(true); setLastResult(null); setLastError(null)
     try {
-      const exec = await api.executions.prepare(slug, parsed)
-      await api.executions.start(exec.id, parsed)
-      setLastResult(exec)
+      setLastResult(await api.flows.run(flow.id, parsed))
     } catch (err: unknown) {
       setLastError(err instanceof Error ? err.message : 'Trigger failed')
     } finally { setTriggering(false) }

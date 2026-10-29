@@ -11,7 +11,7 @@ const FloatingAssistant = dynamic(() => import('@/components/FloatingAssistant')
 
 const SITE_URL = 'https://nex-flow-frontend.vercel.app'
 const SITE_NAME = 'NexFlow'
-const SITE_DESCRIPTION = 'NexFlow — AI-powered no-code workflow automation platform. Build, run, and monitor automation flows with AI nodes, parallel execution, real-time canvas, and multi-provider LLM support. The developer-first alternative to Zapier and n8n.'
+const SITE_DESCRIPTION = 'NexFlow — AI-powered no-code workflow automation platform. Build, run, and monitor automation flows with AI nodes, parallel execution, cron schedules, and multi-provider LLM support. The developer-first alternative to Zapier and n8n.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -96,11 +96,11 @@ const jsonLd = {
         'AI workflow automation',
         'No-code flow builder',
         'Multi-provider AI nodes (Anthropic, OpenAI, Gemini, Groq)',
-        'Real-time execution canvas',
+        'Visual flow canvas',
         'Parallel branch execution',
         'JavaScript and Python script nodes',
         'Sub-flow composition',
-        'RabbitMQ-backed WebSocket events',
+        'Cron schedules',
       ],
     },
   ],

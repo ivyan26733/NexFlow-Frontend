@@ -120,7 +120,9 @@ export default function TransactionDetailPage() {
   )
   if (!detail) return <div className="dashboard-page" style={{ color: 'var(--color-muted)' }}>Execution not found.</div>
 
-  const snapshotError = detail.ncoSnapshot?.error ?? (detail.ncoSnapshot?.meta as { errorMessage?: string } | undefined)?.errorMessage
+  const snapshotMeta  = detail.ncoSnapshot?.meta as { errorMessage?: string; errorDetail?: string } | undefined
+  const snapshotError = detail.errorMessage ?? detail.ncoSnapshot?.error ?? snapshotMeta?.errorMessage
+  const snapshotDetail = detail.errorDetail ?? snapshotMeta?.errorDetail
 
   return (
     <div className="dashboard-page" style={{ maxWidth: '100%', padding: '1.5rem 2rem' }}>
@@ -156,9 +158,8 @@ export default function TransactionDetailPage() {
           ))}
         </div>
         {snapshotError && (
-          <div style={{ marginTop: '1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '0.5rem', padding: '0.75rem 1rem' }}>
-            <p className="dashboard-label" style={{ color: 'var(--color-failure)', marginBottom: '0.25rem' }}>EXECUTION ERROR</p>
-            <p style={{ fontSize: '0.8rem', color: '#ff8080', fontFamily: 'var(--font-mono)', margin: 0 }}>{snapshotError}</p>
+          <div style={{ marginTop: '1rem' }}>
+            <ErrorBox label="Why this run failed" message={snapshotError} detail={snapshotDetail} />
           </div>
         )}
       </div>
@@ -188,7 +189,7 @@ export default function TransactionDetailPage() {
             {[
               { label: 'NODE', sub: 'type · ID · request / response', color: 'var(--color-accent)' },
               { label: 'OUTCOME', sub: 'status · duration', color: '#a78bfa' },
-              { label: 'EXCEPTION', sub: 'error · fix hint', color: '#f87171' },
+              { label: 'PROBLEM', sub: 'what went wrong · technical details', color: '#f87171' },
             ].map((col, i) => (
               <div key={col.label} style={{
                 padding: '0.875rem 1.25rem',
@@ -258,8 +259,6 @@ function NodeRow({ log, saveAs, isSelected, isLast, expanded, onToggleExpand, on
   const rowBg     = isSelected ? 'rgba(255,255,255,0.03)' : 'transparent'
 
   const errorMsg = log.errorMessage ?? (log.failureOutput as Record<string,unknown> | undefined)?.error as string | undefined
-
-  const fixHint = errorMsg ? getFixHint(String(errorMsg)) : null
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px 1fr', borderBottom: rowBorder, background: rowBg, transition: 'background 0.1s' }}
@@ -361,32 +360,8 @@ function NodeRow({ log, saveAs, isSelected, isLast, expanded, onToggleExpand, on
           </div>
         ) : (
           <>
-            {/* Error message */}
             {errorMsg && (
-              <div style={{
-                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-                borderRadius: '0.5rem', padding: '0.625rem 0.875rem',
-              }}>
-                <p style={{ fontSize: '0.68rem', fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.35rem' }}>Error</p>
-                <p style={{ fontSize: '0.775rem', fontFamily: 'var(--font-mono)', color: '#fca5a5', margin: 0, lineHeight: 1.6, wordBreak: 'break-word' }}>{errorMsg}</p>
-              </div>
-            )}
-
-            {/* Failure output detail if different from error */}
-            {log.failureOutput && (
-              <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '0.5rem', padding: '0.625rem 0.875rem' }}>
-                <p style={{ fontSize: '0.68rem', fontWeight: 700, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 0.35rem' }}>Failure Detail</p>
-                <pre style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: '#fca5a5', margin: 0, overflow: 'auto', maxHeight: '8rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                  {JSON.stringify(log.failureOutput, null, 2)}
-                </pre>
-              </div>
-            )}
-
-            {/* Fix hint */}
-            {fixHint && (
-              <div style={{ borderLeft: '3px solid rgba(239,68,68,0.5)', background: 'rgba(239,68,68,0.04)', borderRadius: '0 0.375rem 0.375rem 0', padding: '0.5rem 0.75rem', fontSize: '0.72rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>
-                {fixHint}
-              </div>
+              <ErrorBox message={String(errorMsg)} detail={log.errorDetail} failureOutput={log.failureOutput} />
             )}
           </>
         )}
@@ -429,8 +404,10 @@ function BranchRows({ branch, nodeExecutions, isLast, expanded, onToggleExpand }
         </div>
         <div style={{ padding: '0.625rem 1.25rem', display: 'flex', alignItems: 'center' }}>
           {branch.errorMessage
-            ? <span style={{ fontSize: '0.72rem', color: '#fca5a5', fontFamily: 'var(--font-mono)' }}>{branch.errorMessage}</span>
-            : <span style={{ fontSize: '0.72rem', color: '#10b981' }}>Branch completed</span>
+            ? <span style={{ fontSize: '0.78rem', color: 'var(--color-failure)', lineHeight: 1.45 }}>{branch.errorMessage}</span>
+            : <span style={{ fontSize: '0.72rem', color: 'var(--color-success)' }}>
+                {branch.status === 'CANCELLED' ? 'Not needed — enough other branches finished' : 'Branch completed'}
+              </span>
           }
         </div>
       </div>
@@ -440,7 +417,7 @@ function BranchRows({ branch, nodeExecutions, isLast, expanded, onToggleExpand }
         const neKey    = `branch:${branch.id}:${ne.id}`
         const isNeExp  = !!expanded[neKey]
         const isNeLast = isLast && ni === nodeExecutions.length - 1
-        const neError  = ne.errorMessage ?? (ne.outputNex as Record<string,unknown> | undefined)?.error as string | undefined
+        const neError  = ne.errorMessage ?? undefined
 
         return (
           <div key={ne.id} style={{
@@ -489,10 +466,7 @@ function BranchRows({ branch, nodeExecutions, isLast, expanded, onToggleExpand }
                   <span style={{ fontSize: '0.72rem' }}>No exceptions</span>
                 </div>
               ) : (
-                <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.375rem', padding: '0.5rem 0.75rem' }}>
-                  <p style={{ fontSize: '0.68rem', color: '#ef4444', fontWeight: 700, margin: '0 0 0.25rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Error</p>
-                  <p style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: '#fca5a5', margin: 0, lineHeight: 1.5, wordBreak: 'break-word' }}>{neError}</p>
-                </div>
+                <ErrorBox message={neError} detail={ne.errorDetail} />
               )}
             </div>
           </div>
@@ -502,18 +476,27 @@ function BranchRows({ branch, nodeExecutions, isLast, expanded, onToggleExpand }
   )
 }
 
-/* ── Fix hint helper ── */
-function getFixHint(msg: string): string | null {
-  if (msg.includes('null'))            return '→ A reference resolved to null. Check your {{nex.x}} paths.'
-  if (msg.includes('401'))             return '→ Unauthorized. Check auth headers or API key.'
-  if (msg.includes('404'))             return '→ Not found. Verify the URL and endpoint exists.'
-  if (msg.includes('url'))             return '→ NEXUS node missing the URL. Add it in node config.'
-  if (msg.includes('code'))            return '→ SCRIPT node has no code. Open node and write your script.'
-  if (msg.includes('ReferenceError'))  return '→ Variable not defined. Check nex.x path in script.'
-  if (msg.includes('TypeError'))       return '→ Type mismatch. Check data types and null access.'
-  if (msg.includes('timeout'))         return '→ Timed out. Check for infinite loops or slow APIs.'
-  if (msg.includes('No API key'))      return '→ Missing API key. Go to Settings → AI Providers.'
-  return '→ Check node configuration and upstream data.'
+/* ── Friendly error with collapsible technical detail ── */
+function ErrorBox({ message, detail, failureOutput, label = 'What went wrong' }: {
+  message:        string
+  detail?:        string | null
+  failureOutput?: Record<string, unknown>
+  label?:         string
+}) {
+  const hasDetail = (!!detail && detail !== message) || !!failureOutput
+  return (
+    <div className="tx-error">
+      <p className="tx-error__label">{label}</p>
+      <p className="tx-error__message">{message}</p>
+      {hasDetail && (
+        <details className="tx-detail">
+          <summary>Technical details</summary>
+          {detail && detail !== message && <pre>{detail}</pre>}
+          {failureOutput && <pre>{JSON.stringify(failureOutput, null, 2)}</pre>}
+        </details>
+      )}
+    </div>
+  )
 }
 
 /* ── Status dot ── */

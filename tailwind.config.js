@@ -14,7 +14,6 @@ module.exports = {
     './nodeConfig.ts',
     './api.ts',
     './index.ts',
-    './useExecutionSocket.ts',
   ],
   theme: {
     extend: {

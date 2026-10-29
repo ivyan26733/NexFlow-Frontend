@@ -65,6 +65,13 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(body),
       }),
+    /** Studio run: starts the flow (drafts allowed) and returns the execution right away. */
+    run: (id: string, payload: Record<string, unknown>) =>
+      request<Execution>(`/api/flows/${id}/run`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+
     delete: (id: string) =>
       request<void>(`/api/flows/${id}`, { method: 'DELETE' }),
 
@@ -130,23 +137,7 @@ export const api = {
         .then(r => r.ok ? r.json() : Promise.resolve({ transactionId: id, nex: {} }))
         .then((body: { transactionId: string; nex?: NexMap }) => ({ transactionId: body.transactionId, nex: body.nex ?? {} })),
 
-    // Phase 1: create the execution row first, then wait for the Studio socket.
-    prepare: (slug: string, payload: Record<string, unknown>) =>
-      request<Execution>(`/api/pulse/${slug}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Studio-Trigger': '1' },
-        body: JSON.stringify(payload),
-      }),
-
-    // Phase 2: start only after the websocket subscription is ready.
-    start: (executionId: string, payload: Record<string, unknown>) =>
-      request<void>(`/api/executions/${executionId}/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }),
-
-    // Legacy helpers used by non-Studio flows (can be refactored later)
+    // Public webhook trigger (flow must be ACTIVE)
     triggerBySlug: (slug: string, payload: Record<string, unknown>) =>
       request<Execution>(`/api/pulse/${slug}`, {
         method: 'POST',

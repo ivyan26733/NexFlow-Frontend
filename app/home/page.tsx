@@ -83,7 +83,7 @@ const NODES = [
 
 const STEPS = [
   { n: '01', title: 'Design on the canvas', desc: 'Drag nodes, connect them with edges, configure each one in the panel. The canvas shows your entire automation at a glance.' },
-  { n: '02', title: 'Run and watch live',    desc: 'Hit Run. Every node lights up in real-time over WebSocket. See exactly which path your data took, where it paused, where it succeeded.' },
+  { n: '02', title: 'Run and inspect',       desc: 'Hit Run and get notified when it finishes. The transaction shows exactly which path your data took, what every step received and returned, and why anything failed — in plain language.' },
   { n: '03', title: 'Inspect every detail',  desc: 'Every execution saves a full audit trail. Open any transaction to see per-node input, output, duration, and the complete data snapshot.' },
 ]
 
@@ -499,7 +499,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', animation: 'nx-marquee 22s linear infinite', whiteSpace: 'nowrap' }}>
           {[...Array(2)].map((_, i) => (
             <div key={i} style={{ display: 'flex', gap: 44, paddingRight: 44 }}>
-              {['AI Nodes','Real-Time Canvas','Parallel Execution','JavaScript + Python','Multi-LLM','HTTP Requests','Sub-Flows','Fork / Join','Full Transparency','RabbitMQ','WebSocket','Decision Trees'].map(f => (
+              {['AI Nodes','Visual Canvas','Parallel Execution','JavaScript + Python','Multi-LLM','HTTP Requests','Sub-Flows','Fork / Join','Full Transparency','Cron Schedules','Retries','Decision Trees'].map(f => (
                 <span key={f} style={{ fontSize: 13, color: 'var(--color-muted)', fontWeight: 600 }}>
                   <span style={{ color: 'var(--color-accent)', marginRight: 14 }}>◆</span>{f}
                 </span>
