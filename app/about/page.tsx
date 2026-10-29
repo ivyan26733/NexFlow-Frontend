@@ -52,28 +52,28 @@ const shipped = [
 
 // ── DESIGN TOKENS — "Cognac & Navy" warm editorial palette ───────────────────
 const T = {
-  bg:          '#F2E9DC',   // warm sand — rich base, never cold
-  bgAlt:       '#E8DCCF',   // toasted cream — alternate sections
-  bgDeep:      '#DDD0BF',   // deep tan — hero accents
-  surface:     '#F9F3EC',   // warm card surface
-  surfaceHigh: '#FDF8F3',   // lightest warm — elevated cards
+  bg:          '#F3F5F9',   // warm sand — rich base, never cold
+  bgAlt:       '#EAEEF4',   // toasted cream — alternate sections
+  bgDeep:      '#EEF1F6',   // deep tan — hero accents
+  surface:     '#FFFFFF',   // warm card surface
+  surfaceHigh: '#F8FAFC',   // lightest warm — elevated cards
 
-  border:      '#C8B9A5',   // warm tan border
-  borderLight: '#D8CBBA',   // softer warm border
+  border:      '#CDD5E0',   // warm tan border
+  borderLight: '#E3E8EF',   // softer warm border
 
-  accent:      '#9A3412',   // deep terracotta / brick-red — bold, warm, unique
+  accent:      '#4338CA',   // deep terracotta / brick-red — bold, warm, unique
   accentAlt:   '#C2410C',   // brighter terracotta for hover
-  accentBg:    '#FEF0E7',   // very soft warm orange bg
+  accentBg:    '#EEF0FF',   // very soft warm orange bg
   accentLight: '#FDCFB4',   // light terracotta tint
 
   navy:        '#1E3A5F',   // deep navy — contrast anchor
   navyMid:     '#2563EB',   // medium blue accent
   navyBg:      '#EFF6FF',   // light navy bg
 
-  text:        '#1A1008',   // warm near-black — rich, not harsh
-  textMid:     '#3D3020',   // warm dark brown
-  textMuted:   '#6B5A45',   // warm mid-brown
-  textLight:   '#A8927A',   // warm light tan text
+  text:        '#0B1220',   // warm near-black — rich, not harsh
+  textMid:     '#1E293B',   // warm dark brown
+  textMuted:   '#475569',   // warm mid-brown
+  textLight:   '#5B6677',   // warm light tan text
 
   success:     '#14532D',
   successBg:   '#DCFCE7',
@@ -82,12 +82,12 @@ const T = {
   error:       '#7F1D1D',
   errorBg:     '#FEE2E2',
 
-  shadow:      '0 1px 4px rgba(26,16,8,0.08), 0 4px 20px rgba(26,16,8,0.06)',
-  shadowMd:    '0 4px 16px rgba(26,16,8,0.12), 0 1px 4px rgba(26,16,8,0.07)',
+  shadow:      '0 1px 4px rgba(15,23,42,0.08), 0 4px 20px rgba(15,23,42,0.06)',
+  shadowMd:    '0 4px 16px rgba(15,23,42,0.12), 0 1px 4px rgba(15,23,42,0.07)',
 
-  grad:        'linear-gradient(135deg, #9A3412 0%, #1E3A5F 100%)',  // terracotta → navy
-  gradWarm:    'linear-gradient(135deg, #78350F 0%, #9A3412 100%)',
-  gradHero:    'linear-gradient(160deg, #F2E9DC 0%, #E8DCCF 55%, #DDD0BF 100%)',
+  grad:        'linear-gradient(135deg, #4338CA 0%, #1E3A5F 100%)',  // terracotta → navy
+  gradWarm:    'linear-gradient(135deg, #78350F 0%, #4338CA 100%)',
+  gradHero:    'linear-gradient(160deg, #F3F5F9 0%, #EAEEF4 55%, #EEF1F6 100%)',
 };
 
 const statusMeta: Record<string, { color: string; bg: string; label: string }> = {
@@ -101,7 +101,7 @@ const statusMeta: Record<string, { color: string; bg: string; label: string }> =
 
 const BRANCH_STAGES = [
   { label: "branchA", ms: 200,  color: "#14532D", nodes: ["API Call", "Transform"] },
-  { label: "branchB", ms: 580,  color: "#9A3412", nodes: ["AI Node", "Extract"]   },
+  { label: "branchB", ms: 580,  color: "#4338CA", nodes: ["AI Node", "Extract"]   },
   { label: "branchC", ms: 150,  color: "#1E3A5F", nodes: ["DB Query"]              },
 ];
 const TOTAL_PARALLEL_MS   = 580;
@@ -284,7 +284,7 @@ function NexComparison() {
         ))}
       </div>
       <div style={{
-        background: T.surfaceHigh, border:`1.5px solid ${active==='us' ? T.border : 'rgba(154,52,18,0.25)'}`,
+        background: T.surfaceHigh, border:`1.5px solid ${active==='us' ? T.border : 'rgba(67,56,202,0.25)'}`,
         borderRadius:'10px', padding:'22px', transition:'border-color 0.3s', position:'relative',
         boxShadow: T.shadow,
       }}>
@@ -292,7 +292,7 @@ function NexComparison() {
           position:'absolute', top:'10px', right:'12px', fontSize:'9px', letterSpacing:'0.1em',
           color: active==='us' ? T.accent : T.error,
           background: active==='us' ? T.accentBg : T.errorBg,
-          border:`1px solid ${active==='us' ? T.border : 'rgba(154,52,18,0.2)'}`,
+          border:`1px solid ${active==='us' ? T.border : 'rgba(67,56,202,0.2)'}`,
           borderRadius:'4px', padding:'2px 8px',
         }}>
           {active==='us' ? 'NEXFLOW' : 'THEIR WAY'}
@@ -399,10 +399,10 @@ export default function AboutPage() {
   },[]);
 
   return (
-    <div style={{ background: T.bg, minHeight:'100vh', color: T.text, fontFamily:"'DM Sans', sans-serif", overflowX:'hidden', backgroundImage:'radial-gradient(ellipse at 80% 0%, rgba(154,52,18,0.06) 0%, transparent 55%), radial-gradient(ellipse at 0% 100%, rgba(30,58,95,0.05) 0%, transparent 50%)' }}>
+    <div style={{ background: T.bg, minHeight:'100vh', color: T.text, fontFamily:"'DM Sans', sans-serif", overflowX:'hidden', backgroundImage:'radial-gradient(ellipse at 80% 0%, rgba(67,56,202,0.06) 0%, transparent 55%), radial-gradient(ellipse at 0% 100%, rgba(30,58,95,0.05) 0%, transparent 50%)' }}>
 
       {/* Warm background glow orbs */}
-      <div style={{ position:'fixed', top:'10%', right:'5%', width:'min(600px, 80vw)', height:'min(600px, 80vw)', background:'radial-gradient(circle, rgba(154,52,18,0.07) 0%, transparent 70%)', pointerEvents:'none', zIndex:0, transform:`translateY(${scrollY*0.08}px)` }} />
+      <div style={{ position:'fixed', top:'10%', right:'5%', width:'min(600px, 80vw)', height:'min(600px, 80vw)', background:'radial-gradient(circle, rgba(67,56,202,0.07) 0%, transparent 70%)', pointerEvents:'none', zIndex:0, transform:`translateY(${scrollY*0.08}px)` }} />
       <div style={{ position:'fixed', bottom:'15%', left:'-10%', width:'min(500px, 70vw)', height:'min(500px, 70vw)', background:'radial-gradient(circle, rgba(30,58,95,0.05) 0%, transparent 70%)', pointerEvents:'none', zIndex:0 }} />
 
       <style>{`

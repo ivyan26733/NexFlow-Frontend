@@ -56,7 +56,7 @@ function TypingDots() {
             width: 6,
             height: 6,
             borderRadius: '50%',
-            background: '#9A3412',
+            background: '#4338CA',
             animation: `assistant-dot 1.2s ease-in-out ${i * 0.2}s infinite`,
           }}
         />
@@ -81,8 +81,8 @@ function renderMarkdown(text: string) {
               <code key={pi} style={{
                 fontFamily: 'var(--font-mono)',
                 fontSize: '0.8em',
-                background: 'rgba(154,52,18,0.1)',
-                color: '#9A3412',
+                background: 'rgba(67,56,202,0.1)',
+                color: '#4338CA',
                 padding: '1px 4px',
                 borderRadius: 3,
               }}>
@@ -244,7 +244,7 @@ export default function FloatingAssistant() {
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             borderRadius: 16,
-            boxShadow: '0 8px 40px rgba(26,16,8,0.18), 0 2px 8px rgba(26,16,8,0.1)',
+            boxShadow: '0 8px 40px rgba(15,23,42,0.18), 0 2px 8px rgba(15,23,42,0.1)',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
@@ -255,7 +255,7 @@ export default function FloatingAssistant() {
           {/* Header */}
           <div style={{
             padding: '13px 16px 11px',
-            background: 'linear-gradient(135deg, #9A3412 0%, #1E3A5F 100%)',
+            background: 'linear-gradient(135deg, #4338CA 0%, #1E3A5F 100%)',
             display: 'flex',
             alignItems: 'center',
             gap: 10,
@@ -264,17 +264,17 @@ export default function FloatingAssistant() {
             <div style={{
               width: 32, height: 32,
               borderRadius: 8,
-              background: 'rgba(249,243,236,0.15)',
+              background: 'rgba(255,255,255,0.15)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}>
-              <SpiralIcon size={18} color="#F9F3EC" />
+              <SpiralIcon size={18} color="#FFFFFF" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#F9F3EC', letterSpacing: '0.01em' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.01em' }}>
                 Nexflow Assistant
               </div>
-              <div style={{ fontSize: 10, color: 'rgba(249,243,236,0.65)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
                 {getPageName(pathname)} · Ask anything
               </div>
             </div>
@@ -284,10 +284,10 @@ export default function FloatingAssistant() {
                   onClick={clearChat}
                   title="Clear chat"
                   style={{
-                    background: 'rgba(249,243,236,0.12)',
+                    background: 'rgba(255,255,255,0.12)',
                     border: 'none',
                     borderRadius: 6,
-                    color: 'rgba(249,243,236,0.7)',
+                    color: 'rgba(255,255,255,0.7)',
                     cursor: 'pointer',
                     padding: '4px 7px',
                     fontSize: 11,
@@ -300,10 +300,10 @@ export default function FloatingAssistant() {
               <button
                 onClick={() => setOpen(false)}
                 style={{
-                  background: 'rgba(249,243,236,0.12)',
+                  background: 'rgba(255,255,255,0.12)',
                   border: 'none',
                   borderRadius: 6,
-                  color: 'rgba(249,243,236,0.8)',
+                  color: 'rgba(255,255,255,0.8)',
                   cursor: 'pointer',
                   width: 28, height: 28,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -338,11 +338,11 @@ export default function FloatingAssistant() {
                 <div style={{
                   width: 48, height: 48,
                   borderRadius: 12,
-                  background: 'linear-gradient(135deg, rgba(154,52,18,0.12) 0%, rgba(30,58,95,0.12) 100%)',
-                  border: '1px solid rgba(154,52,18,0.2)',
+                  background: 'linear-gradient(135deg, rgba(67,56,202,0.12) 0%, rgba(30,58,95,0.12) 100%)',
+                  border: '1px solid rgba(67,56,202,0.2)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <SpiralIcon size={24} color="#9A3412" />
+                  <SpiralIcon size={24} color="#4338CA" />
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)' }}>
                   How can I help?
@@ -371,8 +371,8 @@ export default function FloatingAssistant() {
                         transition: 'border-color 0.15s, color 0.15s',
                       }}
                       onMouseEnter={e => {
-                        e.currentTarget.style.borderColor = '#9A3412'
-                        e.currentTarget.style.color = '#9A3412'
+                        e.currentTarget.style.borderColor = '#4338CA'
+                        e.currentTarget.style.color = '#4338CA'
                       }}
                       onMouseLeave={e => {
                         e.currentTarget.style.borderColor = 'var(--color-border)'
@@ -399,10 +399,10 @@ export default function FloatingAssistant() {
                 {msg.role === 'assistant' && (
                   <div style={{
                     width: 24, height: 24, borderRadius: 6, flexShrink: 0,
-                    background: 'linear-gradient(135deg, #9A3412, #1E3A5F)',
+                    background: 'linear-gradient(135deg, #4338CA, #1E3A5F)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <SpiralIcon size={13} color="#F9F3EC" />
+                    <SpiralIcon size={13} color="#FFFFFF" />
                   </div>
                 )}
                 <div style={{
@@ -412,12 +412,12 @@ export default function FloatingAssistant() {
                     ? '14px 14px 4px 14px'
                     : '14px 14px 14px 4px',
                   background: msg.role === 'user'
-                    ? 'linear-gradient(135deg, #9A3412, #7C2D12)'
+                    ? 'linear-gradient(135deg, #4338CA, #7C2D12)'
                     : 'var(--color-panel)',
                   border: msg.role === 'user'
                     ? 'none'
                     : '1px solid var(--color-border)',
-                  color: msg.role === 'user' ? '#F9F3EC' : 'var(--color-text)',
+                  color: msg.role === 'user' ? '#FFFFFF' : 'var(--color-text)',
                   fontSize: 13,
                   lineHeight: 1.6,
                 }}>
@@ -430,10 +430,10 @@ export default function FloatingAssistant() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
                 <div style={{
                   width: 24, height: 24, borderRadius: 6, flexShrink: 0,
-                  background: 'linear-gradient(135deg, #9A3412, #1E3A5F)',
+                  background: 'linear-gradient(135deg, #4338CA, #1E3A5F)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <SpiralIcon size={13} color="#F9F3EC" />
+                  <SpiralIcon size={13} color="#FFFFFF" />
                 </div>
                 <div style={{
                   padding: '9px 14px',
@@ -515,13 +515,13 @@ export default function FloatingAssistant() {
                   width: 32, height: 32, flexShrink: 0,
                   borderRadius: 8,
                   background: input.trim() && !loading
-                    ? 'linear-gradient(135deg, #9A3412, #7C2D12)'
+                    ? 'linear-gradient(135deg, #4338CA, #7C2D12)'
                     : 'var(--color-border)',
                   border: 'none',
                   cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'background 0.15s, transform 0.1s',
-                  color: '#F9F3EC',
+                  color: '#FFFFFF',
                   fontSize: 14,
                 }}
                 onMouseDown={e => { if (input.trim() && !loading) (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.92)' }}
@@ -558,7 +558,7 @@ export default function FloatingAssistant() {
             position: 'absolute',
             inset: 0,
             borderRadius: '50%',
-            border: '2px solid rgba(154,52,18,0.5)',
+            border: '2px solid rgba(67,56,202,0.5)',
             animation: 'assistant-pulse-ring 1.8s ease-out infinite',
             pointerEvents: 'none',
           }} />
@@ -589,16 +589,16 @@ export default function FloatingAssistant() {
             height: 54,
             borderRadius: '50%',
             background: open
-              ? 'linear-gradient(135deg, #1E3A5F, #9A3412)'
-              : 'linear-gradient(135deg, #9A3412, #1E3A5F)',
+              ? 'linear-gradient(135deg, #1E3A5F, #4338CA)'
+              : 'linear-gradient(135deg, #4338CA, #1E3A5F)',
             border: 'none',
             cursor: 'inherit',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: open
-              ? '0 4px 20px rgba(30,58,95,0.45), 0 2px 8px rgba(26,16,8,0.2)'
-              : '0 4px 20px rgba(154,52,18,0.4), 0 2px 8px rgba(26,16,8,0.2)',
+              ? '0 4px 20px rgba(30,58,95,0.45), 0 2px 8px rgba(15,23,42,0.2)'
+              : '0 4px 20px rgba(67,56,202,0.4), 0 2px 8px rgba(15,23,42,0.2)',
             transition: 'box-shadow 0.2s, background 0.25s',
             pointerEvents: 'none',
           }}
@@ -612,8 +612,8 @@ export default function FloatingAssistant() {
             transform: open ? 'rotate(135deg) scale(0.85)' : 'rotate(0deg)',
           }}>
             {open
-              ? <span style={{ color: '#F9F3EC', fontSize: 20, lineHeight: 1 }}>×</span>
-              : <SpiralIcon size={24} color="#F9F3EC" />
+              ? <span style={{ color: '#FFFFFF', fontSize: 20, lineHeight: 1 }}>×</span>
+              : <SpiralIcon size={24} color="#FFFFFF" />
             }
           </div>
         </button>

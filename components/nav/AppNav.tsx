@@ -110,11 +110,11 @@ export default function AppNav() {
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           height: '58px',
-          background: 'rgba(242,233,220,0.88)',
+          background: 'rgba(243,245,249,0.88)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderBottom: '1px solid var(--color-border)',
-          boxShadow: '0 1px 8px rgba(26,16,8,0.06)',
+          boxShadow: '0 1px 8px rgba(15,23,42,0.06)',
         }}>
           {/* Brand */}
           <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', flexShrink: 0 }}>
@@ -160,7 +160,7 @@ export default function AppNav() {
               <a href="/dashboard" style={{
                 padding: '7px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
                 background: 'var(--grad-accent)', color: 'var(--color-on-accent)',
-                textDecoration: 'none', boxShadow: '0 2px 8px rgba(154,52,18,0.25)',
+                textDecoration: 'none', boxShadow: '0 2px 8px rgba(67,56,202,0.25)',
                 whiteSpace: 'nowrap',
               }}>Dashboard →</a>
             ) : (
@@ -182,7 +182,7 @@ export default function AppNav() {
                     padding: '7px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
                     background: 'var(--grad-accent)', color: 'var(--color-on-accent)',
                     border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                    boxShadow: '0 2px 8px rgba(154,52,18,0.25)',
+                    boxShadow: '0 2px 8px rgba(67,56,202,0.25)',
                     whiteSpace: 'nowrap',
                   }}
                 >Get started →</button>
@@ -229,8 +229,8 @@ export default function AppNav() {
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             width: '2rem', height: '2rem', borderRadius: '0.4rem',
-            background: dimMode ? 'rgba(154,52,18,0.12)' : 'none',
-            border: dimMode ? '1px solid rgba(154,52,18,0.25)' : '1px solid transparent',
+            background: dimMode ? 'rgba(67,56,202,0.12)' : 'none',
+            border: dimMode ? '1px solid rgba(67,56,202,0.25)' : '1px solid transparent',
             cursor: 'pointer', color: dimMode ? 'var(--color-accent)' : 'var(--color-muted)',
             flexShrink: 0, transition: 'background 0.2s, border-color 0.2s, color 0.2s',
           }}
@@ -268,7 +268,7 @@ export default function AppNav() {
                 style={{
                   color:      isActive(l.href) ? 'var(--color-accent)' : undefined,
                   fontWeight: isActive(l.href) ? 600 : undefined,
-                  background: isActive(l.href) ? 'rgba(154,52,18,0.06)' : undefined,
+                  background: isActive(l.href) ? 'rgba(67,56,202,0.06)' : undefined,
                 }}
                 onClick={() => setMobileOpen(false)}
               >

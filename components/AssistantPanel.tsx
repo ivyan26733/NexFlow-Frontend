@@ -420,7 +420,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: 38,
     borderRadius: 8,
     border: 'none',
-    background: 'linear-gradient(135deg, #9A3412, #1E3A5F)',
+    background: 'linear-gradient(135deg, #4338CA, #1E3A5F)',
     color: '#fff',
     fontSize: 18,
     fontWeight: 700,

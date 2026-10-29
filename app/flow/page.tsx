@@ -12,7 +12,7 @@ import { isLoggedIn, getStoredUser } from '@/lib/auth'
 import { useAuthGuard } from '@/components/AuthGuardProvider'
 
 const STATUS_META: Record<string, { color: string; bg: string; dot: string }> = {
-  DRAFT:    { color: '#A8927A', bg: 'rgba(168,146,122,0.12)',  dot: '#6B5A45' },
+  DRAFT:    { color: '#5B6677', bg: 'rgba(91,102,119,0.12)',  dot: '#475569' },
   ACTIVE:   { color: '#15803d', bg: 'rgba(21,128,61,0.1)',    dot: '#15803d' },
   PAUSED:   { color: '#ffab00', bg: 'rgba(255,171,0,0.1)',    dot: '#ffab00' },
   ARCHIVED: { color: '#b91c1c', bg: 'rgba(185,28,28,0.1)',    dot: '#b91c1c' },
@@ -184,16 +184,16 @@ export default function FlowsPage() {
 
       <div className="stats-grid-4">
         {[
-          { key: 'ALL' as const,      label: 'Total Flows', value: stats.total,    color: '#A8927A' },
+          { key: 'ALL' as const,      label: 'Total Flows', value: stats.total,    color: '#5B6677' },
           { key: 'ACTIVE' as const,   label: 'Active',      value: stats.active,   color: '#15803d' },
-          { key: 'DRAFT' as const,    label: 'Draft',       value: stats.draft,    color: '#6B5A45' },
+          { key: 'DRAFT' as const,    label: 'Draft',       value: stats.draft,    color: '#475569' },
           { key: 'ARCHIVED' as const, label: 'Archived',    value: stats.archived, color: '#b91c1c' },
         ].map(s => (
           <button key={s.label} type="button" onClick={() => { setStatusFilter(s.key); setPage(1) }} style={{
             background: 'var(--color-surface)', border: '1px solid var(--color-border)',
             borderRadius: '0.875rem', padding: '1.25rem 1.5rem',
             textAlign: 'left', cursor: 'pointer',
-            boxShadow: statusFilter === s.key ? '0 0 0 1px rgba(154,52,18,0.35) inset' : 'none',
+            boxShadow: statusFilter === s.key ? '0 0 0 1px rgba(67,56,202,0.35) inset' : 'none',
           }}>
             <p style={{ fontSize: '1.875rem', fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</p>
             <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginTop: '0.375rem' }}>{s.label}</p>

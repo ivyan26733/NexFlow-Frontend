@@ -1,74 +1,101 @@
 'use client'
 
-import { NODE_GROUPS, NODE_META } from './nodeConfig'
+import { useState } from 'react'
+import { PanelLeftClose, Search } from 'lucide-react'
+import { NODE_GROUPS, NODE_META, CATEGORY_META } from './nodeConfig'
+import { NodeIcon } from '@/components/studio/nodeIcons'
 import type { NodeType } from '@/types'
 
-import { PanelLeftClose } from 'lucide-react'
-
 export default function NodeSidebar({ onAddNode, onClose }: { onAddNode?: (t: NodeType) => void; onClose?: () => void }) {
+  const [query, setQuery] = useState('')
+  const q = query.trim().toLowerCase()
+
   function onDragStart(event: React.DragEvent, nodeType: NodeType) {
     event.dataTransfer.setData('nodeType', nodeType)
     event.dataTransfer.effectAllowed = 'move'
   }
 
-  return (
-    <aside className="studio-sidebar">
+  const groups = NODE_GROUPS
+    .map(g => ({
+      ...g,
+      types: g.types.filter(t => !q
+        || NODE_META[t].label.toLowerCase().includes(q)
+        || NODE_META[t].description.toLowerCase().includes(q)
+        || g.label.toLowerCase().includes(q)),
+    }))
+    .filter(g => g.types.length > 0)
 
+  return (
+    <aside className="studio-sidebar" aria-label="Node palette">
       <div className="studio-sidebar-header">
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+        <div className="nf-palette__top">
           <div>
-            <p className="title">NODES</p>
-            <p className="subtitle">Drag onto canvas · tap to add on mobile</p>
+            <p className="title">Add a step</p>
+            <p className="subtitle">Drag onto the canvas · tap on mobile</p>
           </div>
           {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              title="Collapse panel"
-              style={{
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                width: '1.75rem', height: '1.75rem', flexShrink: 0,
-                border: '1px solid var(--color-border)', borderRadius: '0.375rem',
-                background: 'transparent', color: 'var(--color-muted)',
-                cursor: 'pointer', marginTop: '0.125rem',
-              }}
-            >
-              <PanelLeftClose size={14} />
+            <button type="button" onClick={onClose} title="Collapse panel" className="nf-icon-btn">
+              <PanelLeftClose size={15} />
             </button>
           )}
         </div>
+        <label className="nf-palette__search">
+          <Search size={14} aria-hidden />
+          <input
+            type="search"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search nodes…"
+            aria-label="Search nodes"
+          />
+        </label>
       </div>
 
       <div className="studio-sidebar-body">
-        <div className="studio-sidebar-section">
-          <p className="studio-sidebar-section-label">ENTRY</p>
-          <StartNodeHint />
-        </div>
-        {NODE_GROUPS.map(group => (
-          <div key={group.label} className="studio-sidebar-section">
-            <p className="studio-sidebar-section-label">{group.label}</p>
-            <div className="studio-sidebar-nodes">
-              {group.types.map(type => (
-                <SidebarNode
-                  key={type}
-                  nodeType={type}
-                  onDragStart={onDragStart}
-                  onAddNode={onAddNode}
-                />
-              ))}
+        {!q && (
+          <div className="nf-palette__group">
+            <GroupHeader color={CATEGORY_META.TRIGGER.color} label="Trigger" meaning={CATEGORY_META.TRIGGER.meaning} />
+            <div className="nf-palette__item is-static" style={{ ['--nc' as string]: NODE_META.START.color, ['--nt' as string]: NODE_META.START.bgColor }}>
+              <span className="nf-palette__icon"><NodeIcon type="START" size={15} /></span>
+              <span className="nf-palette__text">
+                <span className="nf-palette__label">Start</span>
+                <span className="nf-palette__desc">Added automatically — every flow begins here</span>
+              </span>
             </div>
           </div>
-        ))}
+        )}
+
+        {groups.map(group => {
+          const cat = CATEGORY_META[group.category]
+          return (
+            <div key={group.category} className="nf-palette__group">
+              <GroupHeader color={cat.color} label={cat.label} meaning={cat.meaning} />
+              {group.types.map(type => (
+                <SidebarNode key={type} nodeType={type} onDragStart={onDragStart} onAddNode={onAddNode} />
+              ))}
+            </div>
+          )
+        })}
+
+        {groups.length === 0 && <p className="nf-palette__none">No nodes match “{query}”.</p>}
       </div>
 
       <div className="studio-sidebar-footer">
-        <span style={{ color: 'var(--color-text)' }}>Nexus</span> and <span style={{ color: 'var(--color-text)' }}>Sub-Flow</span> have <span style={{ color: 'var(--color-success)' }}>success</span> + <span style={{ color: 'var(--color-failure)' }}>failure</span> outputs.
+        Steps with two outputs: <b className="nf-txt-success">● success</b> continues, <b className="nf-txt-failure">● error</b> handles failure.
       </div>
     </aside>
   )
 }
 
-/* ───────────────────────── Sidebar Node ───────────────────────── */
+function GroupHeader({ color, label, meaning }: { color: string; label: string; meaning: string }) {
+  return (
+    <div className="nf-palette__head">
+      <span className="nf-palette__chip" style={{ background: color }} />
+      <span className="nf-palette__cat">{label}</span>
+      <span className="nf-palette__meaning">{meaning}</span>
+    </div>
+  )
+}
 
 function SidebarNode({
   nodeType,
@@ -82,16 +109,12 @@ function SidebarNode({
   const meta = NODE_META[nodeType]
 
   function handleClick() {
-    if (!onAddNode) return
-    if (typeof window === 'undefined') return
-
+    if (!onAddNode || typeof window === 'undefined') return
     const isTouch =
       ('ontouchstart' in window) ||
       (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
       (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
-
-    if (!isTouch) return
-    onAddNode(nodeType)
+    if (isTouch) onAddNode(nodeType)
   }
 
   return (
@@ -99,47 +122,15 @@ function SidebarNode({
       draggable
       onDragStart={e => onDragStart(e, nodeType)}
       onClick={handleClick}
-      className="studio-sidebar-node"
-      style={{ borderLeftWidth: '3px', borderLeftColor: meta.color }}
+      className="nf-palette__item"
+      style={{ ['--nc' as string]: meta.color, ['--nt' as string]: meta.bgColor }}
+      title={meta.description}
     >
-      <div className="studio-sidebar-node-dot" style={{ background: meta.color }} />
-      <div className="min-w-0">
-        <span style={{ fontWeight: 500 }}>{meta.label}</span>
-        <p style={{ fontSize: '10px', color: 'var(--color-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getShortDescription(nodeType)}</p>
-      </div>
+      <span className="nf-palette__icon"><NodeIcon type={nodeType} size={15} /></span>
+      <span className="nf-palette__text">
+        <span className="nf-palette__label">{meta.label}</span>
+        <span className="nf-palette__desc">{meta.description}</span>
+      </span>
     </div>
   )
-}
-
-/* ───────────────────────── Start Node Hint ───────────────────────── */
-
-function StartNodeHint() {
-  const meta = NODE_META.START
-
-  return (
-    <div className="studio-sidebar-node" style={{ borderStyle: 'dashed', opacity: 0.85, borderLeftColor: meta.color, background: 'rgba(254, 243, 199, 0.35)' }}>
-      <div className="studio-sidebar-node-dot" style={{ background: meta.color }} />
-      <span style={{ color: 'var(--color-muted)' }}>Start (auto)</span>
-    </div>
-  )
-}
-
-/* ───────────────────────── Descriptions ───────────────────────── */
-
-function getShortDescription(type: NodeType): string {
-  switch (type) {
-    case 'NEXUS':    return 'Saved connector or inline API'
-    case 'SUB_FLOW': return 'Call another flow'
-    case 'SCRIPT':   return 'JavaScript or Python'
-    case 'VARIABLE': return 'Set static values'
-    case 'MAPPER':   return 'Reshape data'
-    case 'DECISION': return 'Branch on condition'
-    case 'LOOP':     return 'Draw CONTINUE + EXIT edges'
-    case 'FORK':     return 'Split into parallel branches'
-    case 'JOIN':     return 'Merge parallel branches'
-    case 'AI':       return 'LLM task — configure in AI Providers first'
-    case 'SUCCESS':  return 'End — success'
-    case 'FAILURE':  return 'End — failure'
-    default:         return ''
-  }
 }

@@ -110,8 +110,8 @@ export default function StudioToolbar({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                borderColor: 'rgba(154,52,18,0.28)',
-                background: 'linear-gradient(135deg,rgba(154,52,18,0.1),rgba(30,58,95,0.1))',
+                borderColor: 'rgba(67,56,202,0.28)',
+                background: 'linear-gradient(135deg,rgba(67,56,202,0.1),rgba(30,58,95,0.1))',
                 color: '#1E3A5F',
                 fontWeight: 600,
               }}

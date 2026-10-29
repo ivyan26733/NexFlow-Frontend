@@ -56,7 +56,7 @@ export default function NexusPage() {
           </p>
         </div>
         <button onClick={openCreate}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: '#4C1D95', color: '#F9F3EC', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', flexShrink: 0 }}>
+          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: '#4C1D95', color: '#FFFFFF', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', flexShrink: 0 }}>
           <Plus size={15} /> New Connector
         </button>
       </div>
@@ -233,7 +233,7 @@ function ConnectorModal({ initial, onSave, onClose }: {
         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
           <button onClick={onClose} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
           <button onClick={submit} disabled={saving || !form.name?.trim()}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1.25rem', background: '#4C1D95', color: '#F9F3EC', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', opacity: (!form.name?.trim() || saving) ? 0.5 : 1 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1.25rem', background: '#4C1D95', color: '#FFFFFF', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', opacity: (!form.name?.trim() || saving) ? 0.5 : 1 }}>
             {saving ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={14} />}
             {saving ? 'Saving…' : 'Save'}
           </button>
@@ -291,7 +291,7 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
       <Key size={32} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
       <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>No connectors yet</h2>
       <p style={{ fontSize: '0.875rem', marginBottom: '1.5rem' }}>Create a connector to store API credentials and reuse them in your flows.</p>
-      <button onClick={onCreate} style={{ padding: '0.5rem 1.25rem', background: '#4C1D95', color: '#F9F3EC', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}>
+      <button onClick={onCreate} style={{ padding: '0.5rem 1.25rem', background: '#4C1D95', color: '#FFFFFF', border: 'none', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}>
         Create Connector
       </button>
     </div>

@@ -90,7 +90,7 @@ const PROVIDER_META: Record<string, { icon: string; color: string; label: string
   GROQ:      { icon: '⚡', color: '#B45309',  label: 'Groq' },
   MISTRAL:   { icon: '◈', color: '#1E3A5F',  label: 'Mistral' },
   MLVOCA:    { icon: '◇', color: '#0F766E',  label: 'MLvoca (testing)' },
-  CUSTOM:    { icon: '⚙', color: '#6B5A45',  label: 'Custom' },
+  CUSTOM:    { icon: '⚙', color: '#475569',  label: 'Custom' },
 }
 
 interface InputBinding {
@@ -354,7 +354,7 @@ export default function AiConfig({ config, onChange, nodeLabel }: Props) {
 
       <div style={{
         padding: '8px 12px', marginBottom: '12px',
-        background: 'rgba(154,52,18,0.05)', border: '1px solid rgba(154,52,18,0.15)',
+        background: 'rgba(67,56,202,0.05)', border: '1px solid rgba(67,56,202,0.15)',
         borderRadius: '5px', fontSize: '11px', color: 'var(--color-muted)',
       }}>
         AI can <strong>only</strong> see data you bind here. Credentials are blocked.

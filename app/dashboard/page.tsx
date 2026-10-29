@@ -177,7 +177,7 @@ export default function DashboardLandingPage() {
           </>
         ) : (
           <>
-            <KpiCard icon={<Layers size={16} />} label="Total Flows" value={summary?.totalFlows ?? 0} tone="#9A3412" gradient="linear-gradient(135deg, rgba(154,52,18,0.14), rgba(154,52,18,0.04))" />
+            <KpiCard icon={<Layers size={16} />} label="Total Flows" value={summary?.totalFlows ?? 0} tone="#4338CA" gradient="linear-gradient(135deg, rgba(67,56,202,0.14), rgba(67,56,202,0.04))" />
             <KpiCard icon={<CheckCircle2 size={16} />} label="Successful" value={successCount} tone="#15803d" gradient="linear-gradient(135deg, rgba(21,128,61,0.14), rgba(20,83,45,0.05))" />
             <KpiCard icon={<AlertTriangle size={16} />} label="Failed" value={failureCount} tone="#b91c1c" gradient="linear-gradient(135deg, rgba(185,28,28,0.12), rgba(127,29,29,0.05))" />
             <KpiCard icon={<Activity size={16} />} label="Running" value={runningCount} tone="#1E3A5F" gradient="linear-gradient(135deg, rgba(30,58,95,0.14), rgba(30,58,95,0.04))" />
@@ -224,7 +224,7 @@ export default function DashboardLandingPage() {
             title="Last Active Flow"
             value={latestFlow?.name ?? 'No flows yet'}
             sub={latestFlow?.updatedAt ? `Updated ${relativeTime(latestFlow.updatedAt)}` : 'Create a flow to start'}
-            accent="#9A3412"
+            accent="#4338CA"
             onClick={latestFlow ? () => router.push(`/studio/${latestFlow.id}`) : undefined}
           />
         )}
@@ -323,7 +323,7 @@ export default function DashboardLandingPage() {
         <div className="dash-card" style={{ overflow: 'hidden', marginBottom: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Sparkles size={14} style={{ color: '#9A3412' }} />
+              <Sparkles size={14} style={{ color: '#4338CA' }} />
               <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>RECENT TRANSACTIONS</span>
             </div>
             <button onClick={() => router.push('/transactions')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
@@ -345,7 +345,7 @@ export default function DashboardLandingPage() {
                   FAILURE: { dot: '#b91c1c', bg: 'rgba(185,28,28,0.1)' },
                   RUNNING: { dot: '#1E3A5F', bg: 'rgba(30,58,95,0.1)' },
                 }
-                const c = colors[ex.status] ?? { dot: '#6B5A45', bg: 'rgba(107,90,69,0.1)' }
+                const c = colors[ex.status] ?? { dot: '#475569', bg: 'rgba(71,85,105,0.1)' }
                 return (
                   <div key={ex.id}
                     style={{
@@ -617,7 +617,7 @@ function HourlyHeatmap({ data }: { data: number[] }) {
         const intensity = count / max
         const bg = count === 0
           ? 'var(--color-panel)'
-          : `rgba(154, 52, 18, ${0.12 + intensity * 0.55})`
+          : `rgba(67,56,202, ${0.12 + intensity * 0.55})`
         return (
           <div key={hr} style={{ textAlign: 'center' }} title={`${String(hr).padStart(2, '0')}:00 — ${count} hits`}>
             <div style={{
@@ -806,8 +806,8 @@ function GuestDashboard() {
       }}>
         <div style={{
           width: '5rem', height: '5rem', borderRadius: '1.25rem',
-          background: 'linear-gradient(135deg,rgba(154,52,18,0.12),rgba(30,58,95,0.12))',
-          border: '1px solid rgba(154,52,18,0.22)',
+          background: 'linear-gradient(135deg,rgba(67,56,202,0.12),rgba(30,58,95,0.12))',
+          border: '1px solid rgba(67,56,202,0.22)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem',
         }}>
           <BarChart3 size={28} style={{ color: 'var(--color-accent)' }} />

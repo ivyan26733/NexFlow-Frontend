@@ -8,7 +8,7 @@ interface MillennialLoaderProps {
 }
 
 /* Same 4-pointed star used by the floating assistant */
-function StarIcon({ size = 28, color = '#9A3412' }: { size?: number; color?: string }) {
+function StarIcon({ size = 28, color = '#4338CA' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path
@@ -34,8 +34,8 @@ export function MillennialLoader({ label = 'Loading…', fullScreen = false }: M
           <svg viewBox="0 0 96 96" width="96" height="96" aria-hidden>
             <defs>
               <linearGradient id="nf-arc-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#9A3412" stopOpacity="1" />
-                <stop offset="100%" stopColor="#9A3412" stopOpacity="0" />
+                <stop offset="0%" stopColor="#4338CA" stopOpacity="1" />
+                <stop offset="100%" stopColor="#4338CA" stopOpacity="0" />
               </linearGradient>
             </defs>
             <circle
@@ -68,7 +68,7 @@ export function MillennialLoader({ label = 'Loading…', fullScreen = false }: M
 
         {/* Center star — breathing */}
         <div className="nexflow-loader-star">
-          <StarIcon size={30} color="#9A3412" />
+          <StarIcon size={30} color="#4338CA" />
         </div>
 
       </div>

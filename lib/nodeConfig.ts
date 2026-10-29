@@ -1,2 +1,4 @@
-export { NODE_META, DRAGGABLE_NODES, NODE_GROUPS } from '../nodeConfig'
-export type { NodeMeta } from '../nodeConfig' 
+export {
+  NODE_META, DRAGGABLE_NODES, NODE_GROUPS, CATEGORY_META, STATUS_COLOR, EDGE_STYLE,
+} from '../nodeConfig'
+export type { NodeMeta, NodeCategory, CategoryMeta, EdgeKind } from '../nodeConfig'

@@ -159,7 +159,7 @@ function AuthModal({ mode, onClose, onSwitch }: {
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0, zIndex: 200,
-          background: 'rgba(26,16,8,0.55)',
+          background: 'rgba(15,23,42,0.55)',
           backdropFilter: 'blur(6px)',
           WebkitBackdropFilter: 'blur(6px)',
           animation: 'nx-fadeIn 0.2s ease',
@@ -181,7 +181,7 @@ function AuthModal({ mode, onClose, onSwitch }: {
             borderRadius: '20px',
             padding: '36px 32px',
             width: '100%', maxWidth: '400px',
-            boxShadow: '0 24px 64px rgba(26,16,8,0.18)',
+            boxShadow: '0 24px 64px rgba(15,23,42,0.18)',
             animation: 'nx-slideUp 0.25s ease',
           }}
         >
@@ -191,7 +191,7 @@ function AuthModal({ mode, onClose, onSwitch }: {
               <div style={{
                 width: 44, height: 44, borderRadius: 12,
                 background: 'var(--color-accent-soft)',
-                border: '1px solid rgba(154,52,18,0.2)',
+                border: '1px solid rgba(67,56,202,0.2)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 20, marginBottom: 12,
               }}>
@@ -374,7 +374,7 @@ export default function HomePage() {
       <style>{`
         @keyframes nx-float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
         @keyframes nx-marquee  { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
-        @keyframes nx-pulse    { 0%{box-shadow:0 0 0 0 rgba(154,52,18,0.35)} 70%{box-shadow:0 0 0 10px rgba(154,52,18,0)} 100%{box-shadow:0 0 0 0 rgba(154,52,18,0)} }
+        @keyframes nx-pulse    { 0%{box-shadow:0 0 0 0 rgba(67,56,202,0.35)} 70%{box-shadow:0 0 0 10px rgba(67,56,202,0)} 100%{box-shadow:0 0 0 0 rgba(67,56,202,0)} }
         @keyframes nx-grad     { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
         @keyframes nx-fadeIn   { from{opacity:0} to{opacity:1} }
         @keyframes nx-slideUp  { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
@@ -388,7 +388,7 @@ export default function HomePage() {
           background:var(--color-surface); border:1px solid var(--color-border); border-radius:16px;
           transition:transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         }
-        .nx-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-warm),0 8px 32px rgba(154,52,18,0.1); border-color:var(--color-accent); }
+        .nx-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-warm),0 8px 32px rgba(67,56,202,0.1); border-color:var(--color-accent); }
         .nx-btn-primary {
           display:inline-flex; align-items:center; gap:8px;
           padding:13px 28px; border-radius:10px;
@@ -449,7 +449,7 @@ export default function HomePage() {
         padding: '120px 16px 80px', position: 'relative', overflow: 'hidden',
         background: 'var(--grad-hero-warm)',
       }}>
-        <div style={{ position: 'absolute', top: '8%', right: '8%', width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(154,52,18,0.08) 0%, transparent 70%)', animation: 'nx-float 7s ease-in-out infinite', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '8%', right: '8%', width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(67,56,202,0.08) 0%, transparent 70%)', animation: 'nx-float 7s ease-in-out infinite', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '12%', left: '5%', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(30,58,95,0.08) 0%, transparent 70%)', animation: 'nx-float 9s ease-in-out 2s infinite', pointerEvents: 'none' }} />
 
         <div className="nx-badge">
@@ -551,7 +551,7 @@ export default function HomePage() {
             {STEPS.map((s, i) => (
               <Reveal key={s.n} delay={i * 120}>
                 <div className="nx-card" style={{ padding: 32 }}>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 12, background: 'var(--color-accent-soft)', border: '1px solid rgba(154,52,18,0.2)', fontSize: 13, fontWeight: 800, color: 'var(--color-accent)', marginBottom: 20 }}>{s.n}</div>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 12, background: 'var(--color-accent-soft)', border: '1px solid rgba(67,56,202,0.2)', fontSize: 13, fontWeight: 800, color: 'var(--color-accent)', marginBottom: 20 }}>{s.n}</div>
                   <h3 style={{ fontSize: 19, fontWeight: 700, marginBottom: 10, letterSpacing: '-0.4px' }}>{s.title}</h3>
                   <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--color-muted)', margin: 0 }}>{s.desc}</p>
                 </div>
@@ -577,7 +577,7 @@ export default function HomePage() {
             <Reveal key={n.name} delay={i * 45}>
               <div className="nx-card" style={{ padding: '20px 22px', cursor: 'default' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 9, background: 'var(--color-accent-soft)', border: '1px solid rgba(154,52,18,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{n.icon}</div>
+                  <div style={{ width: 36, height: 36, borderRadius: 9, background: 'var(--color-accent-soft)', border: '1px solid rgba(67,56,202,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{n.icon}</div>
                   <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-accent)' }}>{n.name}</span>
                 </div>
                 <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--color-muted)', margin: 0 }}>{n.desc}</p>
@@ -648,7 +648,7 @@ export default function HomePage() {
                   </div>
                 </div>
               ))}
-              <div style={{ marginTop: 14, padding: 12, background: 'var(--color-accent-soft)', border: '1px solid rgba(154,52,18,0.18)', borderRadius: 8 }}>
+              <div style={{ marginTop: 14, padding: 12, background: 'var(--color-accent-soft)', border: '1px solid rgba(67,56,202,0.18)', borderRadius: 8 }}>
                 <div style={{ color: 'var(--color-accent)', fontSize: 11, fontWeight: 700, marginBottom: 6 }}>nex.analyzeData.result</div>
                 <div style={{ color: 'var(--color-muted)', fontSize: 12 }}>{'{ "sentiment": "positive", "score": 0.87 }'}</div>
               </div>
@@ -692,10 +692,10 @@ export default function HomePage() {
           <div className="nx-dev-grid">
             <Reveal delay={0} className="nx-span2">
               <div className="nx-code-block" style={{ background: 'var(--color-navy)', border: '1px solid rgba(30,58,95,0.3)', borderRadius: 16, padding: 28, fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 1.8 }}>
-                <div style={{ fontSize: 11, color: 'rgba(249,243,236,0.35)', marginBottom: 14 }}>Script Node — JavaScript</div>
-                <div><span style={{ color: '#c084fc' }}>const</span> <span style={{ color: '#93c5fd' }}>orders</span> <span style={{ color: '#f9f3ec' }}>=</span> <span style={{ color: '#c084fc' }}>nex</span><span style={{ color: '#f9f3ec' }}>.</span><span style={{ color: '#6ee7b7' }}>fetchOrders</span><span style={{ color: '#f9f3ec' }}>.</span><span style={{ color: '#6ee7b7' }}>body</span><span style={{ color: '#f9f3ec' }}>.</span><span style={{ color: '#6ee7b7' }}>data</span><span style={{ color: '#f9f3ec' }}>;</span></div>
-                <div><span style={{ color: '#c084fc' }}>const</span> <span style={{ color: '#93c5fd' }}>highValue</span> <span style={{ color: '#f9f3ec' }}>=</span> <span style={{ color: '#93c5fd' }}>orders</span><span style={{ color: '#f9f3ec' }}>.</span><span style={{ color: '#6ee7b7' }}>filter</span><span style={{ color: '#f9f3ec' }}>(o =&gt; o.</span><span style={{ color: '#6ee7b7' }}>total</span> <span style={{ color: '#f9f3ec' }}>&gt;</span> <span style={{ color: '#fcd34d' }}>1000</span><span style={{ color: '#f9f3ec' }}>);</span></div>
-                <div><span style={{ color: '#c084fc' }}>return</span> <span style={{ color: '#f9f3ec' }}>{'{ '}</span><span style={{ color: '#6ee7b7' }}>count</span><span style={{ color: '#f9f3ec' }}>: highValue.</span><span style={{ color: '#6ee7b7' }}>length</span><span style={{ color: '#f9f3ec' }}>, </span><span style={{ color: '#6ee7b7' }}>orders</span><span style={{ color: '#f9f3ec' }}>: highValue {'}'}</span></div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 14 }}>Script Node — JavaScript</div>
+                <div><span style={{ color: '#c084fc' }}>const</span> <span style={{ color: '#93c5fd' }}>orders</span> <span style={{ color: '#FFFFFF' }}>=</span> <span style={{ color: '#c084fc' }}>nex</span><span style={{ color: '#FFFFFF' }}>.</span><span style={{ color: '#6ee7b7' }}>fetchOrders</span><span style={{ color: '#FFFFFF' }}>.</span><span style={{ color: '#6ee7b7' }}>body</span><span style={{ color: '#FFFFFF' }}>.</span><span style={{ color: '#6ee7b7' }}>data</span><span style={{ color: '#FFFFFF' }}>;</span></div>
+                <div><span style={{ color: '#c084fc' }}>const</span> <span style={{ color: '#93c5fd' }}>highValue</span> <span style={{ color: '#FFFFFF' }}>=</span> <span style={{ color: '#93c5fd' }}>orders</span><span style={{ color: '#FFFFFF' }}>.</span><span style={{ color: '#6ee7b7' }}>filter</span><span style={{ color: '#FFFFFF' }}>(o =&gt; o.</span><span style={{ color: '#6ee7b7' }}>total</span> <span style={{ color: '#FFFFFF' }}>&gt;</span> <span style={{ color: '#fcd34d' }}>1000</span><span style={{ color: '#FFFFFF' }}>);</span></div>
+                <div><span style={{ color: '#c084fc' }}>return</span> <span style={{ color: '#FFFFFF' }}>{'{ '}</span><span style={{ color: '#6ee7b7' }}>count</span><span style={{ color: '#FFFFFF' }}>: highValue.</span><span style={{ color: '#6ee7b7' }}>length</span><span style={{ color: '#FFFFFF' }}>, </span><span style={{ color: '#6ee7b7' }}>orders</span><span style={{ color: '#FFFFFF' }}>: highValue {'}'}</span></div>
                 <div style={{ marginTop: 16, padding: '10px 14px', background: 'rgba(20,83,45,0.4)', borderRadius: 8, borderLeft: '2px solid #22c55e' }}>
                   <span style={{ color: '#4ade80', fontSize: 12 }}>✓ Output stored as nex.filterHighValue — accessible by any downstream node</span>
                 </div>

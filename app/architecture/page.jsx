@@ -677,7 +677,7 @@ export default function NexflowArchitecture() {
       }}>
         <div style={{
           width: "42px", height: "42px",
-          background: "linear-gradient(135deg, #9A3412, #1E3A5F)",
+          background: "linear-gradient(135deg, #4338CA, #1E3A5F)",
           borderRadius: "10px",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: "20px", fontWeight: "bold", color: "#fff",

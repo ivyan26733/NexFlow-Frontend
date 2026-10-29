@@ -70,7 +70,7 @@ export const TEMPLATES: Template[] = [
     nodeCount: 3,
     useCase: 'Summarize, classify or transform text with AI',
     icon: '◎',
-    color: '#9A3412',
+    color: '#4338CA',
     canvas: {
       nodes: [
         n('s', 'START',   'Start',       100, 200),
@@ -338,7 +338,7 @@ export const TEMPLATES: Template[] = [
     nodeCount: 7,
     useCase: 'Route requests to different paths based on computed score',
     icon: '⬡',
-    color: '#9A3412',
+    color: '#4338CA',
     canvas: {
       nodes: [
         n('s',  'START',    'Start',            100, 300),

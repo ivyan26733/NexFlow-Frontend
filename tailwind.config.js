@@ -3,6 +3,7 @@ module.exports = {
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
+    './ForkJoinNodeCard.tsx',
     './config/**/*.{ts,tsx}',
     './lib/**/*.ts',
     './types/**/*.ts',
@@ -18,17 +19,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Cognac & Navy — mirror app/globals.css semantic tokens
-        base:    '#F2E9DC',
-        surface: '#F9F3EC',
-        panel:   '#E8DCCF',
-        border:  '#C8B9A5',
-        accent:  '#9A3412',
-        success: '#14532D',
-        failure: '#7F1D1D',
-        warning: '#78350F',
-        muted:   '#6B5A45',
-        text:    '#1A1008',
+        // "Ink & Signal" — mirror app/globals.css semantic tokens
+        base:    'var(--color-base)',
+        surface: 'var(--color-surface)',
+        panel:   'var(--color-panel)',
+        border:  'var(--color-border)',
+        accent:  'var(--color-accent)',
+        success: 'var(--color-success)',
+        failure: 'var(--color-failure)',
+        warning: 'var(--color-warning)',
+        muted:   'var(--color-muted)',
+        text:    'var(--color-text)',
       },
       fontFamily: {
         sans: ['var(--font-geist)', 'sans-serif'],

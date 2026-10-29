@@ -92,7 +92,7 @@ export default function GroupsPage() {
   }
 
   const avatarColors = [
-    'linear-gradient(135deg,#9A3412,#1E3A5F)',
+    'linear-gradient(135deg,#4338CA,#1E3A5F)',
     'linear-gradient(135deg,#c2410c,#92400e)',
     'linear-gradient(135deg,#15803d,#14532d)',
     'linear-gradient(135deg,#b45309,#78350f)',
@@ -123,7 +123,7 @@ export default function GroupsPage() {
       {/* ── Stats ──────────────────────────────────────────────── */}
       <div className="stats-grid-3">
         {[
-          { label: 'Total Groups',    value: groups.length,                              color: '#A8927A', icon: <Users size={18} />  },
+          { label: 'Total Groups',    value: groups.length,                              color: '#5B6677', icon: <Users size={18} />  },
           { label: 'All-Access',      value: groups.filter(g => g.allFlowsAccess).length, color: '#1E3A5F', icon: <Globe size={18} />  },
           { label: 'Selective Access', value: groups.filter(g => !g.allFlowsAccess).length, color: '#f59e0b', icon: <Lock size={18} />   },
         ].map(s => (
@@ -316,7 +316,7 @@ function GroupCard({
     ? nonMembers.filter(u => u.name.toLowerCase().includes(memberSearch.toLowerCase()) || u.email.toLowerCase().includes(memberSearch.toLowerCase()))
     : nonMembers
 
-  const avatarColors = ['linear-gradient(135deg,#9A3412,#1E3A5F)','linear-gradient(135deg,#c2410c,#92400e)','linear-gradient(135deg,#15803d,#14532d)','linear-gradient(135deg,#b45309,#78350f)','linear-gradient(135deg,#57534e,#44403c)']
+  const avatarColors = ['linear-gradient(135deg,#4338CA,#1E3A5F)','linear-gradient(135deg,#c2410c,#92400e)','linear-gradient(135deg,#15803d,#14532d)','linear-gradient(135deg,#b45309,#78350f)','linear-gradient(135deg,#57534e,#44403c)']
 
   return (
     <div style={{

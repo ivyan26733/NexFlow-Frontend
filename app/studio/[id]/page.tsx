@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import {
   ReactFlow, ReactFlowProvider, useReactFlow,
   Background, Controls, MiniMap,
   addEdge, useNodesState, useEdgesState,
   type Connection, type NodeTypes, type Edge, type Node,
-  type OnNodesChange, type OnEdgesChange,
-  BackgroundVariant,
+  type OnNodesChange, type OnEdgesChange, type EdgeTypes,
+  BackgroundVariant, ConnectionLineType,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { PanelLeftOpen, PanelLeftClose } from 'lucide-react'
@@ -35,6 +35,8 @@ import ForkJoinNodeCard from '@/ForkJoinNodeCard'
 import AiFlowNodeCard from '@/components/studio/AiFlowNodeCard'
 import { MillennialLoader } from '@/MillennialLoader'
 import { AIPanel } from '@/components/AIPanel'
+import { SemanticEdge, edgeKind, edgeMarker } from '@/components/studio/SemanticEdge'
+import { CanvasLegend } from '@/components/studio/CanvasLegend'
 
 /* ───────────────────────── Node Types ───────────────────────── */
 
@@ -53,6 +55,8 @@ const nodeTypes: NodeTypes = {
   FORK:     ForkJoinNodeCard,
   JOIN:     ForkJoinNodeCard,
 }
+
+const edgeTypes: EdgeTypes = { semantic: SemanticEdge }
 
 /* ───────────────────────── Page ───────────────────────── */
 
@@ -232,19 +236,14 @@ export default function StudioPage() {
 
     const sourceHandleId = connection.sourceHandle ?? undefined
     const conditionType = sourceHandleId === 'continue' ? 'CONTINUE' : sourceHandleId === 'failure' ? 'FAILURE' : 'SUCCESS'
-    const style = conditionType === 'CONTINUE'
-      ? { stroke: '#F59E0B', strokeWidth: 2, strokeDasharray: '6 3' }
-      : conditionType === 'FAILURE'
-        ? { stroke: '#b91c1c', strokeWidth: 2 }
-        : { stroke: '#15803d', strokeWidth: 2 }
+    // Visual style (colour, dash, arrow, label) is derived from the edge's meaning in StudioCanvas.
     setEdges(eds =>
       addEdge(
         {
           ...connection,
           id: crypto.randomUUID(),
-          type: 'smoothstep',
+          type: 'semantic',
           data: { conditionType },
-          style,
         },
         eds
       )
@@ -729,6 +728,26 @@ function StudioCanvas({
 }) {
   const { screenToFlowPosition } = useReactFlow()
 
+  // Give every edge its meaning (kind → colour, dash, arrow, label) and its live state
+  // (traversed = execution went this way, active = flowing into a running node).
+  const displayEdges = useMemo(() => {
+    const byId = new Map(nodesWithStatus.map(n => [n.id, n]))
+    return edges.map(e => {
+      const src = byId.get(e.source)
+      const tgt = byId.get(e.target)
+      const { kind, label } = edgeKind(e, src?.data?.nodeType as string | undefined)
+      const ss = src?.data?.liveStatus as string | null | undefined
+      const ts = tgt?.data?.liveStatus as string | null | undefined
+      const traversed = !!ss && !!ts && (kind === 'failure' ? ss === 'FAILURE' : kind === 'success' ? ss !== 'FAILURE' : true)
+      return {
+        ...e,
+        type: 'semantic',
+        markerEnd: edgeMarker(kind),
+        data: { ...e.data, kind, label, traversed, active: traversed && ts === 'RUNNING' },
+      }
+    })
+  }, [edges, nodesWithStatus])
+
   function onDrop(e: React.DragEvent) {
     e.preventDefault()
     if (viewMode) return
@@ -756,8 +775,11 @@ function StudioCanvas({
   return (
     <ReactFlow
       nodes={nodesWithStatus}
-      edges={edges}
+      edges={displayEdges}
       nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
+      connectionLineType={ConnectionLineType.SmoothStep}
+      connectionRadius={28}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={viewMode ? undefined : onConnect}
@@ -768,14 +790,26 @@ function StudioCanvas({
       onDrop={onDrop}
       onDragOver={e => e.preventDefault()}
       fitView
+      fitViewOptions={{ padding: 0.2, maxZoom: 1.1 }}
+      minZoom={0.2}
       nodesDraggable={!viewMode}
       nodesConnectable={!viewMode}
       elementsSelectable
       deleteKeyCode={viewMode ? null : 'Backspace'}
     >
-      <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#1e2d45" />
-      <Controls />
-      <MiniMap nodeColor={n => NODE_META[n.type as keyof typeof NODE_META]?.color ?? '#4a5568'} />
+      <Background variant={BackgroundVariant.Dots} gap={22} size={1.6} color="var(--studio-grid)" />
+      <Controls showInteractive={false} position="bottom-right" />
+      <MiniMap
+        position="top-right"
+        pannable
+        zoomable
+        nodeBorderRadius={6}
+        nodeStrokeWidth={0}
+        maskColor="rgba(15, 23, 42, 0.08)"
+        nodeColor={n => NODE_META[n.type as keyof typeof NODE_META]?.color ?? '#475569'}
+        ariaLabel="Flow overview"
+      />
+      <CanvasLegend />
     </ReactFlow>
   )
 }
@@ -914,17 +948,14 @@ function apiNodeToRfNode(n: ApiNode): Node {
 
 function apiEdgeToRfEdge(e: ApiEdge): Edge {
   const sourceHandle = e.sourceHandle ?? (e.conditionType === 'FAILURE' ? 'failure' : e.conditionType === 'CONTINUE' ? 'continue' : undefined)
-  const stroke = e.conditionType === 'CONTINUE' ? '#F59E0B' : (e.sourceHandle === 'failure' || e.conditionType === 'FAILURE') ? '#b91c1c' : '#15803d'
-  const strokeDasharray = e.conditionType === 'CONTINUE' ? '6 3' : undefined
   return {
     id: e.id,
     source: e.sourceNodeId,
     target: e.targetNodeId,
     sourceHandle: sourceHandle || undefined,
     targetHandle: e.targetHandle ?? undefined,
-    type: 'smoothstep',
+    type: 'semantic',
     data: { conditionType: e.conditionType },
-    style: { stroke, strokeWidth: 2, ...(strokeDasharray ? { strokeDasharray } : {}) },
   }
 }
 

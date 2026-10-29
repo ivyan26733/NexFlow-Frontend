@@ -92,7 +92,7 @@ function PulseCard({ flow, onOpenStudio }: { flow: Flow; onOpenStudio: () => voi
 
       {/* Card header */}
       <div style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem', background: 'rgba(154,52,18,0.1)', border: '1px solid rgba(154,52,18,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem', background: 'rgba(67,56,202,0.1)', border: '1px solid rgba(67,56,202,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <Zap size={16} style={{ color: 'var(--color-accent)' }} />
         </div>
 
@@ -101,7 +101,7 @@ function PulseCard({ flow, onOpenStudio }: { flow: Flow; onOpenStudio: () => voi
             <h3 style={{ fontSize: '0.9375rem', fontWeight: 600 }}>{flow.name}</h3>
             <span style={{
               fontSize: '0.65rem', fontFamily: 'var(--font-mono)', padding: '0.1rem 0.4rem',
-              borderRadius: '9999px', background: flow.status === 'ACTIVE' ? 'rgba(21,128,61,0.12)' : 'rgba(107,90,69,0.12)',
+              borderRadius: '9999px', background: flow.status === 'ACTIVE' ? 'rgba(21,128,61,0.12)' : 'rgba(71,85,105,0.12)',
               color: flow.status === 'ACTIVE' ? '#15803d' : 'var(--color-muted)',
             }}>{flow.status}</span>
           </div>

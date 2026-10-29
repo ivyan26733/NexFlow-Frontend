@@ -101,9 +101,9 @@ function TemplateCard({ template, onUse }: { template: Template; onUse: (t: Temp
         <span style={{
           fontSize: '0.65rem', fontFamily: 'var(--font-mono)', padding: '0.2rem 0.6rem',
           borderRadius: '999px', flexShrink: 0,
-          background: template.category === 'basic' ? 'rgba(21,128,61,0.1)' : 'rgba(154,52,18,0.1)',
-          color: template.category === 'basic' ? '#15803d' : '#9A3412',
-          border: `1px solid ${template.category === 'basic' ? 'rgba(21,128,61,0.25)' : 'rgba(154,52,18,0.25)'}`,
+          background: template.category === 'basic' ? 'rgba(21,128,61,0.1)' : 'rgba(67,56,202,0.1)',
+          color: template.category === 'basic' ? '#15803d' : '#4338CA',
+          border: `1px solid ${template.category === 'basic' ? 'rgba(21,128,61,0.25)' : 'rgba(67,56,202,0.25)'}`,
         }}>
           {template.category === 'basic' ? 'BASIC' : 'COMPLEX'}
         </span>
@@ -314,9 +314,9 @@ export default function TemplatesPage() {
       {/* Stats */}
       <div className="stats-grid-4" style={{ marginBottom: '2rem' }}>
         {[
-          { label: 'Total Templates', value: TEMPLATES.length,  color: '#A8927A' },
+          { label: 'Total Templates', value: TEMPLATES.length,  color: '#5B6677' },
           { label: 'Basic',           value: basicCount,         color: '#15803d' },
-          { label: 'Complex',         value: complexCount,       color: '#9A3412' },
+          { label: 'Complex',         value: complexCount,       color: '#4338CA' },
           { label: 'Node Types',      value: 8,                  color: '#1E3A5F' },
         ].map(s => (
           <div key={s.label} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '0.875rem', padding: '1.25rem 1.5rem' }}>

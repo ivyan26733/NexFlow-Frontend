@@ -1,154 +1,126 @@
 import type { NodeType } from '@/types'
 
-export interface NodeMeta {
-  label:       string
-  color:       string       // border / icon / handle (main hex)
-  bgColor:     string       // node body: light pairing at ~60% opacity over canvas
-  description: string
-  isTerminal:  boolean
-  icon?:       string       // e.g. '↺' for LOOP
-  group?:      string       // e.g. 'LOGIC'
+/**
+ * Visual language of the canvas.
+ *
+ * Every node belongs to exactly one CATEGORY, and the category alone decides its colour.
+ * Colour therefore always answers one question: "what kind of work does this step do?"
+ * Runtime state (running / success / failure) is shown separately with rings, badges and
+ * edge animation, so it never competes with the category colour.
+ *
+ * All category colours pass WCAG AA (≥ 4.5:1) as text on white.
+ */
+export type NodeCategory =
+  | 'TRIGGER'   // where data enters the flow
+  | 'CONNECT'   // talks to the outside world (APIs, databases, other flows)
+  | 'DATA'      // shapes or stores values, no side effects
+  | 'LOGIC'     // decides where execution goes next
+  | 'CODE'      // runs user code
+  | 'AI'        // asks a language model
+  | 'PARALLEL'  // splits or merges concurrent branches
+  | 'OUTCOME'   // ends the flow
+
+export interface CategoryMeta {
+  label:   string
+  color:   string   // solid — icon, border, handle, minimap
+  tint:    string   // very light wash of the same hue — icon tile / chip background
+  meaning: string   // one-line answer to "why is this colour?"
 }
 
-// Single source of truth for how each node should look in the sidebar and canvas.
-/** Solid warm backgrounds — opaque on the studio canvas (#DDD0BF) */
-const bg = (r: number, g: number, b: number) => `rgba(${r},${g},${b},0.96)`
+export const CATEGORY_META: Record<NodeCategory, CategoryMeta> = {
+  TRIGGER:  { label: 'Trigger',  color: '#C2410C', tint: '#FFF1E8', meaning: 'Where data enters the flow' },
+  CONNECT:  { label: 'Connect',  color: '#1D4ED8', tint: '#EAF0FF', meaning: 'Calls the outside world — APIs, databases, flows' },
+  DATA:     { label: 'Data',     color: '#0F766E', tint: '#E6F6F4', meaning: 'Shapes values — no side effects' },
+  LOGIC:    { label: 'Logic',    color: '#BE185D', tint: '#FDEBF3', meaning: 'Decides which path runs next' },
+  CODE:     { label: 'Code',     color: '#334155', tint: '#EEF1F5', meaning: 'Runs your JavaScript or Python' },
+  AI:       { label: 'AI',       color: '#7C3AED', tint: '#F3EEFF', meaning: 'Asks a language model' },
+  PARALLEL: { label: 'Parallel', color: '#A16207', tint: '#FDF6E3', meaning: 'Runs branches at the same time' },
+  OUTCOME:  { label: 'Outcome',  color: '#15803D', tint: '#E8F7EE', meaning: 'Ends the flow with a result' },
+}
 
+export interface NodeMeta {
+  label:       string
+  category:    NodeCategory
+  color:       string       // solid accent (category colour; outcome nodes use their own result colour)
+  bgColor:     string       // light tint of `color`
+  description: string       // what the node does — shown in the palette and tooltips
+  isTerminal:  boolean
+}
+
+function meta(
+  label: string,
+  category: NodeCategory,
+  description: string,
+  opts: { isTerminal?: boolean; color?: string; tint?: string } = {},
+): NodeMeta {
+  const c = CATEGORY_META[category]
+  return {
+    label,
+    category,
+    color:      opts.color ?? c.color,
+    bgColor:    opts.tint ?? c.tint,
+    description,
+    isTerminal: opts.isTerminal ?? false,
+  }
+}
+
+// Single source of truth for how each node looks in the palette, on the canvas and in the minimap.
 export const NODE_META: Record<NodeType, NodeMeta> = {
-  START: {
-    label:       'Start',
-    color:       '#B45309',
-    bgColor:     bg(255, 247, 220), // warm amber-cream
-    description: 'Entry point — receives the inbound trigger payload',
-    isTerminal:  false,
-  },
-
-  NEXUS: {
-    label:       'Nexus',
-    color:       '#1D4ED8',
-    bgColor:     bg(219, 234, 254), // sky blue
-    description: 'Saved connector or inline API call (REST/SQL)',
-    isTerminal:  false,
-  },
-
-  SUB_FLOW: {
-    label:       'Sub-Flow',
-    color:       '#15803D',
-    bgColor:     bg(220, 252, 231), // fresh green
-    description: 'Call another flow — SYNC (wait) or ASYNC (fire & forget)',
-    isTerminal:  false,
-  },
-
-  VARIABLE: {
-    label:       'Variable',
-    color:       '#6B5A45',
-    bgColor:     bg(245, 240, 234), // warm parchment
-    description: 'Define static values or reference previous node outputs',
-    isTerminal:  false,
-  },
-
-  MAPPER: {
-    label:       'Mapper',
-    color:       '#0F766E',
-    bgColor:     bg(204, 251, 241), // teal mint
-    description: 'Shape a new object from any previous data',
-    isTerminal:  false,
-  },
-
-  DECISION: {
-    label:       'Decision',
-    color:       '#C2410C',
-    bgColor:     bg(255, 237, 213), // warm orange
-    description: 'Branch flow based on a condition',
-    isTerminal:  false,
-  },
-
-  LOOP: {
-    label:       'Loop',
-    color:       '#9F1239',
-    bgColor:     bg(254, 228, 232), // rose pink
-    description: 'Repeat until condition is false',
-    isTerminal:  false,
-    icon:        '↺',
-    group:       'LOGIC',
-  },
-
-  SCRIPT: {
-    label:       'Script',
-    color:       '#6D28D9',
-    bgColor:     bg(245, 243, 255), // light violet
-    description: 'Run JavaScript or Python — use input.variables, input.nodes, input.trigger',
-    isTerminal:  false,
-  },
-
-  SUCCESS: {
-    label:       'Success',
-    color:       '#15803D',
-    bgColor:     bg(220, 252, 231), // fresh green
-    description: 'Terminal — flow ended successfully',
-    isTerminal:  true,
-  },
-
-  FAILURE: {
-    label:       'Failure',
-    color:       '#991B1B',
-    bgColor:     bg(254, 226, 226), // rose red
-    description: 'Terminal — flow ended with failure',
-    isTerminal:  true,
-  },
-
-  AI: {
-    label:       'AI',
-    color:       '#7C3AED',
-    bgColor:     bg(237, 233, 254), // lavender
-    description: 'Transform or classify data using any LLM',
-    isTerminal:  false,
-    icon:        '✦',
-    group:       'AI',
-  },
-
-  FORK: {
-    label:       'Fork',
-    color:       '#B45309',
-    bgColor:     bg(255, 247, 220), // warm amber-cream
-    description: 'Split flow into parallel branches — paired with JOIN',
-    isTerminal:  false,
-    icon:        '⑃',
-    group:       'PARALLEL',
-  },
-
-  JOIN: {
-    label:       'Join',
-    color:       '#065F46',
-    bgColor:     bg(209, 250, 229), // emerald mint
-    description: 'Merge parallel branches back into a single flow',
-    isTerminal:  false,
-    icon:        '⑄',
-    group:       'PARALLEL',
-  },
+  START:    meta('Start',    'TRIGGER',  'Entry point — receives the trigger payload'),
+  NEXUS:    meta('Nexus',    'CONNECT',  'Call a saved connector or inline HTTP / SQL request'),
+  SUB_FLOW: meta('Sub-Flow', 'CONNECT',  'Run another flow — wait for it (SYNC) or fire & forget (ASYNC)'),
+  VARIABLE: meta('Variable', 'DATA',     'Set static values or capture earlier outputs'),
+  MAPPER:   meta('Mapper',   'DATA',     'Build a new object from earlier data'),
+  DECISION: meta('Decision', 'LOGIC',    'Take the success or failure path based on a condition'),
+  LOOP:     meta('Loop',     'LOGIC',    'Repeat a section until the condition is false'),
+  SCRIPT:   meta('Script',   'CODE',     'Run JavaScript or Python with input.variables / input.nodes'),
+  AI:       meta('AI',       'AI',       'Transform, extract or classify data with any LLM'),
+  FORK:     meta('Fork',     'PARALLEL', 'Split into branches that run at the same time'),
+  JOIN:     meta('Join',     'PARALLEL', 'Wait for parallel branches and merge their results'),
+  SUCCESS:  meta('Success',  'OUTCOME',  'End the flow as successful', { isTerminal: true }),
+  FAILURE:  meta('Failure',  'OUTCOME',  'End the flow as failed',     { isTerminal: true, color: '#B91C1C', tint: '#FDECEC' }),
 }
 
 // This list drives the draggable sidebar order.
 export const DRAGGABLE_NODES: NodeType[] = [
-  'NEXUS',
-  'SUB_FLOW',
-  'SCRIPT',
-  'VARIABLE',
-  'MAPPER',
-  'DECISION',
-  'LOOP',
-  'FORK',
-  'JOIN',
-  'AI',
-  'SUCCESS',
-  'FAILURE',
+  'NEXUS', 'SUB_FLOW', 'VARIABLE', 'MAPPER', 'DECISION', 'LOOP',
+  'SCRIPT', 'AI', 'FORK', 'JOIN', 'SUCCESS', 'FAILURE',
 ]
 
-// These sections are only for the left sidebar grouping.
-export const NODE_GROUPS: { label: string; types: NodeType[] }[] = [
-  { label: 'CALL',     types: ['NEXUS', 'SUB_FLOW'] },
-  { label: 'LOGIC',    types: ['SCRIPT', 'VARIABLE', 'MAPPER', 'DECISION', 'LOOP'] },
-  { label: 'PARALLEL', types: ['FORK', 'JOIN'] },
-  { label: 'AI',       types: ['AI'] },
-  { label: 'TERMINAL', types: ['SUCCESS', 'FAILURE'] },
+// Palette sections — one per category, in the order a flow is usually built.
+export const NODE_GROUPS: { category: NodeCategory; label: string; types: NodeType[] }[] = [
+  { category: 'CONNECT',  label: 'Connect',  types: ['NEXUS', 'SUB_FLOW'] },
+  { category: 'DATA',     label: 'Data',     types: ['VARIABLE', 'MAPPER'] },
+  { category: 'LOGIC',    label: 'Logic',    types: ['DECISION', 'LOOP'] },
+  { category: 'CODE',     label: 'Code',     types: ['SCRIPT'] },
+  { category: 'AI',       label: 'AI',       types: ['AI'] },
+  { category: 'PARALLEL', label: 'Parallel', types: ['FORK', 'JOIN'] },
+  { category: 'OUTCOME',  label: 'Outcome',  types: ['SUCCESS', 'FAILURE'] },
 ]
+
+/**
+ * Runtime status colours — deliberately separate from category colours.
+ * Used for node rings, status badges and the "path taken" edge highlight.
+ */
+export const STATUS_COLOR = {
+  RUNNING:  '#2563EB',
+  SUCCESS:  '#15803D',
+  FAILURE:  '#B91C1C',
+  RETRYING: '#B45309',
+  CONTINUE: '#B45309',
+  PENDING:  '#64748B',
+} as const
+
+/**
+ * Edge semantics — the line itself tells you which path it is,
+ * even in greyscale (solid / dashed / dotted), not only by colour.
+ */
+export type EdgeKind = 'success' | 'failure' | 'continue' | 'branch' | 'default'
+
+export const EDGE_STYLE: Record<EdgeKind, { color: string; dash?: string; label: string; meaning: string }> = {
+  success:  { color: '#15803D', label: 'on success', meaning: 'Runs when the step succeeds' },
+  failure:  { color: '#B91C1C', dash: '7 5', label: 'on error', meaning: 'Runs when the step fails' },
+  continue: { color: '#B45309', dash: '2 6', label: 'repeat', meaning: 'Loops back for another iteration' },
+  branch:   { color: '#A16207', label: 'branch', meaning: 'A parallel branch from a Fork' },
+  default:  { color: '#475569', label: '', meaning: 'Next step' },
+}

@@ -49,8 +49,8 @@ export default function ForgotPasswordPage() {
           <>
             <div style={{
               width: '3rem', height: '3rem', borderRadius: '0.75rem',
-              background: 'linear-gradient(135deg,rgba(154,52,18,0.12),rgba(30,58,95,0.12))',
-              border: '1px solid rgba(154,52,18,0.22)',
+              background: 'linear-gradient(135deg,rgba(67,56,202,0.12),rgba(30,58,95,0.12))',
+              border: '1px solid rgba(67,56,202,0.22)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem',
             }}>
               <Mail size={20} style={{ color: 'var(--color-accent)' }} />

@@ -12,9 +12,9 @@ import { usePortalPosition } from '@/hooks/usePortalDropdown'
 const ROLES: UserRole[] = ['ADMIN', 'SUB_ADMIN', 'MEMBER']
 
 const ROLE_META: Record<UserRole, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  ADMIN:     { label: 'Admin',     color: '#9A3412', bg: 'rgba(154,52,18,0.12)',    icon: <Crown size={13} />    },
+  ADMIN:     { label: 'Admin',     color: '#4338CA', bg: 'rgba(67,56,202,0.12)',    icon: <Crown size={13} />    },
   SUB_ADMIN: { label: 'Sub-Admin', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',   icon: <Shield size={13} />   },
-  MEMBER:    { label: 'Member',    color: '#6B5A45', bg: 'rgba(107,90,69,0.12)',  icon: <UserCheck size={13} /> },
+  MEMBER:    { label: 'Member',    color: '#475569', bg: 'rgba(71,85,105,0.12)',  icon: <UserCheck size={13} /> },
 }
 
 export default function AdminPage() {
@@ -59,7 +59,7 @@ export default function AdminPage() {
   }
 
   const avatarColors = [
-    'linear-gradient(135deg,#9A3412,#1E3A5F)',
+    'linear-gradient(135deg,#4338CA,#1E3A5F)',
     'linear-gradient(135deg,#c2410c,#92400e)',
     'linear-gradient(135deg,#15803d,#14532d)',
     'linear-gradient(135deg,#b45309,#78350f)',
@@ -83,10 +83,10 @@ export default function AdminPage() {
       {/* ── Stats row ──────────────────────────────────────────── */}
       <div className="stats-grid-4">
         {[
-          { label: 'Total Users',  value: stats.total,     icon: <Users size={18} />,    color: '#A8927A' },
-          { label: 'Admins',       value: stats.admins,    icon: <Crown size={18} />,    color: '#9A3412' },
+          { label: 'Total Users',  value: stats.total,     icon: <Users size={18} />,    color: '#5B6677' },
+          { label: 'Admins',       value: stats.admins,    icon: <Crown size={18} />,    color: '#4338CA' },
           { label: 'Sub-Admins',   value: stats.subAdmins, icon: <Shield size={18} />,   color: '#f59e0b' },
-          { label: 'Members',      value: stats.members,   icon: <UserCheck size={18} />, color: '#6B5A45' },
+          { label: 'Members',      value: stats.members,   icon: <UserCheck size={18} />, color: '#475569' },
         ].map(s => (
           <div key={s.label} style={{
             background: 'var(--color-surface)', border: '1px solid var(--color-border)',
@@ -143,10 +143,10 @@ export default function AdminPage() {
               padding: '1.125rem 1.75rem', alignItems: 'center',
               borderBottom: i < users.length - 1 ? '1px solid var(--color-border)' : 'none',
               transition: 'background 0.1s',
-              background: isMe ? 'rgba(154,52,18,0.06)' : 'transparent',
+              background: isMe ? 'rgba(67,56,202,0.06)' : 'transparent',
             }}
             onMouseEnter={e => { if (!isMe) e.currentTarget.style.background = 'var(--color-panel)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = isMe ? 'rgba(154,52,18,0.06)' : 'transparent' }}
+            onMouseLeave={e => { e.currentTarget.style.background = isMe ? 'rgba(67,56,202,0.06)' : 'transparent' }}
             >
               {/* User */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
@@ -165,7 +165,7 @@ export default function AdminPage() {
                   {isMe && (
                     <span style={{
                       fontSize: '0.7rem', color: 'var(--color-accent)', fontFamily: 'var(--font-mono)',
-                      background: 'rgba(154,52,18,0.12)', padding: '0.1rem 0.4rem', borderRadius: '999px',
+                      background: 'rgba(67,56,202,0.12)', padding: '0.1rem 0.4rem', borderRadius: '999px',
                     }}>you</span>
                   )}
                 </div>
